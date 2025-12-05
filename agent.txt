@@ -1,0 +1,420 @@
+import logging
+import re
+from typing import AsyncGenerator, List
+
+from langchain_core.tools import StructuredTool
+from pydantic_ai import Agent, Tool
+from pydantic_ai.messages import (
+    FunctionToolCallEvent,
+    FunctionToolResultEvent,
+    ModelResponse,
+    PartDeltaEvent,
+    PartStartEvent,
+    TextPart,
+    TextPartDelta,
+)
+from pydantic_ai.models.groq import GroqModel
+from pydantic_ai.models.mistral import MistralModel
+from pydantic_ai.providers.groq import GroqProvider
+from pydantic_ai.providers.mistral import MistralProvider
+
+from app.core.config import config_provider
+from app.modules.provider.provider_service import ProviderService
+from app.modules.tools.tool_helper import (
+    get_tool_call_info_content,
+    get_tool_response_message,
+    get_tool_result_info_content,
+    get_tool_run_message,
+)
+from ..agent_schema import (
+    AgentConfig,
+    ChatAgent,
+    ChatAgentResponse,
+    ChatContext,
+    TaskConfig,
+    ToolCallEventType,
+    ToolCallResponse,
+)
+
+
+logger = logging.getLogger(__name__)
+
+
+    
+class PydanticRagAgent(ChatAgent):
+    def __init__(
+        self,
+        llm_provider: ProviderService,
+        config: AgentConfig,
+        tools: List[StructuredTool],
+    ):
+        """Initialize the agent with configuration and tools"""
+
+        self.tasks = config.tasks
+        self.max_iter = config.max_iter
+
+        # tool name can't have spaces for langgraph/pydantic agents
+        for i, tool in enumerate(tools):
+            tools[i].name = re.sub(r" ", "", tool.name)
+
+        self.agent = Agent(
+            model=MistralModel(
+                model_name="mistral-large-latest",
+                provider=MistralProvider(api_key = config_provider.get_llm_api_key())
+            ),
+            tools=[
+                Tool(
+                    name=tool.name,
+                    description=tool.description,
+                    function=tool.func,  # type: ignore
+                )
+                for tool in tools
+            ],
+            system_prompt=f"Role: {config.role}\nGoal: {config.goal}\nBackstory: {config.backstory}. Respond to the user query",
+            result_type=str,
+            retries=3,
+            defer_model_check=True,
+            end_strategy="exhaustive",
+            model_settings={"parallel_tool_calls": True, "max_tokens": 8000},
+        )
+
+    
+    def _create_task_description(
+        self,
+        task_config: TaskConfig,
+        ctx: ChatContext,
+    ) -> str:
+        """Create a task description from task configuration"""
+        
+
+        return f"""
+                CONTEXT:
+                User Query: {ctx.query}
+                Project ID: {ctx.project_id}
+                
+                Additional Context:
+                {ctx.additional_context if ctx.additional_context != "" else "no additional context"}
+
+                TASK:
+                {task_config.description}
+
+                Expected Output:
+                {task_config.expected_output}
+
+                INSTRUCTIONS:
+                1. Use the available tools to gather information
+                2. Process and synthesize the gathered information
+                3. Format your response in markdown, make sure it's well formatted
+                4. Include relevant code snippets and file references
+                5. Provide clear explanations
+                6. Verify your output before submitting
+
+                IMPORTANT:
+                - Use tools efficiently and avoid unnecessary API calls
+                - Only use the tools listed below
+
+                With above information answer the user query: {ctx.query}
+            """
+
+
+    async def run(self, ctx: ChatContext) -> ChatAgentResponse:
+        """Main execution flow"""
+        logger.info("running pydantic-ai agent")
+        try:
+
+            task = self._create_task_description(self.tasks[0], ctx)
+
+            resp = await self.agent.run(user_prompt=task)
+
+            return ChatAgentResponse(
+                response=resp.data,
+                tool_calls=[],
+                citations=[],
+            )
+
+        except Exception as e:
+            logger.error(f"Error in run method: {str(e)}", exc_info=True)
+            raise Exception from e
+
+    async def run_stream(
+        self, ctx: ChatContext
+    ) -> AsyncGenerator[ChatAgentResponse, None]:
+        print("running pydantic-ai agent stream",ctx)
+        task = self._create_task_description(self.tasks[0], ctx)
+        print(f"Task description: {task}")
+        try:
+            async with self.agent.iter(
+                user_prompt=task,
+                message_history=[
+                    ModelResponse([TextPart(content=msg)]) for msg in ctx.history
+                ],
+            ) as run:
+                print("run started")
+                async for node in run:
+                    if Agent.is_model_request_node(node):
+                        # A model request node => We can stream tokens from the model's request
+                        print("model request node found")
+                        async with node.stream(run.ctx) as request_stream:
+                            async for event in request_stream:
+                                if isinstance(event, PartStartEvent) and isinstance(
+                                    event.part, TextPart
+                                ):
+                                    yield ChatAgentResponse(
+                                        response=event.part.content,
+                                        tool_calls=[],
+                                        citations=[],
+                                    )
+                               
+                                if isinstance(event, PartDeltaEvent) and isinstance(
+                                    event.delta, TextPartDelta
+                                ):
+                                    yield ChatAgentResponse(
+                                        response=event.delta.content_delta,
+                                        tool_calls=[],
+                                        citations=[],
+                                    )
+
+                    elif Agent.is_call_tools_node(node):
+                        print("call tools node found")
+                        async with node.stream(run.ctx) as handle_stream:
+                            async for event in handle_stream:
+                                if isinstance(event, FunctionToolCallEvent):
+                                    yield ChatAgentResponse(
+                                        response="",
+                                        tool_calls=[
+                                            ToolCallResponse(
+                                                call_id=event.part.tool_call_id or "",
+                                                event_type=ToolCallEventType.CALL,
+                                                tool_name=event.part.tool_name,
+                                                tool_response=get_tool_run_message(
+                                                    event.part.tool_name
+                                                ),
+                                                tool_call_details={
+                                                    "summary": get_tool_call_info_content(
+                                                        event.part.tool_name,
+                                                        event.part.args_as_dict(),
+                                                    )
+                                                },
+                                            )
+                                        ],
+                                        citations=[],
+                                    )
+                               
+                            
+                                if isinstance(event, FunctionToolResultEvent):
+                                    yield ChatAgentResponse(
+                                        response="",
+                                        tool_calls=[
+                                            ToolCallResponse(
+                                                call_id=event.result.tool_call_id or "",
+                                                event_type=ToolCallEventType.RESULT,
+                                                tool_name=event.result.tool_name
+                                                or "unknown tool",
+                                                tool_response=get_tool_response_message(
+                                                    event.result.tool_name
+                                                    or "unknown tool"
+                                                ),
+                                                tool_call_details={
+                                                    "summary": get_tool_result_info_content(
+                                                        event.result.tool_name
+                                                        or "unknown tool",
+                                                        event.result.content,
+                                                    )
+                                                },
+                                            )
+                                        ],
+                                        citations=[],
+                                    )
+
+                    elif Agent.is_end_node(node):
+                        logger.info("result streamed successfully!!")
+                        print("end node found")
+
+        except Exception as e:
+            logger.error(f"Error in run method: {str(e)}", exc_info=True)
+            raise Exception from e
+
+
+
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Any, AsyncGenerator, Dict, List, Optional
+from pydantic import BaseModel, Field
+from crewai import Agent, Crew, Process, Task
+
+class ToolCallEventType(Enum):
+    CALL = "call"
+    RESULT = "result"
+
+
+class ToolCallResponse(BaseModel):
+    call_id: str = Field(
+        ...,
+        description="ID of the tool call",
+    )
+    event_type: ToolCallEventType = Field(..., description="Type of the event")
+    tool_name: str = Field(
+        ...,
+        description="Name of the tool",
+    )
+    tool_response: str = Field(
+        ...,
+        description="Response from the tool",
+    )
+    tool_call_details: Dict[str, Any] = Field(
+        ...,
+        description="Details of the tool call",
+    )
+
+
+class ChatAgentResponse(BaseModel):
+    response: str = Field(
+        ...,
+        description="Full response to the query",
+    )
+    tool_calls: List[ToolCallResponse] = Field([], description="List of tool calls")
+    citations: List[str] = Field(
+        ...,
+        description="List of file names extracted from context and referenced in the response",
+    )
+
+class ChatContext(BaseModel):
+    project_id: str
+    history: List[str]
+    query: str
+    additional_context: str = ""
+
+
+class ChatAgent(ABC):
+    """Interface for chat agents. Chat agents will be used in conversation APIs"""
+
+    @abstractmethod
+    async def run(self, ctx: ChatContext) -> ChatAgentResponse:
+        """Run synchronously in a blocking manner, return entire response at once"""
+        pass
+
+    @abstractmethod
+    def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
+        """Run asynchronously, yield response piece by piece"""
+        pass
+
+
+class TaskConfig(BaseModel):
+    """Model for task configuration from agent_config.json"""
+
+    description: str
+    expected_output: str
+    context: Optional[Task] = None
+
+
+class AgentConfig(BaseModel):
+    """Model for agent configuration from agent_config.json"""
+
+    role: str
+    goal: str
+    backstory: str
+    tasks: List[TaskConfig]
+    max_iter: int = 15
+
+class AgentInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    agent: str
+
+
+class AgentWithInfo:
+    def __init__(self, agent: ChatAgent, id: str, name: str, description: str):
+        self.id = id
+        self.name = name
+        self.description = description
+        self.agent = agent
+
+
+ import os
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+from app.modules.agents.executer_agent import ExecuterAgent
+from app.modules.provider.provider_service import ProviderService
+from app.modules.tools.tool_service import ToolService
+
+from .agent_schema import AgentWithInfo, ChatContext
+from .explanation_agent import ExplanationAgent
+from .qna_agent import QnAAgent
+
+
+
+
+class AgentsService:
+    def __init__(
+        self,
+        db,
+        user_id: str,
+        llm_provider: ProviderService
+    ):  
+        self.db = db
+        self.user_id= user_id
+        self.tool=ToolService(db,user_id)
+        self.system_agents = self._system_agents(
+            llm_provider,self.tool
+        )
+        self.executer = ExecuterAgent(llm_provider, self.system_agents)
+        
+    def _system_agents(
+        self,
+        llm_provider: ProviderService,
+        tool=ToolService
+    ):
+        return {
+            "explanation_agent": AgentWithInfo(
+                id="explanation_agent",
+                name="Explantion Agent",
+                description="An agent specialized in answering questions about the codebase using the knowledge graph and code analysis tools.",
+                agent=ExplanationAgent(llm_provider),
+            ),
+            "qna_agent": AgentWithInfo(
+                id="qna_agent",
+                name="qna Agent",
+                description="An agent specialized in answering questions about the codebase using the knowledge graph and code analysis tools.",
+                agent=QnAAgent(llm_provider,tool),
+            ),
+        }
+
+    async def execute(self, ctx: ChatContext):
+        return await self.executer.run(ctx)
+
+    async def execute_stream(self, ctx: ChatContext):
+        async for chunk in self.executer.run_stream(ctx):
+            yield chunk
+
+          
+
+from typing import AsyncGenerator, Dict
+
+from app.modules.provider.provider_service import ProviderService
+
+from .agent_schema import AgentConfig, ChatAgent, ChatAgentResponse, ChatContext
+from .router_agent import RouterAgent
+
+
+
+class ExecuterAgent(ChatAgent):
+    def __init__(
+        self,
+        llm_provider: ProviderService,
+        agents: Dict[str, AgentConfig],
+    ):
+        self.agent = RouterAgent(llm_provider, agents=agents)
+
+    async def run(self, ctx: ChatContext) -> ChatAgentResponse:
+        return await self.agent.run(ctx)
+
+    async def run_stream(
+        self, ctx: ChatContext
+    ) -> AsyncGenerator[ChatAgentResponse, None]:
+        async for chunck in self.agent.run_stream(ctx):
+            yield chunck
+
+

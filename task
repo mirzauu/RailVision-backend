@@ -1,0 +1,558 @@
+FastAPI Backend Architecture for AI C-Suite Agent SaaS
+Architecture Summary
+This design follows a layered hexagonal architecture within a modular monolith. The system is organized into four primary layers: API (FastAPI routes and schemas), Application (use-case orchestration and business workflows), Domain (core business entities and rules), and Infrastructure (external integrations, databases, and third-party services). A dedicated LLM Gateway module abstracts all AI provider interactions (OpenAI, Claude, Perplexity), while CrewAI is wrapped as an infrastructure service called by application-layer orchestrators.
+All modules are tenant-aware by design with org_id scoping throughout. Dependency injection uses FastAPI's native Depends() combined with factory functions that provide configured instances (DB sessions, clients, settings). Each domain module (auth, agents, documents, conversations, integrations) is self-contained with its own API routes, services, repositories, and domain models, making the system highly modular and testable.
+The memory architecture is hybrid: Pinecone for semantic vector search, PostgreSQL for structured metadata and relational data, and an optional future knowledge graph layer. Agent orchestration happens through a dedicated service that configures CrewAI agents with appropriate tools, memory access, and LLM routing via the gateway. Background ingestion workers handle document processing, embedding generation, and metadata extraction using FastAPI background tasks initially, with easy migration to Celery/RQ later.
+This structure supports horizontal feature expansion (new agents, integrations, tools) without architectural rewrites, clear test boundaries at each layer, and straightforward multi-tenant migration when needed.
+
+Folder Structure
+backend/
+├── src/
+│   ├── main.py                          # FastAPI app entry point
+│   ├── config/``
+│   │   ├── __init__.py
+│   │   ├── settings.py                  # Pydantic Settings (env vars, secrets)
+│   │   ├── logging.py                   # Logging configuration
+│   │   └── database.py                  # SQLAlchemy engine, session factory
+│   │
+│   ├── api/                             # API Layer (FastAPI routers)
+│   │   ├── __init__.py
+│   │   ├── dependencies.py              # Shared API dependencies (auth, DI)
+│   │   ├── middleware.py                # Custom middleware (tenant context, logging)
+│   │   ├── exceptions.py                # Custom exception handlers
+│   │   ├── v1/                          # API versioning
+│   │   │   ├── __init__.py
+│   │   │   ├── router.py                # Aggregates all v1 routers
+│   │   │   ├── auth/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py            # Login, register, refresh token
+│   │   │   │   └── schemas.py           # Pydantic request/response models
+│   │   │   ├── organizations/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py            # Org CRUD, user invitations
+│   │   │   │   └── schemas.py
+│   │   │   ├── agents/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py            # List agents, get agent config, update config
+│   │   │   │   └── schemas.py
+│   │   │   ├── conversations/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py            # Chat with agent, get history, summaries
+│   │   │   │   └── schemas.py
+│   │   │   ├── documents/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py            # Upload, list, tag, assign docs
+│   │   │   │   └── schemas.py
+│   │   │   ├── integrations/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py            # Configure/sync Google Drive, Slack
+│   │   │   │   └── schemas.py
+│   │   │   ├── memory/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py            # View agent/global memory, search knowledge
+│   │   │   │   └── schemas.py
+│   │   │   └── admin/
+│   │   │       ├── __init__.py
+│   │   │       ├── routes.py            # System config, audit logs, analytics
+│   │   │       └── schemas.py
+│   │
+│   ├── application/                     # Application/Service Layer (use cases)
+│   │   ├── __init__.py
+│   │   ├── auth/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth_service.py          # Login, JWT generation, user verification
+│   │   │   └── user_service.py          # User CRUD, invitations, role management
+│   │   ├── organizations/
+│   │   │   ├── __init__.py
+│   │   │   └── org_service.py           # Org lifecycle, tenant provisioning
+│   │   ├── agents/
+│   │   │   ├── __init__.py
+│   │   │   ├── agent_config_service.py  # Agent CRUD, prompt management
+│   │   │   └── agent_orchestrator.py    # CrewAI agent execution coordinator
+│   │   ├── conversations/
+│   │   │   ├── __init__.py
+│   │   │   ├── chat_service.py          # Message handling, history, summaries
+│   │   │   └── memory_service.py        # Memory retrieval (Pinecone + Postgres)
+│   │   ├── documents/
+│   │   │   ├── __init__.py
+│   │   │   ├── document_service.py      # Document metadata management
+│   │   │   └── ingestion_service.py     # Orchestrates parsing, embedding, storage
+│   │   ├── integrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── integration_service.py   # Integration config management
+│   │   │   └── sync_service.py          # Trigger/manage sync jobs
+│   │   └── admin/
+│   │       ├── __init__.py
+│   │       ├── audit_service.py         # Audit log queries and reporting
+│   │       └── analytics_service.py     # Usage metrics, cost tracking
+│   │
+│   ├── domain/                          # Domain Layer (business entities & logic)
+│   │   ├── __init__.py
+│   │   ├── common/
+│   │   │   ├── __init__.py
+│   │   │   ├── entities.py              # Base entity classes
+│   │   │   ├── value_objects.py         # Shared value objects (Email, OrgId, etc.)
+│   │   │   └── exceptions.py            # Domain-specific exceptions
+│   │   ├── auth/
+│   │   │   ├── __init__.py
+│   │   │   ├── user.py                  # User entity
+│   │   │   ├── role.py                  # Role entity and permissions logic
+│   │   │   └── session.py               # Session/token domain model
+│   │   ├── organizations/
+│   │   │   ├── __init__.py
+│   │   │   └── organization.py          # Organization entity
+│   │   ├── agents/
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py                 # Agent entity (type, config, capabilities)
+│   │   │   ├── agent_config.py          # Agent configuration value object
+│   │   │   └── agent_types.py           # Enum: CSO, CRO, CFO, COO, CHRO, etc.
+│   │   ├── conversations/
+│   │   │   ├── __init__.py
+│   │   │   ├── conversation.py          # Conversation aggregate
+│   │   │   ├── message.py               # Message entity
+│   │   │   └── summary.py               # Conversation summary value object
+│   │   ├── documents/
+│   │   │   ├── __init__.py
+│   │   │   ├── document.py              # Document entity
+│   │   │   ├── document_metadata.py     # Tags, visibility, ownership
+│   │   │   └── document_version.py      # Version tracking
+│   │   ├── integrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── integration.py           # Integration entity
+│   │   │   └── integration_config.py    # OAuth tokens, sync settings
+│   │   └── memory/
+│   │       ├── __init__.py
+│   │       ├── memory_entry.py          # Memory metadata entity
+│   │       └── knowledge_scope.py       # Enum: agent-specific, global
+│   │
+│   ├── infrastructure/                  # Infrastructure Layer (external systems)
+│   │   ├── __init__.py
+│   │   ├── database/
+│   │   │   ├── __init__.py
+│   │   │   ├── models.py                # SQLAlchemy ORM models
+│   │   │   ├── repositories/            # Repository pattern for data access
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py              # Generic repository base class
+│   │   │   │   ├── user_repository.py
+│   │   │   │   ├── org_repository.py
+│   │   │   │   ├── agent_repository.py
+│   │   │   │   ├── conversation_repository.py
+│   │   │   │   ├── document_repository.py
+│   │   │   │   └── integration_repository.py
+│   │   │   └── migrations/              # Alembic migrations
+│   │   │       └── versions/
+│   │   ├── vector/
+│   │   │   ├── __init__.py
+│   │   │   ├── pinecone_client.py       # Pinecone wrapper (upsert, query)
+│   │   │   └── embedding_service.py     # Generate embeddings (OpenAI, etc.)
+│   │   ├── llm/
+│   │   │   ├── __init__.py
+│   │   │   ├── gateway.py               # LLM Gateway (routing, logging, rate limits)
+│   │   │   ├── providers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py              # Abstract LLM provider interface
+│   │   │   │   ├── openai_provider.py
+│   │   │   │   ├── claude_provider.py
+│   │   │   │   └── perplexity_provider.py
+│   │   │   └── usage_tracker.py         # Token/cost logging
+│   │   ├── agents/
+│   │   │   ├── __init__.py
+│   │   │   ├── crewai_wrapper.py        # CrewAI integration adapter
+│   │   │   ├── agent_factory.py         # Instantiate CrewAI agents with config
+│   │   │   ├── tools/                   # Custom tools for agents
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── memory_tool.py       # RAG retrieval tool
+│   │   │   │   ├── document_tool.py     # Document lookup tool
+│   │   │   │   └── integration_tool.py  # Query integrations (GDrive, Slack)
+│   │   │   └── memory/
+│   │   │       ├── __init__.py
+│   │   │       ├── agent_memory.py      # Agent-specific memory handler
+│   │   │       └── shared_memory.py     # Global/org memory handler
+│   │   ├── integrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py                  # Abstract integration interface
+│   │   │   ├── google_drive.py          # Google Drive API client
+│   │   │   ├── slack.py                 # Slack API client
+│   │   │   └── registry.py              # Integration factory/registry  
+│   │   ├── document_processing/
+│   │   │   ├── __init__.py
+│   │   │   ├── parser.py                # Multi-format parser (PDF, DOCX, PPT)
+│   │   │   ├── chunker.py               # Text chunking strategies
+│   │   │   └── metadata_extractor.py    # Extract entities, keywords
+│   │   ├── jobs/
+│   │   │   ├── __init__.py
+│   │   │   ├── background_tasks.py      # FastAPI BackgroundTasks wrapper
+│   │   │   └── queue.py                 # Future: Celery/RQ setup
+│   │   ├── email/
+│   │   │   ├── __init__.py
+│   │   │   └── email_service.py         # Send invitations, notifications
+│   │   └── monitoring/
+│   │       ├── __init__.py
+│   │       ├── logging.py               # Structured logging
+│   │       └── metrics.py               # Prometheus/custom metrics
+│   │
+│   └── shared/                          # Shared utilities
+│       ├── __init__.py
+│       ├── utils.py                     # Common helper functions
+│       ├── security.py                  # Password hashing, JWT utils
+│       └── validators.py                # Custom Pydantic validators
+│
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py                      # Pytest fixtures (DB, clients, mocks)
+│   ├── unit/                            # Unit tests (isolated, mocked dependencies)
+│   │   ├── application/
+│   │   ├── domain/
+│   │   └── infrastructure/
+│   ├── integration/                     # Integration tests (DB, external APIs)
+│   │   ├── api/
+│   │   ├── repositories/
+│   │   └── agents/
+│   └── e2e/                             # End-to-end tests (full workflows)
+│       └── test_agent_chat_flow.py
+│
+├── alembic.ini                          # Alembic config
+├── pyproject.toml                       # Poetry/pip dependencies
+├── .env.example                         # Example environment variables
+├── .gitignore
+├── Dockerfile
+├── docker-compose.yml                   # Local dev: Postgres, Redis (future)
+└── README.md
+
+Module Responsibilities
+config/
+
+Responsibilities: Centralized configuration management, environment variables, logging setup, database connection factory.
+Key components:
+
+settings.py: Pydantic BaseSettings class loading env vars (DB URLs, LLM keys, Pinecone API key, JWT secret, etc.)
+logging.py: Structured logging config (JSON logs for production)
+database.py: SQLAlchemy engine, session maker, and get_db() dependency provider
+
+
+Interactions: Injected into every layer via DI; no layer imports hardcoded values
+
+
+api/
+
+Responsibilities: HTTP request/response handling, input validation (Pydantic schemas), authentication middleware, exception handling, route registration.
+Key components:
+
+dependencies.py: Shared dependencies like get_current_user(), require_admin(), get_org_context()
+middleware.py: Tenant context injection (extracts org_id from JWT, sets request state), request logging, CORS
+v1/*/routes.py: FastAPI routers for each domain (auth, agents, documents, conversations, etc.)
+v1/*/schemas.py: Pydantic request/response models (DTOs)
+
+
+Interactions: API layer calls application services via DI; returns serialized responses; never touches infrastructure directly
+
+
+application/
+
+Responsibilities: Use-case orchestration, business workflow coordination, transaction boundaries. This is where complex multi-step operations live (e.g., "chat with agent" = load config + retrieve memory + call CrewAI + log conversation).
+Key components:
+
+auth_service.py: Login flow, JWT generation, password reset
+agent_orchestrator.py: Main entry point for agent execution; loads agent config, initializes CrewAI, calls LLM Gateway, logs audit trail
+chat_service.py: Manages conversation lifecycle (create, append messages, generate summaries)
+memory_service.py: Coordinates retrieval from Pinecone + Postgres (e.g., "get all CSO-specific docs + global strategy docs")
+ingestion_service.py: Orchestrates document parsing → chunking → embedding → Pinecone upsert → Postgres metadata write
+
+
+Interactions:
+
+Receives requests from API layer
+Uses domain entities for business logic
+Calls infrastructure repositories and clients (injected via DI)
+Returns domain entities or DTOs to API layer
+
+
+
+
+domain/
+
+Responsibilities: Core business entities, domain logic, validation rules. No dependencies on frameworks, databases, or external services (pure Python). This is the "heart" of the system.
+Key components:
+
+user.py, organization.py, agent.py, conversation.py, document.py: Core entities with methods for business rules (e.g., user.can_access_agent(), conversation.add_message())
+agent_types.py: Enum defining CSO, CRO, CFO, COO, CHRO
+knowledge_scope.py: Enum for agent-specific vs. global memory
+exceptions.py: Domain-specific exceptions (e.g., AgentNotAuthorizedError, DocumentVersionConflict)
+
+
+Interactions: Used by application services; completely isolated from infrastructure
+
+
+infrastructure/
+database/
+
+Responsibilities: SQLAlchemy ORM models, repository pattern for data access, Alembic migrations.
+Key components:
+
+models.py: SQLAlchemy tables (Users, Organizations, Agents, Conversations, Documents, Integrations)
+repositories/: Repository classes (e.g., UserRepository, ConversationRepository) that encapsulate SQL queries; return domain entities
+migrations/: Alembic version files
+
+
+Interactions: Repositories injected into application services; translate between ORM models and domain entities
+
+vector/
+
+Responsibilities: Pinecone client wrapper, embedding generation.
+Key components:
+
+pinecone_client.py: Methods like upsert_embeddings(), query_similar(query_vector, top_k, filters)
+embedding_service.py: Generates embeddings using OpenAI's text-embedding model (or alternatives)
+
+
+Interactions: Called by ingestion_service.py and memory_service.py
+
+llm/
+
+Responsibilities: Centralized LLM Gateway for all AI provider calls (OpenAI, Claude, Perplexity). Handles routing, logging, rate limiting, token tracking, cost calculation.
+Key components:
+
+gateway.py: Main interface; methods like complete(prompt, model="gpt-4", provider="openai"), stream_complete(), embed(text)
+providers/: Adapter pattern for each LLM (OpenAI, Claude, Perplexity); implements common interface (BaseProvider)
+usage_tracker.py: Logs every LLM call with tokens, latency, cost to Postgres (audit table)
+
+
+Interactions: Called by agent_orchestrator.py and CrewAI tools; all LLM calls go through this gateway
+
+agents/
+
+Responsibilities: CrewAI integration, agent factory, custom tools for agents (memory retrieval, document lookup, integration queries).
+Key components:
+
+crewai_wrapper.py: Wraps CrewAI's Agent, Task, Crew classes; handles initialization and execution
+agent_factory.py: Factory function that takes agent config (from domain) and returns configured CrewAI agent with tools
+tools/memory_tool.py: Custom CrewAI tool that queries Pinecone + Postgres for relevant docs/memory
+agent_memory.py / shared_memory.py: Memory handlers for agent-specific and global contexts
+
+
+Interactions: Called by agent_orchestrator.py (application layer); uses LLM Gateway for reasoning
+
+integrations/
+
+Responsibilities: External API clients (Google Drive, Slack). Each integration implements a common interface.
+Key components:
+
+base.py: Abstract BaseIntegration class with methods like authenticate(), list_files(), fetch_content()
+google_drive.py, slack.py: Concrete implementations
+registry.py: Factory/registry pattern to get integration instances by type
+
+
+Interactions: Called by sync_service.py and agent tools (e.g., agent asks "fetch latest docs from Google Drive")
+
+document_processing/
+
+Responsibilities: Parse, chunk, and extract metadata from uploaded documents.
+Key components:
+
+parser.py: Multi-format parser (uses libraries like pypdf, python-docx, python-pptx)
+chunker.py: Splits text into chunks (e.g., 500 tokens with overlap)
+metadata_extractor.py: Extracts keywords, entities (using NLP or LLM-based extraction)
+
+
+Interactions: Called by ingestion_service.py in background jobs
+
+jobs/
+
+Responsibilities: Background task execution (v1: FastAPI BackgroundTasks; future: Celery/RQ).
+Key components:
+
+background_tasks.py: Wrapper for FastAPI's BackgroundTasks; functions like enqueue_ingestion(document_id)
+queue.py: (Future) Celery/RQ setup for heavier workloads
+
+
+Interactions: Called by API routes when triggering async work (e.g., document upload → ingestion job)
+
+email/
+
+Responsibilities: Send transactional emails (invitations, password resets).
+Key components:
+
+email_service.py: Uses SMTP or service like SendGrid/SES
+
+
+Interactions: Called by user_service.py and org_service.py
+
+monitoring/
+
+Responsibilities: Structured logging, metrics collection (Prometheus, custom dashboards).
+Key components:
+
+logging.py: Custom log handlers, correlation IDs
+metrics.py: Prometheus counters/gauges for request counts, LLM token usage, etc.
+
+
+Interactions: Used throughout all layers via injected logger
+
+
+shared/
+
+Responsibilities: Cross-cutting utilities (security helpers, validators, common functions).
+Key components:
+
+security.py: Password hashing (bcrypt), JWT encode/decode, token generation
+validators.py: Custom Pydantic validators (e.g., email format, org_id format)
+utils.py: General helpers (date formatting, string utilities)
+
+
+Interactions: Imported by application and API layers
+
+
+tests/
+
+Responsibilities: Comprehensive test suite with clear separation between unit, integration, and E2E tests.
+Structure:
+
+unit/: Tests with all dependencies mocked (domain logic, service logic in isolation)
+integration/: Tests against real Postgres (test DB), mocked external APIs (Pinecone, LLMs)
+e2e/: Full workflow tests (e.g., "upload doc → ingest → chat with agent → verify response uses doc")
+
+
+Fixtures (conftest.py):
+
+test_db: SQLAlchemy session pointing to test database
+mock_llm_gateway: Mocked LLM responses
+test_client: FastAPI TestClient
+Sample data factories (user, org, agent, document)
+
+
+
+
+Dependency Injection Pattern
+Configuration Injection
+python# config/settings.py
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    database_url: str
+    jwt_secret: str
+    openai_api_key: str
+    pinecone_api_key: str
+    # ... etc.
+    
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+Database Session Injection
+python# config/database.py
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from config.settings import settings
+
+engine = create_engine(settings.database_url)
+SessionLocal = sessionmaker(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+Service Layer DI (Example: ChatService)
+python# application/conversations/chat_service.py
+from infrastructure.database.repositories.conversation_repository import ConversationRepository
+from infrastructure.llm.gateway import LLMGateway
+from infrastructure.vector.pinecone_client import PineconeClient
+from application.agents.agent_orchestrator import AgentOrchestrator
+
+class ChatService:
+    def __init__(
+        self,
+        conversation_repo: ConversationRepository,
+        agent_orchestrator: AgentOrchestrator,
+    ):
+        self.conversation_repo = conversation_repo
+        self.agent_orchestrator = agent_orchestrator
+    
+    async def send_message(self, user_id, org_id, agent_type, message):
+        # Business logic here
+        pass
+API Route DI (Example: Chat Endpoint)
+python# api/v1/conversations/routes.py
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from config.database import get_db
+from application.conversations.chat_service import ChatService
+from infrastructure.database.repositories.conversation_repository import ConversationRepository
+from application.agents.agent_orchestrator import AgentOrchestrator
+from infrastructure.agents.crewai_wrapper import CrewAIWrapper
+from infrastructure.llm.gateway import LLMGateway
+
+router = APIRouter()
+
+def get_chat_service(db: Session = Depends(get_db)) -> ChatService:
+    conversation_repo = ConversationRepository(db)
+    llm_gateway = LLMGateway()  # Configured from settings
+    crewai = CrewAIWrapper(llm_gateway)
+    agent_orchestrator = AgentOrchestrator(crewai, conversation_repo, llm_gateway)
+    return ChatService(conversation_repo, agent_orchestrator)
+
+@router.post("/chat")
+async def chat(
+    request: ChatRequest,
+    current_user = Depends(get_current_user),
+    chat_service: ChatService = Depends(get_chat_service)
+):
+    response = await chat_service.send_message(
+        user_id=current_user.id,
+        org_id=current_user.org_id,
+        agent_type=request.agent_type,
+        message=request.message
+    )
+    return response
+Key DI principles:
+
+Settings injected once at app startup (via config module)
+DB session injected per-request via get_db() dependency
+Repositories constructed with DB session in factory functions
+Services constructed with repositories + clients in factory functions
+API routes use Depends() to get fully-configured services
+Tests can override dependencies with mocks via app.dependency_overrides
+
+
+Scaling and Evolution Notes
+Multi-Tenant Migration
+
+Current design: All tables have org_id column; all queries scoped by org_id from JWT
+Migration path:
+
+Add tenant-level quotas, rate limits to organizations table
+Add row-level security policies in Postgres (optional)
+Namespace Pinecone indexes by org (or use metadata filters)
+Update middleware to enforce strict tenant isolation
+
+
+
+Adding New Agents
+
+Add new agent type to domain/agents/agent_types.py enum
+Create agent config in agent_repository (or via admin UI)
+Define agent-specific tools in infrastructure/agents/tools/ if needed
+Agent orchestrator automatically picks up new type via factory pattern
+
+Adding New Integrations
+
+Create new integration class in infrastructure/integrations/ implementing BaseIntegration
+Add to integration_registry.py
+Create API routes in api/v1/integrations/ for OAuth flow and sync triggers
+Ingestion service automatically handles synced docs like uploaded docs
+
+Swapping/Adding LLM Providers
+
+Create new provider class in infrastructure/llm/providers/ implementing BaseProvider
+Update LLMGateway to register new provider
+Update agent configs in Postgres to specify preferred provider
+No changes needed in application or API layers (abstracted by gateway)
+
+Adding Knowledge Graph
+
+Add Neo4j client in infrastructure/graph/ (similar to Pinecone client)
+Create repository/service for entity and relationship management
+Update memory_service.py to query graph alongside Pinecone/Postgres
+Add graph population step to ingestion_service.py (entity extraction → graph upsert)
+Create admin UI routes to visualize/manage graph

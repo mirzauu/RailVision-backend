@@ -1,0 +1,107 @@
+design the database for this project. Databse details are given below 
+
+
+The database schema, defined primarily in src/infrastructure/database/models.py, includes 20 core and optional tables, along with detailed use of enums, indexing strategies, and automated functions/triggers.
+Database Overview and Naming Conventions
+The schema adheres to specific conventions and uses key features:
+Feature/Convention
+Details
+Source
+RDBMS
+PostgreSQL 15+.
+Key Features
+JSONB for flexible metadata, ENUMs for type safety, partial indexes, full-text search, and Row-Level Security (RLS) readiness.
+Naming
+Tables are snake_case, plural (e.g., users, conversations). Columns are snake_case. Primary Keys are id (UUID or BIGSERIAL). Foreign keys are {table_name}_id. Timestamps include created_at, updated_at, and deleted_at (for soft deletes).
+Security
+RLS is enabled on key tables (e.g., documents) to enforce isolation using org_id. Sensitive fields like tokens and secrets are encrypted at the application layer.
+Core Multi-Tenancy Tables
+Multi-tenancy is enforced by the org_id column, which is a required Foreign Key in almost all tables, linking back to the organizations table.
+Table
+Purpose
+Key Columns & Features
+Source
+1. organizations
+Central tenant table.
+id (UUID PK), name, slug (UNIQUE), subscription limits (max_users, max_monthly_tokens), settings (JSONB) for flexible config (branding, security, integrations). Uses an index on deleted_at for partial indexing.
+2. users
+User accounts and roles.
+org_id (FK), email, hashed_password, role (ENUM: super_admin, org_admin, staff, etc.). Uses a unique index on (email, org_id) where deleted_at IS NULL.
+3. user_invitations
+Pending user invitations.
+org_id (FK), email, role, token (UNIQUE, Hashed). Status ENUM: pending, accepted, expired.
+4. refresh_tokens
+JWT session management.
+user_id (FK), token_hash (UNIQUE), expires_at, revoked_at. Tracks device_name, ip_address, and user_agent.
+Agent System and Conversation Tables
+These tables manage the AI agents, their configurations, and their chat history, including observability data.
+Table
+Purpose
+Key Columns & Features
+Source
+5. agents
+Agent configurations.
+org_id (FK), type (agent_type ENUM: cso, cfo, chro, etc.), config (JSONB) for LLM settings (system_prompt, temperature, primary_llm, tools_enabled, memory_scope). Unique index on (org_id, type).
+6. agent_prompt_versions
+Version history for prompts.
+agent_id (FK), version, system_prompt, config_snapshot (JSONB). Used for A/B testing and rollbacks, includes performance metrics.
+7. conversations
+Conversation threads.
+org_id (FK), user_id (FK), agent_id (FK), message_count, summary, tags (TEXT[]). Supports collaboration via participating_agents (UUID[]).
+8. messages
+Individual chat messages.
+conversation_id (FK), role (ENUM), content (TEXT), attachments (JSONB), token tracking (prompt_tokens, completion_tokens). Crucially includes context_used (JSONB) for RAG explainability (document IDs, relevance scores, tools called).
+9. conversation_summaries
+Context reduction.
+conversation_id (FK), summary (TEXT), key_points (TEXT[]), tracks coverage (from_message_id, to_message_id).
+Document Management and RAG Tables
+These tables manage document ingestion, metadata, access control, and mapping to the vector store (Pinecone).
+Table
+Purpose
+Key Columns & Features
+Source
+10. documents
+Core document metadata.
+org_id (FK), uploaded_by (FK), filename, file_type (ENUM), status (ENUM: ingested, failed), extracted_text (TEXT), embedding_model. Access control via visibility (ENUM) and assigned_agent_ids (UUID[]). Tracks citation_count and last_accessed_at.
+11. document_chunks
+Chunked text for embeddings.
+org_id (FK), document_id (FK), chunk_index, chunk_text, pinecone_id (UNIQUE reference to vector store).
+12. document_access_logs
+Audit trail for RAG use.
+org_id (FK), document_id (FK), tracks user_id or agent_id, access_type (chat_reference, view), relevance_score.
+Integration and Memory Tables
+These tables support connections to external services and manage the agent's structured memory.
+Table
+Purpose
+Key Columns & Features
+Source
+13. integrations
+External service connections.
+org_id (FK), type (ENUM: google_drive, slack, salesforce), status, encrypted access_token and refresh_token, config (JSONB) for sync settings.
+14. integration_sync_logs
+History of sync operations.
+integration_id (FK), org_id (FK), tracks started_at, completed_at, status, and file counts (files_new, files_updated).
+15. memory_entries
+Structured memory (non-vector).
+org_id (FK), type (ENUM: fact, insight, decision), scope (ENUM: agent, global, user). Includes source_type, confidence_score, and temporal validity (valid_from, valid_until).
+Observability and Audit Tables
+These high-volume tables are critical for billing, performance, and compliance.
+Table
+Purpose
+Key Columns & Features
+Source
+16. llm_usage_logs
+Detailed logging of all LLM calls (High Volume).
+org_id (FK), user_id (FK), agent_id (FK), provider, model, prompt_tokens, completion_tokens, cost_usd. Recommended for partitioning by month.
+17. audit_logs
+System-wide audit trail (Compliance).
+org_id (FK), user_id (FK), action (ENUM) (e.g., user_login, agent_executed, document_uploaded), resource_type, resource_id, and details (JSONB) of the change.
+20. daily_usage_stats
+Aggregated metrics for dashboards.
+org_id (FK), date, active_users, conversations_created, total_llm_tokens, total_llm_cost_usd. Unique index on (org_id, date).
+Advanced Features and Automation
+Database Functions and Triggers
+PL/pgSQL functions and triggers automate data integrity and tracking:
+1. update_updated_at_column(): Automatically updates the updated_at timestamp on row modifications for tables like users, organizations, agents, and conversations.
+2. update_conversation_message_count(): Updates the conversations table's message_count and last_message_at fields on message INSERT or DELETE.
+3. track_document_citation(): Increments the citation_count and updates last_accessed_at in the documents table whenever a new message INSERT is detected that references documents in the messages.context_used JSONB field.
