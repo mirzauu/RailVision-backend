@@ -1,7 +1,8 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
     # Application Environment
     app_env: str = "development"  # development or production
     
@@ -37,9 +38,5 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         return self.app_env.lower() == "development"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-
 settings = Settings()
 

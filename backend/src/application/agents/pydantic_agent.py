@@ -49,32 +49,36 @@ class PydanticChatAgent(ChatAgent):
 
         provider = llm_provider.chat_config.provider
         api_key = llm_provider._get_api_key(llm_provider.chat_config.auth_provider)
+        model_id = llm_provider.chat_config.model.split("/")[-1]
 
         if provider == "openai":
             model = OpenAIModel(
-                model_name=llm_provider.chat_config.model,
+                model_name=model_id,
                 provider=OpenAIProvider(api_key=api_key),
             )
         elif provider == "anthropic":
             model = AnthropicModel(
-                model_name=llm_provider.chat_config.model,
+                model_name=model_id,
                 provider=AnthropicProvider(api_key=api_key),
             )
         else:
             model = OpenAIModel(
-                model_name=llm_provider.chat_config.model,
+                model_name=model_id,
                 provider=OpenAIProvider(api_key=api_key),
             )
 
+        model_settings = {"max_tokens": 8000}
+        if tools and len(tools) > 0:
+            model_settings["parallel_tool_calls"] = True
+
         self.agent = PydanticAgent(
             model=model,
-            tools=[Tool(name=t.name, description=t.description, function=t.function) for t in tools],
+            tools=tools,
             system_prompt=f"Role: {config.role}\nGoal: {config.goal}\nBackstory: {config.backstory}. Respond to the user query",
-            result_type=str,
             retries=3,
             defer_model_check=True,
             end_strategy="exhaustive",
-            model_settings={"parallel_tool_calls": True, "max_tokens": 8000},
+            model_settings=model_settings,
         )
 
     def _create_task_description(self, task_config: TaskConfig, ctx: ChatContext) -> str:
@@ -86,7 +90,28 @@ class PydanticChatAgent(ChatAgent):
         logger.info("running pydantic-ai agent")
         task = self._create_task_description(self.tasks[0], ctx)
         resp = await self.agent.run(user_prompt=task)
-        return ChatAgentResponse(response=resp.data, tool_calls=[], citations=[])
+        response_text = None
+        if isinstance(resp, str):
+            response_text = resp
+        else:
+            for attr in ("text", "output_text", "response_text"):
+                value = getattr(resp, attr, None)
+                if callable(value):
+                    try:
+                        response_text = value()
+                        break
+                    except Exception:
+                        pass
+                elif isinstance(value, str):
+                    response_text = value
+                    break
+            if response_text is None:
+                value_attr = getattr(resp, "value", None)
+                if isinstance(value_attr, str):
+                    response_text = value_attr
+        if response_text is None:
+            response_text = str(resp)
+        return ChatAgentResponse(response=response_text, tool_calls=[], citations=[])
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
         task = self._create_task_description(self.tasks[0], ctx)
@@ -145,4 +170,3 @@ class PydanticChatAgent(ChatAgent):
                                 )
                 elif PydanticAgent.is_end_node(node):
                     logger.info("result streamed successfully")
-
