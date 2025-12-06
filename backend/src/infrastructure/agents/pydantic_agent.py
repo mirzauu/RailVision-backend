@@ -19,7 +19,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.anthropic import AnthropicProvider
 
 from src.infrastructure.llm.provider_service import ProviderService
-from .base import (
+from src.domain.agents.base import (
     AgentConfig,
     ChatAgent,
     ChatAgentResponse,
@@ -52,20 +52,11 @@ class PydanticChatAgent(ChatAgent):
         model_id = llm_provider.chat_config.model.split("/")[-1]
 
         if provider == "openai":
-            model = OpenAIModel(
-                model_name=model_id,
-                provider=OpenAIProvider(api_key=api_key),
-            )
+            model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key))
         elif provider == "anthropic":
-            model = AnthropicModel(
-                model_name=model_id,
-                provider=AnthropicProvider(api_key=api_key),
-            )
+            model = AnthropicModel(model_name=model_id, provider=AnthropicProvider(api_key=api_key))
         else:
-            model = OpenAIModel(
-                model_name=model_id,
-                provider=OpenAIProvider(api_key=api_key),
-            )
+            model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key))
 
         model_settings = {"max_tokens": 8000}
         if tools and len(tools) > 0:
@@ -140,10 +131,7 @@ class PydanticChatAgent(ChatAgent):
                                             tool_name=event.part.tool_name,
                                             tool_response=f"Running tool {event.part.tool_name}",
                                             tool_call_details={
-                                                "summary": {
-                                                    "tool": event.part.tool_name,
-                                                    "args": event.part.args_as_dict(),
-                                                }
+                                                "summary": {"tool": event.part.tool_name, "args": event.part.args_as_dict()}
                                             },
                                         )
                                     ],
@@ -159,10 +147,7 @@ class PydanticChatAgent(ChatAgent):
                                             tool_name=event.result.tool_name or "unknown tool",
                                             tool_response=f"Completed tool {event.result.tool_name or 'unknown tool'}",
                                             tool_call_details={
-                                                "summary": {
-                                                    "tool": event.result.tool_name or "unknown tool",
-                                                    "result": event.result.content,
-                                                }
+                                                "summary": {"tool": event.result.tool_name or "unknown tool", "result": event.result.content}
                                             },
                                         )
                                     ],
@@ -170,3 +155,4 @@ class PydanticChatAgent(ChatAgent):
                                 )
                 elif PydanticAgent.is_end_node(node):
                     logger.info("result streamed successfully")
+

@@ -1,9 +1,9 @@
 from typing import AsyncGenerator, Optional
 
 from src.infrastructure.llm.provider_service import ProviderService
-from .base import ChatAgent, ChatAgentResponse, ChatContext, AgentConfig
-from .pydantic_agent import PydanticChatAgent
-from .crewai_agent import CrewAIChatAgent
+from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext, AgentConfig
+from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
+from src.infrastructure.agents.crewai_agent import CrewAIChatAgent
 
 
 class ExecuterAgent(ChatAgent):
@@ -34,4 +34,3 @@ class ExecuterAgent(ChatAgent):
             async for chunk in self.crewai_agent.run_stream(ctx):
                 yield chunk
             return
-

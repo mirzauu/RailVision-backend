@@ -8,7 +8,7 @@ from src.config.database import get_db
 from src.api.dependencies import get_current_user
 from src.infrastructure.database.models import User
 from src.infrastructure.llm.provider_service import ProviderService
-from src.application.agents.base import AgentConfig, TaskConfig, ChatContext
+from src.domain.agents.base import AgentConfig, TaskConfig, ChatContext
 from src.application.agents.executer_agent import ExecuterAgent
 
 router = APIRouter()
