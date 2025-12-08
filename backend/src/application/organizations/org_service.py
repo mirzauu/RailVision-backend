@@ -6,7 +6,12 @@ class OrgService:
         self.org_repo = org_repo
 
     def create_organization(self, name: str) -> Organization:
-        org = Organization(name=name)
+        # Simple slug generation
+        slug = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")
+        # Ensure slug uniqueness logic here if needed, for now assume unique enough or catch integrity error
+        # In a real app we'd append numbers if duplicate
+        
+        org = Organization(name=name, slug=slug)
         return self.org_repo.create(org)
 
     def get_organization(self, org_id: str) -> Organization:

@@ -4,6 +4,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from src.config.database import get_db
 from src.application.auth.auth_service import AuthService
 from src.infrastructure.database.repositories.user_repository import UserRepository
+from src.infrastructure.database.repositories.role_repository import RoleRepository
+from src.infrastructure.database.repositories.org_repository import OrganizationRepository
 from src.api.v1.auth.schemas import UserCreate, Token, UserResponse, UserLogin
 from src.infrastructure.security.password_hasher import PasslibPasswordHasher
 from src.infrastructure.security.token_provider import JoseJwtTokenProvider
@@ -12,9 +14,11 @@ router = APIRouter()
 
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     user_repo = UserRepository(db)
+    role_repo = RoleRepository(db)
+    org_repo = OrganizationRepository(db)
     hasher = PasslibPasswordHasher()
     tokens = JoseJwtTokenProvider()
-    return AuthService(user_repo, hasher, tokens)
+    return AuthService(user_repo, role_repo, org_repo, hasher, tokens)
 
 @router.post("/register", response_model=UserResponse)
 def register(user_in: UserCreate, auth_service: AuthService = Depends(get_auth_service)):

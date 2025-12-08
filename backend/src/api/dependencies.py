@@ -28,7 +28,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
+from src.infrastructure.database.models import User, UserStatus
+
 def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
-    if not current_user.is_active:
+    if current_user.status != UserStatus.ACTIVE:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

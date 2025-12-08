@@ -14,7 +14,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-if db_url.startswith("sqlite"):
+if settings.auto_create_tables:
     from src.infrastructure.database import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
 

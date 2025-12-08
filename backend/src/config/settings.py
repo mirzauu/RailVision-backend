@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     
     # Database
     database_url: Optional[str] = "sqlite:///./app.db"
+    supabase_url: Optional[str] = None
+    supabase_anon_key: Optional[str] = None
+    supabase_service_role_key: Optional[str] = None
+    auto_create_tables: bool = True
     
     # Security
     jwt_secret: Optional[str] = "dev-secret-key-change-in-production"
