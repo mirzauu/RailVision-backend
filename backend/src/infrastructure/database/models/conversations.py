@@ -50,7 +50,7 @@ class Conversation(Base, UUIDMixin, TimestampMixin):
     started_by_agent_id = Column(String, ForeignKey("agents.id"))
     
     primary_agent_id = Column(String, ForeignKey("agents.id"), index=True)
-    participating_agent_ids = Column(JSON, default=[], index=True)
+    participating_agent_ids = Column(JSON, default=[])
     
     # Tracking
     message_count = Column(Integer, default=0)
@@ -61,7 +61,7 @@ class Conversation(Base, UUIDMixin, TimestampMixin):
     summary_generated_at = Column(DateTime(timezone=True))
     key_points = Column(JSON, default=[])
     
-    tags = Column(JSON, default=[], index=True)
+    tags = Column(JSON, default=[])
     
     is_pinned = Column(Boolean, default=False)
     priority = Column(String(50), default='normal')
@@ -127,15 +127,15 @@ class Message(Base, UUIDMixin, TimestampMixin):
     response_time_ms = Column(Integer)
     time_to_first_token_ms = Column(Integer)
     
-    context_used = Column(JSON, default={}, index=True)
+    context_used = Column(JSON, default={})
     
     user_rating = Column(Integer)
     user_feedback = Column(Text)
     feedback_at = Column(DateTime(timezone=True))
     is_helpful = Column(Boolean)
     
-    mentions_user_ids = Column(JSON, default=[], index=True)
-    mentions_agent_ids = Column(JSON, default=[], index=True)
+    mentions_user_ids = Column(JSON, default=[])
+    mentions_agent_ids = Column(JSON, default=[])
     
     read_by_user_ids = Column(JSON, default=[])
     

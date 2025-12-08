@@ -129,13 +129,13 @@ def main():
 
         llm = s.query(LLMUsageLog).filter_by(user_id=user.id).first()
         if llm is None:
-            llm = LLMUsageLog(id=1, org_id=org.id, project_id=project.id, user_id=user.id, agent_id=agent.id, conversation_id=conv.id, message_id=msg.id, provider="openai", model="gpt-4o", prompt_tokens=10, completion_tokens=5, total_tokens=15, status="success")
+            llm = LLMUsageLog(org_id=org.id, project_id=project.id, user_id=user.id, agent_id=agent.id, conversation_id=conv.id, message_id=msg.id, provider="openai", model="gpt-4o", prompt_tokens=10, completion_tokens=5, total_tokens=15, status="success")
             s.add(llm)
             s.commit()
 
         audit = s.query(AuditLog).filter_by(user_id=user.id).first()
         if audit is None:
-            audit = AuditLog(id=1, org_id=org.id, project_id=project.id, user_id=user.id, action=AuditAction.MESSAGE_SENT, resource_type="message", resource_id=msg.id, success=True)
+            audit = AuditLog(org_id=org.id, project_id=project.id, user_id=user.id, action=AuditAction.MESSAGE_SENT, resource_type="message", resource_id=msg.id, success=True)
             s.add(audit)
             s.commit()
 

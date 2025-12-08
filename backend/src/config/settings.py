@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     supabase_url: Optional[str] = None
     supabase_anon_key: Optional[str] = None
     supabase_service_role_key: Optional[str] = None
+    supabase_db_password: Optional[str] = None
     auto_create_tables: bool = True
     
     # Security

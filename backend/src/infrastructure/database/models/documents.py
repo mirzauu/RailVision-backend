@@ -79,13 +79,13 @@ class Document(Base, UUIDMixin, TimestampMixin):
     source_integration = Column(String(50))
     external_id = Column(String(255))
     
-    tags = Column(JSON, default=[], index=True)
+    tags = Column(JSON, default=[])
     category = Column(String(100))
     keywords = Column(JSON, default=[])
     
     scope = Column(AlchemyEnum(DocumentScope, name="document_scope"), default=DocumentScope.ORGANIZATION, nullable=False, index=True)
-    assigned_agent_ids = Column(JSON, default=[], index=True)
-    shared_with_project_ids = Column(JSON, default=[], index=True)
+    assigned_agent_ids = Column(JSON, default=[])
+    shared_with_project_ids = Column(JSON, default=[])
     
     version = Column(Integer, default=1)
     parent_document_id = Column(String, ForeignKey("documents.id"))

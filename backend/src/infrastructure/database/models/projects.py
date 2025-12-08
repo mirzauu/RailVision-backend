@@ -55,7 +55,7 @@ class Project(Base, UUIDMixin, TimestampMixin):
     last_activity_at = Column(DateTime(timezone=True), index=True)
     message_count = Column(Integer, default=0)
     
-    tags = Column(JSON, default=[], index=True)
+    tags = Column(JSON, default=[])
     category = Column(String(100))
     priority = Column(String(50), default='medium')
     
