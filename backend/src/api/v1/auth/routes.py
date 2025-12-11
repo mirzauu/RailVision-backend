@@ -6,7 +6,7 @@ from src.application.auth.auth_service import AuthService
 from src.infrastructure.database.repositories.user_repository import UserRepository
 from src.infrastructure.database.repositories.role_repository import RoleRepository
 from src.infrastructure.database.repositories.org_repository import OrganizationRepository
-from src.api.v1.auth.schemas import UserCreate, Token, UserResponse, UserLogin
+from src.api.v1.auth.schemas import UserCreate, Token, UserResponse, UserLogin, LoginResponse
 from src.infrastructure.security.password_hasher import PasslibPasswordHasher
 from src.infrastructure.security.token_provider import JoseJwtTokenProvider
 
@@ -29,7 +29,7 @@ def register(user_in: UserCreate, auth_service: AuthService = Depends(get_auth_s
         org_id=user_in.org_id
     )
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=LoginResponse)
 def login(user_in: UserLogin, auth_service: AuthService = Depends(get_auth_service)):
     user = auth_service.authenticate_user(user_in.email, user_in.password)
     if not user:
@@ -38,7 +38,7 @@ def login(user_in: UserLogin, auth_service: AuthService = Depends(get_auth_servi
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return auth_service.create_token_for_user(user)
+    return auth_service.create_login_response(user)
 
 @router.post("/token", response_model=Token)
 def token(form_data: OAuth2PasswordRequestForm = Depends(), auth_service: AuthService = Depends(get_auth_service)):

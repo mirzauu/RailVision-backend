@@ -16,3 +16,9 @@ class OrgService:
 
     def get_organization(self, org_id: str) -> Organization:
         return self.org_repo.get_by_id(org_id)
+
+    def get_organization_flexible(self, identifier: str) -> Organization | None:
+        org = self.org_repo.get_by_id(identifier)
+        if org:
+            return org
+        return self.org_repo.get_by_slug(identifier)

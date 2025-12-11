@@ -65,3 +65,17 @@ class AuthService:
     def create_token_for_user(self, user: User):
         access_token = self.token_provider.create(subject=user.email)
         return {"access_token": access_token, "token_type": "bearer"}
+
+    def create_login_response(self, user: User):
+        tok = self.create_token_for_user(user)
+        user_payload = {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "org_id": user.org_id,
+            "role_id": user.role_id,
+            "status": str(user.status.value) if hasattr(user, "status") else "active",
+            "avatar_url": user.avatar_url,
+        }
+        tok["user"] = user_payload
+        return tok

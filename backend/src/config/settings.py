@@ -33,7 +33,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     
     # CORS
-    cors_origins: str = "http://localhost:3000,http://localhost:5173"
+    cors_origins: str = "http://localhost:3000,http://localhost:8081"
+    cors_allow_credentials: bool = True
+    cors_allow_methods: str = "GET,POST,PUT,DELETE,OPTIONS"
+    cors_allow_headers: str = "Content-Type,Authorization"
     
     @property
     def is_production(self) -> bool:

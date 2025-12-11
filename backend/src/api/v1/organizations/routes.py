@@ -4,7 +4,9 @@ from src.config.database import get_db
 from src.application.organizations.org_service import OrgService
 from src.infrastructure.database.repositories.org_repository import OrganizationRepository
 from src.infrastructure.database.repositories.role_repository import RoleRepository
-from src.api.v1.organizations.schemas import OrgCreate, OrgResponse
+from src.api.v1.organizations.schemas import OrgCreate, OrgResponse, OrgUserResponse
+from typing import List
+from src.infrastructure.database.repositories.user_repository import UserRepository
 from src.api.dependencies import get_current_user
 from src.infrastructure.database.models import User
 
@@ -40,13 +42,36 @@ def create_org(
     
     return org
 
-@router.get("/{org_id}", response_model=OrgResponse)
-def get_org(
-    org_id: str, 
+# Place static route before dynamic to avoid 'me' being captured by {identifier}
+@router.get("/me", response_model=OrgResponse)
+def get_my_org(
     org_service: OrgService = Depends(get_org_service),
     current_user: User = Depends(get_current_user)
 ):
-    org = org_service.get_organization(org_id)
+    if not current_user.org_id:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    org = org_service.get_organization(current_user.org_id)
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return org
+
+@router.get("/users", response_model=List[OrgUserResponse])
+def list_org_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.org_id:
+        return []
+    users = UserRepository(db).get_by_org(current_user.org_id)
+    return users
+
+@router.get("/{identifier}", response_model=OrgResponse)
+def get_org(
+    identifier: str,
+    org_service: OrgService = Depends(get_org_service),
+    current_user: User = Depends(get_current_user)
+):
+    org = org_service.get_organization_flexible(identifier)
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
     return org

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Body
+import os
 from fastapi.responses import StreamingResponse
 import json
 from pydantic import BaseModel, Field
@@ -7,20 +8,19 @@ from typing import List, Optional
 from src.config.database import get_db
 from src.api.dependencies import get_current_user
 from src.infrastructure.database.models import User
+from src.application.conversations.service import ConversationService
 from src.infrastructure.llm.provider_service import ProviderService
-from src.domain.agents.base import AgentConfig, TaskConfig, ChatContext
-from src.application.agents.executer_agent import ExecuterAgent
+from src.api.v1.conversations.schemas import ChatHistoryResponse
 
 router = APIRouter()
 
 class ChatRequest(BaseModel):
     query: str
-    history: List[str] = Field(default_factory=list)
     project_id: str = "default"
     framework: str = "pydantic"
-    role: str = "General Agent"
-    goal: str = "Answer the query"
-    backstory: str = "Helps with codebase questions"
+    model: str | None = None
+    agent: str | None = None
+    attachment: str | None = None
 
 
 @router.post("/chat")
@@ -29,21 +29,20 @@ async def chat(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    provider = ProviderService.create(user_id=str(current_user.id))
-    config = AgentConfig(
-        role=body.role,
-        goal=body.goal,
-        backstory=body.backstory,
-        tasks=[
-            TaskConfig(
-                description="Answer the user's question using available context",
-                expected_output="Clear, concise answer with any relevant references",
-            )
-        ],
+    if body.model and "/" in body.model and body.model.strip().lower() not in {"string", "null", "none"}:
+        os.environ["CHAT_MODEL"] = body.model
+    service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
+    resp = await service.chat(
+        db=db,
+        user_id=str(current_user.id),
+        org_id=current_user.org_id,
+        query=body.query,
+        project_id=body.project_id,
+        framework=body.framework,
+        model=body.model,
+        agent=body.agent,
+        attachment=body.attachment,
     )
-    agent = ExecuterAgent(provider, config, framework=body.framework)
-    ctx = ChatContext(project_id=body.project_id or "default", history=body.history or [], query=body.query)
-    resp = await agent.run(ctx)
     return {"response": resp.response}
 
 
@@ -53,23 +52,31 @@ async def chat_stream(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    provider = ProviderService.create(user_id=str(current_user.id))
-    config = AgentConfig(
-        role=body.role,
-        goal=body.goal,
-        backstory=body.backstory,
-        tasks=[
-            TaskConfig(
-                description="Answer the user's question using available context",
-                expected_output="Clear, concise answer with any relevant references",
-            )
-        ],
-    )
-    agent = ExecuterAgent(provider, config, framework=body.framework)
-    ctx = ChatContext(project_id=body.project_id or "default", history=body.history or [], query=body.query)
+    if body.model and "/" in body.model and body.model.strip().lower() not in {"string", "null", "none"}:
+        os.environ["CHAT_MODEL"] = body.model
+    service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
 
     async def stream_response():
-        async for chunk in agent.run_stream(ctx):
+        async for chunk in service.chat_stream(
+            db=db,
+            user_id=str(current_user.id),
+            org_id=current_user.org_id,
+            query=body.query,
+            project_id=body.project_id,
+            framework=body.framework,
+            model=body.model,
+            agent=body.agent,
+            attachment=body.attachment,
+        ):
             yield json.dumps(chunk.model_dump()) + "\n"
 
     return StreamingResponse(stream_response(), media_type="application/json")
+
+@router.get("/history/{project_id}", response_model=ChatHistoryResponse)
+def get_history(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
+    return service.get_chat_history(db=db, org_id=current_user.org_id, project_id=project_id)

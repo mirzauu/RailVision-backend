@@ -9,6 +9,9 @@ class OrganizationRepository:
     def get_by_id(self, org_id: str) -> Optional[Organization]:
         return self.db.query(Organization).filter(Organization.id == org_id).first()
 
+    def get_by_slug(self, slug: str) -> Optional[Organization]:
+        return self.db.query(Organization).filter(Organization.slug == slug).first()
+
     def create(self, org: Organization) -> Organization:
         self.db.add(org)
         self.db.commit()

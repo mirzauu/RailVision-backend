@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from src.infrastructure.database.models import User
-from typing import Optional
+from typing import Optional, List
 
 class UserRepository:
     def __init__(self, db: Session):
@@ -17,3 +17,6 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def get_by_org(self, org_id: str) -> List[User]:
+        return self.db.query(User).filter(User.org_id == org_id).all()

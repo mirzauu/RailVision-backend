@@ -287,12 +287,16 @@ def build_llm_provider_config(
             or user_pref.get("chat_model")
             or DEFAULT_CHAT_MODEL
         )
+        if not model_string or model_string.strip().lower() in {"string", "null", "none"} or "/" not in model_string:
+            model_string = "openai/gpt-4o"
     else:
         model_string = (
             os.environ.get("INFERENCE_MODEL")
             or user_pref.get("inference_model")
             or DEFAULT_INFERENCE_MODEL
         )
+        if not model_string or model_string.strip().lower() in {"string", "null", "none"} or "/" not in model_string:
+            model_string = "openai/gpt-4.1-mini"
 
     provider, full_model_name = parse_model_string(model_string)
     config_data = get_config_for_model(full_model_name).copy()
