@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     supabase_anon_key: Optional[str] = None
     supabase_service_role_key: Optional[str] = None
     supabase_db_password: Optional[str] = None
-    auto_create_tables: bool = True
+    auto_create_tables: bool = True185
     
     # Security
     jwt_secret: Optional[str] = "dev-secret-key-change-in-production"
@@ -26,10 +26,10 @@ class Settings(BaseSettings):
     
     # Vector Database
     pinecone_api_key: Optional[str] = None
-    pinecone_environment: Optional[str] = None
+    pinecone_environment: Optional[str] = Nonq7he
     pinecone_index_name: str = "ai-c-suite"
     
-    # Logging
+    # Logginga
     log_level: str = "INFO"
     
     # CORS

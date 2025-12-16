@@ -4,14 +4,12 @@ from src.infrastructure.database.models import Project, ProjectType, ProjectStat
 from src.infrastructure.database.repositories.project_repository import ProjectRepository
 from src.infrastructure.database.repositories.project_agent_repository import ProjectAgentRepository
 from src.infrastructure.database.repositories.project_member_repository import ProjectMemberRepository
-from src.infrastructure.database.repositories.agent_repository import AgentRepository
 
 class ProjectService:
-    def __init__(self, project_repo: ProjectRepository, project_agent_repo: ProjectAgentRepository, project_member_repo: ProjectMemberRepository, agent_repo: AgentRepository):
+    def __init__(self, project_repo: ProjectRepository, project_agent_repo: ProjectAgentRepository, project_member_repo: ProjectMemberRepository):
         self.project_repo = project_repo
         self.project_agent_repo = project_agent_repo
         self.project_member_repo = project_member_repo
-        self.agent_repo = agent_repo
 
     def create_project(
         self,
@@ -26,7 +24,6 @@ class ProjectService:
         tags: Optional[List[str]] = None,
         category: Optional[str] = None,
         priority: Optional[str] = None,
-        agent_id: Optional[str] = None,
     ) -> Project:
         pt = ProjectType(type) if type else ProjectType.SINGLE_CHAT
         ps = ProjectStatus(status) if status else ProjectStatus.ACTIVE
@@ -43,12 +40,7 @@ class ProjectService:
             category=category,
             priority=priority or "medium",
         )
-        p = self.project_repo.create(p)
-        if agent_id:
-            a = self.agent_repo.get_by_id(agent_id)
-            if a and a.org_id == org_id:
-                self.add_agent(p.id, agent_id, role=AgentRoleInProject.PRIMARY.value, assigned_by=created_by)
-        return p
+        return self.project_repo.create(p)
 
     def get_by_org(self, org_id: str) -> List[Project]:
         return self.project_repo.get_by_org(org_id)
@@ -131,6 +123,3 @@ class ProjectService:
 
     def list_members(self, project_id: str) -> List[ProjectMember]:
         return self.project_member_repo.get_by_project(project_id)
-
-    def get_projects_by_agent_for_user(self, agent_id: str, user_id: str, org_id: str) -> List[Project]:
-        return self.project_repo.get_by_agent_and_user(agent_id, user_id, org_id)

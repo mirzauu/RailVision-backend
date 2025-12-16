@@ -1,5 +1,7 @@
 from typing import AsyncGenerator
 
+from sqlalchemy.util import duck_type_collection
+
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import AgentConfig, ChatAgent, ChatAgentResponse, ChatContext, TaskConfig
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
@@ -43,3 +45,4 @@ auditor_task_prompt = (
     "and error handling. Identify risks, cite files and lines where possible, and propose mitigations with priority."
 )
 
+duck_type_collectione
