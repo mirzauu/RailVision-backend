@@ -1,0 +1,191 @@
+document versioning is where most RAG systems silently die.
+
+I’ll give you:
+
+Document ID + versioning model (clean, future-proof)
+
+Exact schema additions
+
+Where it plugs into ingestion, Neo4j, and Pinecone
+
+Hard rules you must not break
+
+No fluff.
+
+1️⃣ Document identity model (DO NOT improvise)
+
+You need three levels of identity, not one.
+
+Document (logical)
+└── DocumentVersion (immutable)
+    └── Segment (page/section)
+
+Why?
+
+Same pitch deck → new version next month
+
+Facts may change
+
+Old strategies must still be explainable
+
+If you overwrite documents, your CSO will contradict itself.
+
+Canonical IDs (this is important)
+Document ID (stable)
+
+Represents what the document is.
+
+doc_id = railvision_pitchdeck
+
+
+Never changes.
+
+Version ID (immutable)
+
+Represents which version.
+
+Use content hash, not timestamps.
+
+doc_version = railvision_pitchdeck:v1
+doc_version = railvision_pitchdeck:v2
+
+
+or better:
+
+railvision_pitchdeck:sha256_ab12cd
+
+
+If the content changes → new version. Period.
+
+Segment ID
+segment_id = railvision_pitchdeck:v1:page_14
+
+
+This lets you trace every fact back to a page.
+
+2️⃣ Minimal schema additions (Neo4j)
+
+Add these exact nodes.
+
+Document
+(:Document {
+  doc_id,              // railvision_pitchdeck
+  title,
+  source,
+  doc_type             // pitch_deck, report, memo
+})
+
+DocumentVersion
+(:DocumentVersion {
+  version_id,          // railvision_pitchdeck:v1
+  hash,
+  created_at,
+  status               // active | archived
+})
+
+Relationships
+(Document)-[:HAS_VERSION]->(DocumentVersion)
+(DocumentVersion)-[:CONTAINS]->(Segment)
+
+Segment (optional node, Phase-1 optional)
+
+You can skip Segment nodes initially and store page numbers as properties. That’s fine.
+
+Link facts to versions (NON-NEGOTIABLE)
+
+Every extracted entity and relationship MUST store:
+
+{
+  "source_doc_id": "railvision_pitchdeck",
+  "source_version_id": "railvision_pitchdeck:v1",
+  "source_pages": [14],
+  "confidence": 0.92
+}
+
+
+This is what allows the CSO to say:
+
+“This is based on the Nov 2024 pitch deck”
+
+Without this, your system is untrustworthy.
+
+3️⃣ Pinecone metadata (exact fields)
+
+Pinecone is read-only memory. It still needs versioning.
+
+Chunk metadata
+{
+  "doc_id": "railvision_pitchdeck",
+  "doc_version": "railvision_pitchdeck:v1",
+  "segment_id": "page_14",
+  "category": "go_to_market",
+  "confidence": 0.9
+}
+
+Query rule (important)
+
+When retrieving context:
+
+Always filter by latest active version
+
+Never mix versions in a single answer
+
+4️⃣ How this plugs into your ingestion pipeline
+Update pipeline.py
+def run_ingestion(file_path: Path, doc_id: str, version_id: str):
+    pages = load_pdf(file_path)
+    segments = segment_pages(pages)
+
+    processed = []
+    for seg in segments:
+        seg["doc_id"] = doc_id
+        seg["doc_version"] = version_id
+
+        seg = classify_segment(seg)
+        seg = extract_facts(seg)
+        seg = validate_segment(seg)
+
+        processed.append(seg)
+
+    return processed
+
+Hash-based versioning (DO THIS)
+utils/hashing.py
+import hashlib
+
+def hash_file(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        h.update(f.read())
+    return h.hexdigest()
+
+Version creation
+hash = hash_file(pdf_path)
+version_id = f"{doc_id}:{hash[:8]}"
+
+
+If hash exists → skip ingestion
+If new → ingest + mark active
+
+5️⃣ Neo4j version lifecycle (simple, correct)
+
+Rules:
+
+Only ONE version is active
+
+Old versions become archived
+
+Facts are never deleted (only superseded)
+
+This lets your CSO:
+
+reason with latest data
+
+explain past decisions
+
+6️⃣ Hard rules (break these and it’s trash)
+
+❌ Never overwrite facts
+❌ Never mix document versions in a response
+❌ Never let Pinecone decide “latest”
+❌ Never trust LLM without source metadata

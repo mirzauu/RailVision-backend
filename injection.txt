@@ -1,0 +1,265 @@
+Ingestion Layer — COMPLETE SETUP (CSO-grade)
+Responsibility of ingestion (read this twice)
+
+The ingestion layer does one job only:
+
+Convert raw documents into verified strategic facts (Neo4j)
+and supporting narrative context (Pinecone)
+
+It does NOT:
+
+reason
+
+summarize for users
+
+answer questions
+
+Folder structure (lock this in)
+ingestion/
+├── __init__.py
+├── loader.py
+├── segmenter.py
+├── classifier.py
+├── extractor.py
+├── validator.py
+├── pipeline.py
+└── prompts/
+    ├── classify.txt
+    └── extract.txt
+
+1️⃣ loader.py — PDF → raw pages
+
+Purpose: Zero intelligence. Just extraction with page numbers.
+
+# app/ingestion/loader.py
+from pathlib import Path
+from typing import List, Dict
+import fitz  # PyMuPDF
+
+def load_pdf(path: Path) -> List[Dict]:
+    doc = fitz.open(path)
+    pages = []
+
+    for i, page in enumerate(doc):
+        text = page.get_text().strip()
+        if text:
+            pages.append({
+                "page_number": i + 1,
+                "text": text
+            })
+
+    return pages
+
+
+Rules:
+
+❌ no chunking
+
+❌ no cleaning beyond .strip()
+
+❌ no LLM here
+
+2️⃣ segmenter.py — pages → meaningful segments
+
+Purpose: Group pages by strategic intent, not tokens.
+
+# app/ingestion/segmenter.py
+from typing import List, Dict
+
+def segment_pages(pages: List[Dict]) -> List[Dict]:
+    segments = []
+
+    for page in pages:
+        segments.append({
+            "segment_id": f"page_{page['page_number']}",
+            "page_numbers": [page["page_number"]],
+            "text": page["text"]
+        })
+
+    return segments
+
+
+Yes, this is intentionally simple for Phase-1.
+You’ll merge pages later.
+
+3️⃣ classifier.py — what kind of knowledge is this?
+
+Purpose: Decide how to extract facts from the segment.
+
+Prompt (prompts/classify.txt)
+You are classifying business document segments.
+
+Choose ONE type:
+- product
+- market
+- pricing
+- traction
+- technology
+- risk
+- team
+- financials
+- other
+
+Respond in JSON:
+{
+  "category": "...",
+  "confidence": 0.0-1.0
+}
+
+Code
+# app/ingestion/classifier.py
+from typing import Dict
+from app.llm import call_llm  # your wrapper
+
+def classify_segment(segment: Dict) -> Dict:
+    response = call_llm(
+        system_prompt=open("app/ingestion/prompts/classify.txt").read(),
+        user_prompt=segment["text"]
+    )
+
+    segment["category"] = response["category"]
+    segment["classification_confidence"] = response["confidence"]
+    return segment
+
+
+Rule:
+
+Classification controls extraction rules
+
+Wrong category = wrong graph
+
+4️⃣ extractor.py — FACT extraction (most important file)
+
+This is where most projects fail.
+
+Prompt (prompts/extract.txt)
+You extract VERIFIED business facts.
+
+Rules:
+- Extract only facts stated in the text
+- No assumptions
+- No summaries
+- No opinions
+- Use these entity types only:
+  Company, Product, Market, CustomerSegment,
+  Capability, Constraint, Risk, Goal, Metric
+
+Output JSON ONLY:
+
+{
+  "entities": [
+    {
+      "type": "Product",
+      "name": "EcoRail",
+      "properties": { "status": "beta" }
+    }
+  ],
+  "relationships": [
+    {
+      "from": "EcoRail",
+      "type": "TARGETS",
+      "to": "Class II railroads"
+    }
+  ]
+}
+
+Code
+# app/ingestion/extractor.py
+from typing import Dict
+from app.llm import call_llm
+
+def extract_facts(segment: Dict) -> Dict:
+    response = call_llm(
+        system_prompt=open("app/ingestion/prompts/extract.txt").read(),
+        user_prompt=segment["text"]
+    )
+
+    segment["entities"] = response.get("entities", [])
+    segment["relationships"] = response.get("relationships", [])
+    return segment
+
+
+Hard rule:
+
+If extraction invents facts → you delete them in validation.
+
+5️⃣ validator.py — kill hallucinations
+
+Purpose: Protect Neo4j from LLM bullshit.
+
+# app/ingestion/validator.py
+from typing import Dict, List
+
+ALLOWED_ENTITY_TYPES = {
+    "Company", "Product", "Market", "CustomerSegment",
+    "Capability", "Constraint", "Risk", "Goal", "Metric"
+}
+
+def validate_segment(segment: Dict) -> Dict:
+    valid_entities = []
+    for e in segment.get("entities", []):
+        if e["type"] in ALLOWED_ENTITY_TYPES and e.get("name"):
+            e["source_page"] = segment["page_numbers"]
+            e["confidence"] = segment.get("classification_confidence", 0.8)
+            valid_entities.append(e)
+
+    valid_relationships = []
+    for r in segment.get("relationships", []):
+        if r.get("from") and r.get("to") and r.get("type"):
+            r["source_page"] = segment["page_numbers"]
+            valid_relationships.append(r)
+
+    segment["entities"] = valid_entities
+    segment["relationships"] = valid_relationships
+    return segment
+
+
+This layer saves your project.
+
+6️⃣ pipeline.py — orchestration (single entry point)
+# app/ingestion/pipeline.py
+from pathlib import Path
+from app.ingestion.loader import load_pdf
+from app.ingestion.segmenter import segment_pages
+from app.ingestion.classifier import classify_segment
+from app.ingestion.extractor import extract_facts
+from app.ingestion.validator import validate_segment
+
+def run_ingestion(file_path: Path):
+    pages = load_pdf(file_path)
+    segments = segment_pages(pages)
+
+    processed = []
+    for seg in segments:
+        seg = classify_segment(seg)
+        seg = extract_facts(seg)
+        seg = validate_segment(seg)
+        processed.append(seg)
+
+    return processed
+
+
+Output of this pipeline is clean, structured, graph-ready facts.
+
+7️⃣ Where Neo4j & Pinecone connect (IMPORTANT)
+
+After run_ingestion():
+
+entities + relationships → graph.writer
+
+raw segment["text"] → Pinecone (with metadata)
+
+Ingestion layer NEVER talks to DBs directly
+That’s someone else’s job.
+
+Final brutal check (do this or stop)
+
+After running ingestion on your RailVision deck, you must be able to print:
+
+[
+  Product("EcoRail"),
+  Market("Rail Industry"),
+  Constraint("High fuel costs"),
+  Capability("Real-time locomotive data integration"),
+  CustomerSegment("Class II railroads")
+]

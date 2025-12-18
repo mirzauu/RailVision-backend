@@ -34,7 +34,7 @@ async def upload_document(
             tag_list = [t.strip() for t in tags.split(",") if t.strip()]
         except Exception:
             tag_list = []
-    doc = svc.upload(
+    doc = await svc.upload(
         db=db,
         org_id=current_user.org_id,
         user_id=current_user.id,

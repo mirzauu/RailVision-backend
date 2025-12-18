@@ -1,0 +1,19 @@
+You are classifying business document segments.
+
+Choose ONE type:
+- product
+- market
+- pricing
+- traction
+- technology
+- risk
+- team
+- financials
+- other
+
+Respond in JSON:
+{
+  "category": "...",
+  "confidence": 0.0-1.0
+}
+

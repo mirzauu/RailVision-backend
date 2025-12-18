@@ -3,10 +3,12 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 from src.infrastructure.database.models import Document, DocumentStatus, DocumentType, DocumentScope
 from src.infrastructure.database.repositories.document_repository import DocumentRepository
+from src.application.graph.service import GraphService
 
 class DocumentService:
-    def __init__(self, repo: DocumentRepository):
+    def __init__(self, repo: DocumentRepository, graph: Optional[GraphService] = None):
         self.repo = repo
+        self.graph = graph or GraphService()
 
     def _infer_type(self, filename: str) -> DocumentType:
         ext = (filename.split(".")[-1] or "").lower()
@@ -23,7 +25,7 @@ class DocumentService:
         }
         return mapping.get(ext, DocumentType.TXT)
 
-    def upload(
+    async def upload(
         self,
         db: Session,
         org_id: str,
@@ -72,7 +74,23 @@ class DocumentService:
             category=category,
             tags=tags or [],
         )
-        return self.repo.create(doc)
+        doc = self.repo.create(doc)
+
+        try:
+            await self.graph.ingest_and_persist(
+                file_path=target_path,
+                doc_id=doc.id,
+                version_id=str(doc.version),
+                title=doc.title or doc.original_filename,
+                doc_type=doc.file_type.value,
+                content_hash=None,
+            )
+            doc.status = DocumentStatus.INGESTED
+        except Exception as exc:
+            doc.status = DocumentStatus.FAILED
+            doc.ingestion_error = str(exc)
+
+        return self.repo.update(doc)
 
     def list_by_org(self, org_id: str) -> List[Document]:
         return self.repo.get_by_org(org_id)

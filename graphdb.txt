@@ -1,0 +1,270 @@
+Neo4j Writer — COMPLETE SETUP (Phase 1)
+What this layer is responsible for
+
+Only this:
+
+Create / update nodes
+
+Create / update relationships
+
+Enforce versioning & traceability
+
+Keep the graph clean and queryable
+
+It does NOT:
+
+parse documents
+
+talk to Pinecone
+
+do reasoning
+
+Folder structure
+graph/
+├── __init__.py
+├── client.py
+├── schema.py
+├── writer.py
+└── indexes.py
+
+1️⃣ client.py — Neo4j connection (simple & explicit)
+# app/graph/client.py
+from neo4j import GraphDatabase
+from app.core.config import settings
+
+class Neo4jClient:
+    def __init__(self):
+        self.driver = GraphDatabase.driver(
+            settings.NEO4J_URI,
+            auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
+        )
+
+    def close(self):
+        self.driver.close()
+
+    def session(self):
+        return self.driver.session()
+
+2️⃣ schema.py — allowed labels & relationships (guardrails)
+
+This prevents LLM-invented garbage from entering Neo4j.
+
+# app/graph/schema.py
+
+ALLOWED_NODE_TYPES = {
+    "Company",
+    "Product",
+    "Market",
+    "CustomerSegment",
+    "Capability",
+    "Constraint",
+    "Risk",
+    "Goal",
+    "Metric",
+    "Document",
+    "DocumentVersion"
+}
+
+ALLOWED_RELATIONSHIPS = {
+    "TARGETS",
+    "OPERATES_IN",
+    "REQUIRES",
+    "LIMITED_BY",
+    "EXPOSED_TO",
+    "IMPROVES",
+    "ALIGNS_WITH",
+    "HAS_VERSION",
+    "SUPPORTS"
+}
+
+3️⃣ indexes.py — constraints you MUST create
+
+Run this once at startup.
+
+# app/graph/indexes.py
+from app.graph.client import Neo4jClient
+
+def create_indexes():
+    client = Neo4jClient()
+    with client.session() as session:
+        session.run(
+            "CREATE CONSTRAINT IF NOT EXISTS "
+            "FOR (p:Product) REQUIRE p.name IS UNIQUE"
+        )
+        session.run(
+            "CREATE CONSTRAINT IF NOT EXISTS "
+            "FOR (d:Document) REQUIRE d.doc_id IS UNIQUE"
+        )
+        session.run(
+            "CREATE CONSTRAINT IF NOT EXISTS "
+            "FOR (v:DocumentVersion) REQUIRE v.version_id IS UNIQUE"
+        )
+    client.close()
+
+
+Without constraints → duplicated nodes → corrupted reasoning.
+
+4️⃣ writer.py — the real work
+Helper: upsert node (safe, idempotent)
+# app/graph/writer.py
+from app.graph.client import Neo4jClient
+from app.graph.schema import ALLOWED_NODE_TYPES, ALLOWED_RELATIONSHIPS
+
+def upsert_node(label: str, key: str, properties: dict):
+    if label not in ALLOWED_NODE_TYPES:
+        raise ValueError(f"Invalid node type: {label}")
+
+    query = f"""
+    MERGE (n:{label} {{ {key}: $key_value }})
+    SET n += $properties
+    """
+
+    client = Neo4jClient()
+    with client.session() as session:
+        session.run(
+            query,
+            key_value=properties[key],
+            properties=properties
+        )
+    client.close()
+
+Upsert relationship with evidence
+def upsert_relationship(
+    from_label: str,
+    from_key: str,
+    from_value: str,
+    rel_type: str,
+    to_label: str,
+    to_key: str,
+    to_value: str,
+    metadata: dict
+):
+    if rel_type not in ALLOWED_RELATIONSHIPS:
+        raise ValueError(f"Invalid relationship type: {rel_type}")
+
+    query = f"""
+    MATCH (a:{from_label} {{ {from_key}: $from_value }})
+    MATCH (b:{to_label} {{ {to_key}: $to_value }})
+    MERGE (a)-[r:{rel_type}]->(b)
+    SET r += $metadata
+    """
+
+    client = Neo4jClient()
+    with client.session() as session:
+        session.run(
+            query,
+            from_value=from_value,
+            to_value=to_value,
+            metadata=metadata
+        )
+    client.close()
+
+5️⃣ Writing documents & versions (versioning done right)
+def upsert_document(doc_id: str, title: str, doc_type: str):
+    upsert_node(
+        label="Document",
+        key="doc_id",
+        properties={
+            "doc_id": doc_id,
+            "title": title,
+            "doc_type": doc_type
+        }
+    )
+
+def upsert_document_version(doc_id: str, version_id: str, hash: str):
+    upsert_node(
+        label="DocumentVersion",
+        key="version_id",
+        properties={
+            "version_id": version_id,
+            "hash": hash,
+            "status": "active"
+        }
+    )
+
+    upsert_relationship(
+        from_label="Document",
+        from_key="doc_id",
+        from_value=doc_id,
+        rel_type="HAS_VERSION",
+        to_label="DocumentVersion",
+        to_key="version_id",
+        to_value=version_id,
+        metadata={}
+    )
+
+6️⃣ Writing extracted entities (from ingestion output)
+
+Example ingestion entity:
+
+{
+  "type": "Product",
+  "name": "EcoRail",
+  "properties": { "status": "beta" },
+  "confidence": 0.9,
+  "source_pages": [4]
+}
+
+Code
+def write_entity(entity: dict, doc_id: str, version_id: str):
+    label = entity["type"]
+
+    properties = {
+        "name": entity["name"],
+        **entity.get("properties", {}),
+        "source_doc_id": doc_id,
+        "source_version_id": version_id,
+        "confidence": entity.get("confidence", 0.8)
+    }
+
+    upsert_node(label, "name", properties)
+
+7️⃣ Writing relationships with traceability
+def write_relationship(rel: dict, doc_id: str, version_id: str):
+    upsert_relationship(
+        from_label=rel["from_type"],
+        from_key="name",
+        from_value=rel["from"],
+        rel_type=rel["type"],
+        to_label=rel["to_type"],
+        to_key="name",
+        to_value=rel["to"],
+        metadata={
+            "source_doc_id": doc_id,
+            "source_version_id": version_id,
+            "source_pages": rel.get("source_pages", []),
+            "confidence": rel.get("confidence", 0.8)
+        }
+    )
+
+8️⃣ Putting it together (called after ingestion)
+def persist_to_graph(processed_segments, doc_id, version_id, hash):
+    upsert_document(doc_id, "RailVision Pitch Deck", "pitch_deck")
+    upsert_document_version(doc_id, version_id, hash)
+
+    for seg in processed_segments:
+        for entity in seg["entities"]:
+            write_entity(entity, doc_id, version_id)
+
+        for rel in seg["relationships"]:
+            write_relationship(rel, doc_id, version_id)
+
+Final sanity check (DO THIS MANUALLY)
+
+Run this Cypher:
+
+MATCH (p:Product)-[:TARGETS]->(c:CustomerSegment)
+RETURN p.name, c.name
+
+
+If this returns clean, non-duplicated, explainable results, you did it right.
+
+If you see:
+
+duplicate products
+
+missing relationships
+
+random nodes
+
+Your ingestion or validation is broken — not Neo4j.

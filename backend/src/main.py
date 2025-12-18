@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.config.logging import setup_logging
 from src.config.settings import settings
 from src.api.v1.router import api_router
+from src.infrastructure.graph.indexes import create_indexes
 
 setup_logging()
 
@@ -30,3 +31,11 @@ def health_check():
         "status": "ok",
         "environment": settings.app_env
     }
+
+@app.on_event("startup")
+def _startup_graph_indexes() -> None:
+    if settings.neo4j_uri and settings.neo4j_username and settings.neo4j_password:
+        try:
+            create_indexes()
+        except Exception:
+            pass

@@ -9,6 +9,7 @@ from src.api.v1.memory import routes as memory_routes
 from src.api.v1.provider import routes as provider_routes
 from src.api.v1.projects import routes as project_routes
 from src.api.v1.admin import routes as admin_routes
+from src.api.v1.graph import routes as graph_routes
 
 api_router = APIRouter()
 
@@ -22,3 +23,4 @@ api_router.include_router(memory_routes.router, prefix="/memory", tags=["memory"
 api_router.include_router(admin_routes.router, prefix="/admin", tags=["admin"])
 api_router.include_router(provider_routes.router, prefix="/provider", tags=["provider"])
 api_router.include_router(project_routes.router, prefix="/projects", tags=["projects"])
+api_router.include_router(graph_routes.router, prefix="/graph", tags=["graph"])
