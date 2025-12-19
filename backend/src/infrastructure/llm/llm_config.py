@@ -1,8 +1,8 @@
 from typing import Dict, Any, Optional
 import os
 
-DEFAULT_CHAT_MODEL = "openrouter/google/gemini-2.0-flash-exp:free"
-DEFAULT_INFERENCE_MODEL = "openrouter/google/gemini-2.0-flash-exp:free"
+DEFAULT_CHAT_MODEL = "openai/gpt-4.1-mini"
+DEFAULT_INFERENCE_MODEL = "openai/gpt-4.1-mini"
 
 MODEL_CONFIG_MAP = {
     "openai/gpt-4.1-mini": {

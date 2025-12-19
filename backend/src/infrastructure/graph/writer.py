@@ -2,18 +2,40 @@ from typing import Dict, Any, List
 from src.infrastructure.graph.neo4j_client import get_neo4j_client
 from src.infrastructure.graph.schema import ALLOWED_NODE_TYPES, ALLOWED_RELATIONSHIPS
 
+def _sanitize_properties(props: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Sanitize properties to ensure they are compatible with Neo4j.
+    Neo4j properties must be primitives or lists of primitives.
+    This function flattens or stringifies nested dictionaries.
+    """
+    sanitized = {}
+    for k, v in props.items():
+        if isinstance(v, (dict, list)) and any(isinstance(i, dict) for i in (v if isinstance(v, list) else [v])):
+            # If value is a dict or list containing dicts, serialize to JSON string
+            import json
+            try:
+                sanitized[k] = json.dumps(v)
+            except (TypeError, ValueError):
+                sanitized[k] = str(v)
+        else:
+            sanitized[k] = v
+    return sanitized
+
 def upsert_node(label: str, key: str, properties: Dict[str, Any]) -> None:
     if label not in ALLOWED_NODE_TYPES:
         raise ValueError(f"Invalid node type: {label}")
     if key not in properties:
         raise ValueError("Key not present in properties")
+    
+    clean_props = _sanitize_properties(properties)
+    
     query = f"""
     MERGE (n:{label} {{ {key}: $key_value }})
     SET n += $properties
     """
     client = get_neo4j_client()
     with client.session() as session:
-        session.run(query, key_value=properties[key], properties=properties)
+        session.run(query, key_value=clean_props[key], properties=clean_props)
 
 def upsert_relationship(
     from_label: str,
@@ -25,8 +47,12 @@ def upsert_relationship(
     to_value: Any,
     metadata: Dict[str, Any],
 ) -> None:
-    if rel_type not in ALLOWED_RELATIONSHIPS:
-        raise ValueError(f"Invalid relationship type: {rel_type}")
+    # Validation removed to allow dynamic relationship types from LLM
+    # if rel_type not in ALLOWED_RELATIONSHIPS:
+    #    raise ValueError(f"Invalid relationship type: {rel_type}")
+    
+    clean_metadata = _sanitize_properties(metadata)
+    
     query = f"""
     MATCH (a:{from_label} {{ {from_key}: $from_value }})
     MATCH (b:{to_label} {{ {to_key}: $to_value }})
@@ -39,7 +65,7 @@ def upsert_relationship(
             query,
             from_value=from_value,
             to_value=to_value,
-            metadata=metadata,
+            metadata=clean_metadata,
         )
 
 def upsert_document(doc_id: str, title: str, doc_type: str) -> None:

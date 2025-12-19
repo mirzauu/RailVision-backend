@@ -22,5 +22,9 @@ ALLOWED_RELATIONSHIPS = {
     "ALIGNS_WITH",
     "HAS_VERSION",
     "SUPPORTS",
+    "OFFERS",
+    "HAS_CAPABILITY",
+    "USES",
+    "DEVELOPS"
 }
 
