@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     
     # Vector Database
     pinecone_api_key: Optional[str] = None
-    pinecone_environment: Optional[str] = None
-    pinecone_index_name: str = "ai-c-suite"
+    pinecone_environment: Optional[str] = "us-east-1-aws"
+    pinecone_index_name: str = "quickstart"
 
     # Graph Database (Neo4j)
     neo4j_uri: Optional[str] = None

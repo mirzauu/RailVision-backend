@@ -1,0 +1,226 @@
+Pinecone Writer + Retrieval (Phase 1, CSO-safe)
+Pinecone’s ONLY role (read carefully)
+
+Pinecone stores explanatory context, not truth.
+
+Neo4j answers what is true
+Pinecone explains why it is true
+
+If Pinecone ever decides feasibility, timing, or risk → your system is lying.
+
+Folder structure
+vector/
+├── __init__.py
+├── client.py
+├── embedder.py
+├── writer.py
+└── retriever.py
+
+1️⃣ client.py — Pinecone init (explicit)
+# app/vectorstore/client.py
+from pinecone import Pinecone
+from app.core.config import settings
+
+pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+
+def get_index():
+    return pc.Index(settings.PINECONE_INDEX_NAME)
+
+2️⃣ embedder.py — OpenAI embeddings (stable, boring, correct)
+# app/vectorstore/embedder.py
+from openai import OpenAI
+from app.core.config import settings
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+EMBEDDING_MODEL = "text-embedding-3-large"
+
+def embed_text(text: str) -> list[float]:
+    response = client.embeddings.create(
+        model=EMBEDDING_MODEL,
+        input=text
+    )
+    return response.data[0].embedding
+
+
+Rules:
+
+One embedding per segment
+
+No sentence-level embeddings in Phase 1
+
+3️⃣ What actually goes into Pinecone (important)
+
+From ingestion, you already have:
+
+segment text
+
+category
+
+doc_id
+
+doc_version
+
+page numbers
+
+That’s perfect.
+
+4️⃣ writer.py — version-safe upsert
+# app/vectorstore/writer.py
+from app.vectorstore.client import get_index
+from app.vectorstore.embedder import embed_text
+
+def upsert_segment(
+    segment_id: str,
+    text: str,
+    metadata: dict
+):
+    index = get_index()
+    vector = embed_text(text)
+
+    index.upsert([
+        {
+            "id": segment_id,
+            "values": vector,
+            "metadata": metadata
+        }
+    ])
+
+Metadata schema (DO NOT change lightly)
+metadata = {
+    "doc_id": "railvision_pitchdeck",
+    "doc_version": "railvision_pitchdeck:ab12cd34",
+    "category": "go_to_market",
+    "page_numbers": [14],
+    "confidence": 0.9
+}
+
+
+This metadata is what keeps Pinecone honest.
+
+5️⃣ Wiring Pinecone into ingestion output
+
+After ingestion + validation:
+
+def persist_to_pinecone(processed_segments):
+    for seg in processed_segments:
+        segment_id = f"{seg['doc_id']}:{seg['doc_version']}:{seg['segment_id']}"
+
+        upsert_segment(
+            segment_id=segment_id,
+            text=seg["text"],
+            metadata={
+                "doc_id": seg["doc_id"],
+                "doc_version": seg["doc_version"],
+                "category": seg["category"],
+                "page_numbers": seg["page_numbers"],
+                "confidence": seg.get("classification_confidence", 0.8)
+            }
+        )
+
+6️⃣ Retrieval rules (THIS IS CRITICAL)
+Pinecone is NEVER queried blindly.
+
+All retrieval must be filtered.
+
+7️⃣ retriever.py — filtered similarity search
+# app/vectorstore/retriever.py
+from app.vectorstore.client import get_index
+from app.vectorstore.embedder import embed_text
+
+def retrieve_context(
+    query: str,
+    doc_id: str,
+    active_version: str,
+    allowed_categories: list[str],
+    top_k: int = 5
+):
+    index = get_index()
+    vector = embed_text(query)
+
+    filters = {
+        "doc_id": {"$eq": doc_id},
+        "doc_version": {"$eq": active_version},
+        "category": {"$in": allowed_categories}
+    }
+
+    result = index.query(
+        vector=vector,
+        top_k=top_k,
+        include_metadata=True,
+        filter=filters
+    )
+
+    return [
+        {
+            "text": match["metadata"],
+            "score": match["score"]
+        }
+        for match in result["matches"]
+    ]
+
+Hard rules
+
+❌ No cross-version retrieval
+❌ No global search
+❌ No mixing categories
+
+8️⃣ How CSO uses Pinecone (correctly)
+
+For this query:
+
+“What if we go to market with our latest product now?”
+
+CSO:
+
+Neo4j determines:
+
+latest product
+
+active doc version
+
+relevant categories:
+
+go_to_market
+
+market
+
+pricing
+
+Pinecone retrieves only explanations
+
+LLM reasons over:
+
+graph facts (truth)
+
+Pinecone text (context)
+
+If Pinecone returns nothing → CSO must say:
+
+“We don’t have enough supporting data”
+
+That’s intelligence.
+
+9️⃣ Cost control (you’ll thank me later)
+
+Segment-level embeddings only
+
+No re-embedding unchanged versions
+
+Hash check before upsert
+
+top_k ≤ 5
+
+This keeps Pinecone cheap and fast.
+
+10️⃣ Sanity test (DO THIS)
+
+Run this manually:
+
+retrieve_context(
+    query="go to market strategy",
+    doc_id="railvision_pitchdeck",
+    active_version="railvision_pitchdeck:ab12cd34",
+    allowed_categories=["go_to_market"]
+)
+
