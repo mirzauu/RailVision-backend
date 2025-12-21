@@ -1,0 +1,116 @@
+USER QUERY
+ ↓
+Intent check
+ ↓
+Neo4j → Strategic State
+ ↓
+Pinecone → Supporting Context
+ ↓
+Agent 
+ ↓
+Validated Response
+ ↓
+API Response
+
+
+def CONTEXT_ENRICH(question: str):
+    # 1. Intent gate
+    intent = classify_intent(question)
+    if intent != "scenario_evaluation":
+        
+
+    # 2. Deterministic state (Neo4j)
+    strategic_state = build_cso_state()
+
+    if not strategic_state:
+        raise ValueError("No strategic data available")
+
+    # 3. Context rules (CSO decides scope)
+    allowed_categories = ["market", "go_to_market", "pricing"]
+
+    context = retrieve_context(
+        query=question,
+        doc_id=ACTIVE_DOC_ID,
+        active_version=ACTIVE_VERSION,
+        allowed_categories=allowed_categories
+    )
+
+    # 4. Build reasoning input (IMPORTANT)
+    agent_input = f"""
+STRATEGIC FACTS (Neo4j – authoritative):
+{strategic_state}
+
+SUPPORTING CONTEXT (Pinecone – explanatory):
+{context}
+
+QUESTION:
+{question}
+"""
+
+
+
+5️⃣Neo4j → Strategic State
+reasoning/state_builder.py
+
+This converts your graph into decision-ready data, not text.
+
+from app.graph.client import Neo4jClient
+
+def build_cso_state():
+    query = """
+    MATCH (p:Product)
+    OPTIONAL MATCH (p)-[:TARGETS]->(c:CustomerSegment)
+    OPTIONAL MATCH (p)-[:OPERATES_IN]->(m:Market)
+    OPTIONAL MATCH (p)-[:REQUIRES]->(cap:Capability)
+    OPTIONAL MATCH (p)-[:LIMITED_BY]->(con:Constraint)
+    OPTIONAL MATCH (p)-[:EXPOSED_TO]->(r:Risk)
+    RETURN p, collect(c) AS customers,
+           collect(m) AS markets,
+           collect(cap) AS capabilities,
+           collect(con) AS constraints,
+           collect(r) AS risks
+    """
+
+    client = Neo4jClient()
+    with client.session() as session:
+        result = session.run(query)
+
+        state = []
+        for row in result:
+            state.append({
+                "product": dict(row["p"]),
+                "customers": [dict(x) for x in row["customers"]],
+                "markets": [dict(x) for x in row["markets"]],
+                "capabilities": [dict(x) for x in row["capabilities"]],
+                "constraints": [dict(x) for x in row["constraints"]],
+                "risks": [dict(x) for x in row["risks"]],
+            })
+
+    client.close()
+    return state
+
+
+6️⃣ Pinecone → Supporting Context
+vectorstore/retriever.py
+def retrieve_context(query, doc_id, active_version, allowed_categories, top_k=5):
+    vector = embed_text(query)
+    index = get_index()
+
+    result = index.query(
+        vector=vector,
+        top_k=top_k,
+        filter={
+            "doc_id": {"$eq": doc_id},
+            "doc_version": {"$eq": active_version},
+            "category": {"$in": allowed_categories}
+        },
+        include_metadata=True
+    )
+
+    return [
+        {
+            "text": m["metadata"],
+            "score": m["score"]
+        }
+        for m in result["matches"]
+    ]

@@ -85,6 +85,10 @@ class CSORouterAgent(ChatAgent):
                 selected_agent_id,
                 getattr(classification, "confidence_score", 0.0) or 0.0,
             )
+            print("CSORouterAgent selected '%s' with confidence %.2f",
+                selected_agent_id,
+                getattr(classification, "confidence_score", 0.0) or 0.0,)
+            
         except Exception as e:
             logger.error("Classification error, falling back to explanation agent: %s", e)
             selected_agent_id = "explanation"

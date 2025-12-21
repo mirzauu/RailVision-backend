@@ -100,7 +100,13 @@ class ConversationService:
         db.commit()
         db.refresh(user_msg)
         config = self._build_agent_config(resolved_agent)
-        ctx = ChatContext(project_id=project_id or "default", history=history, query=query, additional_context=attachment or "")
+        
+        # Enrich the query with Reasoning (Neo4j + Pinecone)
+        from src.application.reasoning.pipeline import context_enrich
+        # We assume attachment is the doc_id if provided
+        enriched_query = context_enrich(query, doc_id=None)
+        
+        ctx = ChatContext(project_id=project_id or "default", history=history, query=enriched_query, additional_context=attachment or "")
         agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic")
         resp = await agent_runner.run(ctx)
         ai_msg = Message(
@@ -148,9 +154,15 @@ class ConversationService:
         db.commit()
         db.refresh(user_msg)
         config = self._build_agent_config(resolved_agent)
-        ctx = ChatContext(project_id=project_id or "default", history=history, query=query, additional_context=attachment or "")
+        
+        # Enrich the query with Reasoning (Neo4j + Pinecone)
+        from src.application.reasoning.pipeline import context_enrich
+        enriched_query = context_enrich(query, doc_id=None)
+        
+        ctx = ChatContext(project_id=project_id or "default", history=history, query=enriched_query, additional_context=attachment or "")
         agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic")
         full = []
+        print("Agent running...",enriched_query)
         async for chunk in agent_runner.run_stream(ctx):
             if chunk.response:
                 full.append(chunk.response)

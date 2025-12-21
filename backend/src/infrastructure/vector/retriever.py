@@ -3,9 +3,9 @@ from src.infrastructure.vector.embedder import embed_text
 
 def retrieve_context(
     query: str,
-    doc_id: str,
-    active_version: str,
-    allowed_categories: list[str],
+    doc_id: str = None,
+    active_version: str = None,
+    allowed_categories: list[str] = None,
     top_k: int = 5
 ):
     """
@@ -24,18 +24,24 @@ def retrieve_context(
     index = get_index()
     vector = embed_text(query)
 
-    filters = {
-        "doc_id": {"$eq": doc_id},
-        "doc_version": {"$eq": active_version},
-        "category": {"$in": allowed_categories}
-    }
+    filters = {}
+    if doc_id:
+        filters["doc_id"] = {"$eq": doc_id}
+    if active_version:
+        filters["doc_version"] = {"$eq": active_version}
+    if allowed_categories:
+        filters["category"] = {"$in": allowed_categories}
 
-    result = index.query(
-        vector=vector,
-        top_k=top_k,
-        include_metadata=True,
-        filter=filters
-    )
+    # Only pass filter if it's not empty, otherwise Pinecone might complain or behave unexpectedly
+    query_kwargs = {
+        "vector": vector,
+        "top_k": top_k,
+        "include_metadata": True
+    }
+    if filters:
+        query_kwargs["filter"] = filters
+
+    result = index.query(**query_kwargs)
 
     return [
         {
