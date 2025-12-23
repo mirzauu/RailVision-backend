@@ -1,0 +1,624 @@
+First market analysis thoughts of Jamie's
+
+  ------------------------------------------------------------------------
+  **Feature**         **Trip Optimizer Solution (Video /       **What
+                      Wabtec)**                                RaiVision
+                                                               Offers**
+  ------------------- ---------------------------------------- -----------
+  **Smart             Automatically optimizes speed profile by Almost
+  cruise-control**    considering terrain, train composition,  
+                      speed limits, and operating conditions.  
+
+  **Fuel savings (10% EPA-certified \~10% fuel savings via     Yes
+  certified)**        optimized throttle and dynamic brake     
+                      control.                                 
+
+  **Emissions         Co-benefit of fuel savings; emission     No
+  reduction**         credits available.                       
+
+  **Efficient train   Consistent velocity control, smooth      Almost
+  handling**          handling via cruise control.             
+
+  **Train automation  Enables automated functionalities like   No
+  enabling**          Zero‑to‑Zero operation, network pacing   
+                      integration.                             
+
+  **Air‑brake         Advises operator on air-brake            No
+  advisement**        application and release using real-time  
+                      monitoring.                              
+
+  **LOCOTROL          Integrates with LOCOTROL to manage       No
+  integration**       distributed power automatically.         
+
+  **PTC/ATP           Adapts plan based on real-time PTC or    No
+  integration**       ATP restriction updates.                 
+
+  **Zero‑to‑Zero      Automates starts from 0 mph and complete No
+  operation**         stops using air-brake & signals. Tested  
+                      by CSX with FRA.                         
+
+  **SmartHPT**        Optimizes horsepower-per-ton targets,    No
+                      includes Auto Idle, Smart Planner, and   
+                      Network Control to reduce trailing       
+                      horsepower. EPA 5% certified.            
+
+  **Network pacing    Syncs to a Movement Planner\'s arrival   No
+  (Movement Planner   targets, dynamically adjusting for       
+  integration)**      fuel-efficient pacing.                   
+  ------------------------------------------------------------------------
+
+-   **Trip Optimizer** focuses heavily on fuel and emissions
+    optimization through dynamic throttle/braking control, automation,
+    and real-time integration with multiple control systems working
+    primarily in the **CLASS I** space deployed on **12,000**
+    locomotives.
+
+    -   **Need to interview CLASS I customers to get reliable feedback**
+
+    -   **Need to know pricing (structure and rate)**
+
+    -   **Need to find gaps in their offering -- i.e. ability to handle
+        various Tier trains, need for integration with locomotive and
+        other systems (i.e. PTC) or not, price, dissatisfied customers
+        (with the incumbent and "only" current market offering)**
+
+        -   **Can these gaps be attacked to create a winning Shortline
+            segment product -- can they eventually be leveraged to win
+            share in the CLASS I market**
+
+-   **RailVision**, by contrast, is focused on the **Shortline** segment
+    with a locomotive-agonistic technology. Need to develop a
+    **legitimate available market**.
+
+    -   **Need to develop true market size -- First thought: Develop and
+        actionable game plan targeting 15,000 Tier 0 (if accurate)
+        locomotives -- something easy to understand like 10,000 vehicles
+        (assuming the count that is working everyday) times \$300/month
+        license fee times 12 months = ARR of \$36M market. Develop the
+        market in three phases: Shortline (with current and full
+        execution expectations) then CLASS I then GLOBAL.**
+
+    -   **Need to deeply assess shortline customers' appetite for the
+        product -- what is their perceived ROI -- what are their
+        alternatives -- what is their assessment and to-date real
+        experience with RailVision -- will they buy if we get it
+        right???**
+
+Potential technology roadmap decisions -- **NEED TO DEVELOP based on the
+above**
+
+1.  **Review railvision.ca** to critically analyze its efficacy in
+    fuel-saving/eco-driving modules (e.g. optimize throttle, braking,
+    and horsepower management).
+
+2.  **Integrate with control systems** (e.g. PTC, distributed power,
+    LOCOTROL) to move farther into automation territory.
+
+3.  **Bundle existing AI-vision** strengths with new efficiency modules
+    --- enabling a combined safety + eco-optimization system.
+
+4.  **And more....**
+
+**North American Locomotive Fleet by Tier, Technology Type, and
+Railroad**
+
+  ---------------------------------------------------------------------------
+  **Railroad /       **Estimated   **EPA Tier Mix       **Hybrid / Battery /
+  Operator**         Fleet Size**  (Est.)**             Alternative Fuel**
+  ------------------ ------------- -------------------- ---------------------
+  **Union Pacific    \~7,300       Majority Tier 2/Tier Pilot projects with
+  (UP)**                           0+, newer Tier 4     battery-electric
+                                   units                (Wabtec FLXdrive)
+
+  **BNSF Railway**   \~6,000       Tier 0+ to Tier 3,   Testing FLXdrive;
+                                   newer Tier 4 GE      hybrid shunters in
+                                   Evolution            California
+
+  **Norfolk Southern \~4,000       Mix of Tier 0 to     Partner in
+  (NS)**                           Tier 3, some         battery-electric and
+                                   rebuilds to Tier 4   hybrid pilot programs
+
+  **CSX              \~3,800       Mostly Tier 0 to     Working with Wabtec;
+  Transportation**                 Tier 3, some Tier 4  battery-electric
+                                   upgrades             pilots
+
+  **Canadian         \~2,000       Tier 0+ to Tier 4    Invested in
+  National (CN)**    (U.S.)        (GE ES44AC,          RNG/hydrogen and
+                                   SD70ACe-T4)          battery hybrids
+
+  **Canadian Pacific \~1,600       SD70ACe, GE Tier 3/4 Hydrogen locomotive
+  (CPKC)**           (U.S.)        fleet                development
+
+  **Kansas City      \~950         Mostly older Tier 0+ Planning hydrogen or
+  Southern**                       to Tier 2            renewable diesel
+                                                        transitions
+
+  **Amtrak**         \~500         Tier 3+ to Tier 4    Operating ALC-42
+                                   Chargers (Siemens    Chargers (Tier 4); no
+                                   SC-44)               hybrid
+
+  **Shortline        \~15,000      Predominantly Tier   Some hybrids (e.g.,
+  Operators                        0, many              GenSet switchers);
+  (combined)**                     non-compliant legacy low penetration
+                                   units                
+
+  **Passenger &      \~1,200       Mix of Tier 0 to     Some battery-electric
+  Transit (e.g.                    Tier 4               trials (e.g.,
+  Metra, VIA)**                                         Caltrain, NJ Transit)
+  ---------------------------------------------------------------------------
+
+**\
+Tier Definitions (EPA Diesel Locomotive Standards)**
+
+**The key item is WHAT IS OUR MARKET from the below? Need more accurate
+details about the locomotives used in the Shortline segment and the
+applicability and opportunity OR NOT of using Trip Optimizer???**
+
+  -------------------------------------------------------------------------
+  **EPA    **Implementation Period** **Key Traits**
+  Tier**                             
+  -------- ------------------------- --------------------------------------
+  Tier 0   Pre-2001 (retrofitted     No emission controls or minimal
+           older units)              upgrades
+
+  Tier 1   2001--2004                Moderate NOx and PM controls
+
+  Tier 2   2005--2011                Improved combustion; some EGR
+
+  Tier 3   2012--2014                Intermediate standards; bridging to
+                                     Tier 4
+
+  Tier 4   2015--Present             Full after-treatment (SCR, DPF);
+                                     lowest NOx/PM
+  -------------------------------------------------------------------------
+
+**Total Locomotive Count in North America (Est.)**
+
+  -----------------------------------------------------------------------
+  **Region**                                 **Estimated Total Units**
+  ------------------------------------------ ----------------------------
+  United States (freight + passenger)        \~25,000
+
+  Canada (freight + passenger)               \~3,000
+
+  Mexico (freight)                           \~1,500
+
+  **North America Total**                    **\~29,500 locomotives**
+  -----------------------------------------------------------------------
+
+Wabtec doesn't publicly list a per-unit price for Trip Optimizer in
+filings or press materials---most of their public data focuses on its
+deployment scale and aggregate benefits. However, we can draw reasonable
+estimates based on some figures in their filings.
+
+**Web research**
+
+-   **Recent large order**\
+    In Wabtec's Q4 earnings report, they mention:
+
+"Wabtec has taken orders worth \$74 million for upgrading Trip Optimizer
+and Locotrol on locomotives in North America."
+[wabteccorp.com+11wabteccorp.com+11wabteccorp.com+11](https://www.wabteccorp.com/TripOptimizer-brochure.pdf?inline=&utm_source=chatgpt.com)[youtube.com+11freightwaves.com+11wabteccorp.com+11](https://www.freightwaves.com/news/wabtecs-earnings-and-outlook-disappoint-wall-street?utm_source=chatgpt.com)
+
+-   **Installed base**\
+    As of January 2024, Trip Optimizer had been installed on ≈12,000
+    locomotives globally, including \"all North American Class I
+    railroads\"
+    [masstransitmag.com+5wabteccorp.com+5railwayage.com+5](https://www.wabteccorp.com/newsroom/press-releases/wabtec-s-trip-optimizer-surpasses-1-billion-miles-significantly-reducing-the-rail-industry-s-fuel-consumption-and?utm_source=chatgpt.com).
+
+**ChatGPT analysis (suspect to inaccuracy for sure)**
+
+While the \$74 M package is a bundled upgrade alongside Locotrol, we can
+apportion it roughly for Trip Optimizer cost estimation.
+
+Assume:
+
+-   This \$74 M covers, say, **2,000 locomotives**---a plausible size
+    for a batch modernization across Class I fleets.
+
+-   The package is split evenly between Locotrol and Trip Optimizer.\
+    That would assign **\$37 M for Trip Optimizer** across those units.
+
+-   Therefore, **per-locomotive costs** are in the range of:
+
+    -   **\$37 M ÷ 2,000 = \$18,500**
+
+    -   If evenly split across 2,000 units and half the budget.
+
+Depending on actual allocation and unit counts, a **cost range of
+\$15,000 to \$30,000 per locomotive** seems plausible. This price would
+generally include:
+
+-   Trip Optimizer hardware (GoLINC/TMC interface or PTC energy
+    management card)
+
+-   Software license and integration
+
+-   Track database / surveying services
+
+-   Initial supervised runs and deployment support
+
+**More ChatGPT**
+
+There's no single definitive public per-locomotive price due to bundling
+and proprietary pricing. But given:
+
+1.  \$74 M for upgrades of both Trip Optimizer & Locotrol
+    [wabteccorp.com+1wabteccorp.com+1](https://www.wabteccorp.com/TripOptimizer-brochure.pdf?inline=&utm_source=chatgpt.com),
+
+2.  The total installed base,
+
+3.  Typical batch sizes of upgrades,
+
+we can estimate that Trip Optimizer costs **approximately
+\$15,000--\$30,000 per locomotive** for Class I railroads when rolled
+out as part of upgrade/swaps
+
+**What the SEC Filings Reveal**
+
+-   Wabtec reports its energy management offerings---including Trip
+    Optimizer, SmartHPT, and LOCOTROL---as part of consolidated sales,
+    without per-unit or product-level pricing [Wabtec
+    Corporation+3Wabtec Corporation+3Wabtec
+    Corporation+3](https://www.wabteccorp.com/trains-of-thought/on-the-right-track-how-wabtec-s-trip-optimizer-is-transforming-freight-train-efficiency?utm_source=chatgpt.com).
+
+-   Total "remaining performance obligations" (i.e., signed contracts
+    yet to be recognized as revenue) stand at approximately \$22 billion
+    as of late 2021
+    [SEC](https://www.sec.gov/Archives/edgar/data/943452/000162828022002997/wab-20211231.htm?utm_source=chatgpt.com).
+    Given Trip Optimizer's presence across Class I fleets, a meaningful
+    chunk of this backlog likely supports its continued deployment and
+    upgrades.
+
+**📉 Refined Price‑Per‑Locomotive Estimate**
+
+Build on our earlier logic:
+
+1.  **Analogous Batches:**
+
+    -   A recent deal quoted at \$74 million for Trip Optimizer +
+        LOCOTROL upgrades on a batch of North American locomotives.
+
+    -   If that applies to \~2,000 units and costs are split evenly
+        between the two systems, Trip Optimizer's share is
+        \~\$37 million.
+
+2.  **Per‑Unit Cost Range:**
+
+    -   That translates to roughly **\$18,500 per locomotive** just for
+        Trip Optimizer.
+
+    -   If contract size or system split vary, a broader **range of
+        \$15,000 to \$30,000 per diesel locomotive** remains plausible.
+
+3.  **Complementary Services & Upgrades:**
+
+    -   This includes hardware (PTC/energy management cards), software
+        license, database creation/updates, installation, crew training,
+        and deployment support.
+
+**📊 Summary & Confidence**
+
+-   ❌ **No explicit unit price revealed in SEC filings.**
+
+-   ✅ Public statements like the \$74 M bundle give us real-world
+    anchoring.
+
+-   ✅ Back-of-the-envelope math suggests **\$15K--\$30K per
+    locomotive** for Trip Optimizer, most often in bundled upgrade
+    contexts.
+
+-   ⚠️ Final pricing can vary based on fleet size, contract structure,
+    roll-out scope, and included services.
+
+**✅ Next Steps You Could Take**
+
+If you aim for greater precision:
+
+-   Analyze **quarterly earnings call transcripts**, where management
+    may discuss system adoption rates.
+
+-   Compare year-over-year **segment revenue growth** in digital systems
+    vs. installed base to infer ASP (average selling price).
+
+-   Review filings for **recent contract awards or backlog detail**,
+    which sometimes include system-level commentary.
+
+Let me know if you'd like me to deep-dive into earnings transcripts or
+segment revenue trends for more precision.
+
+**Segment Trends & Digital Intelligence Update**
+
+-   In Q4 2024, Wabtec's **digital intelligence** sales---which include
+    Trip Optimizer and other onboard systems---were **down 1.4% YoY**,
+    weighed by North American softness but offset by international
+    demand
+    [ir.wabteccorp.com+12Investing.com+12ir.wabteccorp.com+12](https://www.investing.com/news/transcripts/earnings-call-transcript-westinghouse-air-brake-q4-2024-misses-eps-93CH-3865070?utm_source=chatgpt.com).
+
+-   Conversely, Q3 2024 saw **digital intelligence growth of \~12.7%
+    YoY** , signaling variability driven by timing of deployments.
+
+-   Freight segment backlog remains strong---Q4 2024 freight backlog
+    hitting **\$5.58 B** (12-month) and **\$18 B** (multi-year)
+    [Investing.com](https://www.investing.com/news/transcripts/earnings-call-transcript-westinghouse-air-brake-q4-2024-misses-eps-93CH-3865070?utm_source=chatgpt.com).
+
+**🗣️ Earnings Call Insights**
+
+While there's no explicit Trip Optimizer pricing discussed, remarks from
+Q4 2024 earnings include:
+
+Analysts inquired about the company\'s pricing strategy and margin
+expansion opportunities. Executives emphasized their focus on value
+delivery and highlighted growth potential in international markets,
+particularly in digital intelligence
+[ir.wabteccorp.com+6Investing.com+6ir.wabteccorp.com+6](https://www.investing.com/news/transcripts/earnings-call-transcript-westinghouse-air-brake-q4-2024-misses-eps-93CH-3865070?utm_source=chatgpt.com).
+
+This suggests the company views digital intelligence
+products---including Trip Optimizer---as margin-enhancing tools and is
+actively considering pricing dynamics, but no per-unit figures were
+disclosed.
+
+**💰 Pricing Inference: Refined**
+
+Bringing together all clues:
+
+1.  **Batch upgrade order:** \~\$74 M for combined Trip Optimizer +
+    LOCOTROL [Wabtec
+    Corporation](https://www.wabteccorp.com/digital-intelligence/energy-management/trip-optimizer-smarthpt?utm_source=chatgpt.com).
+
+2.  **Deployment volatility:** Digital intelligence growth fluctuates
+    quarterly, aligning with discrete batch orders .
+
+3.  **Backlog size:** Multi-billion-dollar backlog provides capacity for
+    further deployments .
+
+Result:
+
+-   Conservative estimate: **\$15K--\$30K per locomotive**, consistent
+    with our earlier range.
+
+-   Price variability expected depending on order size, fleet
+    modernization scope, included services, and mix of systems bundled.
+
+**✅ Summary**
+
+-   **No explicit per-unit pricing** appears in transcripts or filings.
+
+-   **Digital intelligence category fluctuations** confirm
+    deployment-driven revenue cycles.
+
+-   Combined with the \$74 M order, passenger per‑unit estimates remain
+    **\$15K--\$30K per locomotive** for Trip Optimizer
+
+1.  **Wabtec's press materials** emphasize Trip Optimizer deployments
+    mainly with **Class I railroads** and major global operators
+    (Brazil, Australia, etc.), with 12,000+ locomotives in service
+    [wabteccorp.com+15ir.wabteccorp.com+15railwayage.com+15](https://ir.wabteccorp.com/news-releases/news-release-details/wabtecs-trip-optimizertm-surpasses-1-billion-miles-significantly?utm_source=chatgpt.com).
+
+2.  The **Short Line Railroad Transportation Management System (TMS)**,
+    referenced in Wabtec\'s SEC disclosure, is distinct:
+
+"Transportation Management System: Manages movement of \>9 M annual
+carloads; used by 520 Short Lines..."\
+This highlights digital tools targeted at short lines---but does *not*
+include Trip Optimizer.
+
+3.  No announcements or press releases specifically mention Trip
+    Optimizer being deployed or sold to shortline/regional railroads.
+
+**✅ Bottom Line**
+
+-   **Trip Optimizer** has been proudly marketed and sold primarily to
+    **Class I railroads** and larger operators.
+
+-   There's **no indication** of adoption by shortline or regional lines
+    in any public source.
+
+-   In contrast, Wabtec clearly differentiates its **Transportation
+    Management System** for shortline use---which is a completely
+    separate product line.
+
+LB Foster
+
+**What LB Foster & First Analytics bring to the table**
+
+-   **L.B. Foster (Rail Technologies)** --- a large, established
+    supplier of rail track products and technology with a long-running
+    *friction management* practice (top-of-rail lubricants/modifiers,
+    wayside applicators, measurement and monitoring). Their materials
+    and services explicitly list *improved fuel economy* and
+    "performance validation / long-term benefit validation" as outcomes
+    of friction management programs. [L.B.
+    Foster+1](https://lbfoster.com/rail?utm_source=chatgpt.com)
+
+-   **First Analytics** --- a boutique analytics & AI consultancy that
+    helps companies design measurement systems and validate outcomes
+    with advanced statistical methods. Rob (Robert/Rob) Stevens is a
+    senior leader there and is co-author on an analytical white paper
+    specifically about validating railroad fuel-saving technologies ---
+    that paper is directly relevant to the conference talk you cited.
+    [First
+    Analytics+1](https://firstanalytics.com/staff-member/rob-stevens/?utm_source=chatgpt.com)
+
+Together, this is the common stack you'll see in practice: LB Foster
+provides a field intervention (lubricants, applicators, friction
+management program and instrumentation), and First Analytics provides
+the statistical/AI validation to prove the intervention produced real
+fuel savings beyond normal variability.
+
+**How fuel-savings validation is usually done (methods you should
+adopt)**
+
+The literature and the First Analytics paper use a combination of these
+robust techniques --- all are applicable to shortlines:
+
+1.  **Define clear KPIs up front**
+
+    -   Primary examples: fuel gallons per gross ton-mile (GTM per
+        gallon inverted), fuel gallons per train-mile, or fuel per
+        ton-mile for a given commodity/consist. Also record idle time,
+        throttle notch distribution, train mass, speed profile, and
+        tonnage per train. (If you track GTM, you can compute fuel per
+        GTM which normalizes for size and distance.)
+
+2.  **Baseline and control design**
+
+    -   Use a pre-intervention baseline period and, where possible, a
+        control group (other locomotives, other subdivisions, or matched
+        train types that do not receive the treatment). When controls
+        aren't available, use longer historical baselines and
+        time-series adjustments.
+
+3.  **Difference-in-Differences (DiD)**
+
+    -   Classic approach when you have treated vs. untreated groups over
+        the same time window. DiD estimates the change in fuel use for
+        treated units relative to controls, adjusting for shared time
+        effects.
+
+4.  **Regression modeling with covariates**
+
+    -   Regress fuel consumption (or log fuel) on predictors: train
+        weight (tons), train length, average speed, grade profile,
+        ambient temperature, consist, engineer/crew,
+        day-of-week/seasonal terms, and a treatment indicator. This
+        isolates the treatment effect controlling for confounders.
+
+5.  **Propensity score matching (PSM)**
+
+    -   Useful if treated vs. untreated routes/trains differ. Match
+        similar runs on pre-treatment features, then compare fuel
+        outcomes.
+
+6.  **Time-series / interrupted time series (ITS)**
+
+    -   If you implement treatment system-wide and lack controls, ITS
+        with autoregressive errors can detect level or slope changes
+        after treatment, accounting for autocorrelation.
+
+7.  **Bootstrapping & uncertainty quantification**
+
+    -   Always report confidence intervals (or Bayesian posterior
+        intervals) for the estimated % fuel savings, not just point
+        estimates.
+
+8.  **Outlier handling & robustness checks**
+
+    -   Remove or analyze separately extreme events (weather, outages,
+        clogged fuel filters) and run sensitivity checks (different
+        baseline windows, lag structures).
+
+(These methods and recommendations align with the analytical guidance in
+the First Analytics / conference material.) [First
+Analytics](https://firstanalytics.com/wp-content/uploads/Analytical-Approaches-to-Validating-Railroad-Fuel-Saving-Technology.pdf?utm_source=chatgpt.com)
+
+**Practical data & instrumentation for shortlines**
+
+Shortlines tend to have resource constraints, so focus on the most
+cost-effective data collection:
+
+-   **Essential data** (minimum): fuel gallons by locomotive (fuel
+    receipts / fuel meters), train movement logs (departure/arrival
+    times, mileposts), tonnage per train (cars × load), distance,
+    locomotive hours/engine hours, and consist information.
+
+-   **High-value add**: event recorder (VDR) / onboard telemetry
+    (throttle profile, speed), GPS tracking for accurate time/distance,
+    fuel flow meters on locomotives (if feasible), and wayside sensors
+    (axle counters, wayside weigh-in-motion) for GTM accuracy.
+
+-   **Operational metadata**: crew/engineer, weather, maintenance
+    events, idling events, and any changes in timetables or routing.
+
+**Recommended step-by-step pilot plan for RailVision.ca (shortline
+focus)**
+
+1.  **Select 2--3 pilot corridors** with different operating
+    characteristics (flat vs hilly, heavy vs light traffic).
+
+2.  **Establish baseline**: collect at least 3--6 months of
+    pre-treatment data; longer if seasonal effects are present.
+
+3.  **Choose treatment(s)**: e.g., top-of-rail friction modifier,
+    wheel/lubricant, or operational advisory (driver advisory, throttle
+    guidance). LB Foster friction management is one such proven physical
+    treatment; also consider operational AI/telemetry recommendations.
+    [L.B.
+    Foster+1](https://lbfoster.com/rail/friction-management?utm_source=chatgpt.com)
+
+4.  **Instrumentation rollout**: ensure synchronized timestamps across
+    fuel and movement logs; install fuel meters or reconcile fuel
+    purchase records to locomotive assignments.
+
+5.  **Statistical plan (pre-registered)**: publish a short plan
+    describing KPIs, baseline period, control selection, models to be
+    used (DiD + regression), outlier criteria, and significance
+    thresholds. This prevents ex-post fishing. (First Analytics'
+    materials stress formal analytical approaches and preplanning.)
+    [First
+    Analytics](https://firstanalytics.com/wp-content/uploads/Analytical-Approaches-to-Validating-Railroad-Fuel-Saving-Technology.pdf?utm_source=chatgpt.com)
+
+6.  **Run pilot (3--6 months)**, collect data continuously.
+
+7.  **Analyze with multiple methods** (DiD, regression, ITS) and report
+    point estimates + CIs, sensitivity checks, and operational
+    explanations for observed changes (e.g., reduced resistance or
+    changed throttle behavior).
+
+8.  **Translate to business case**: convert % fuel saved into \$ saved
+    (fuel price scenarios) and compute payback for friction management
+    equipment and monitoring costs.
+
+9.  **Scale with an iterative loop**: refine placement, dosing rates, or
+    AI models and repeat validation for new corridors.
+
+**Things to watch out for / pitfalls**
+
+-   **Confounding operational changes** (new schedules, locomotive
+    swaps, crew changes) can mimic savings --- you must control for
+    them.
+
+-   **Small sample sizes / high variance**: shortlines with few trains
+    require longer time windows or pooled analysis across multiple
+    shortlines to reach statistical power. Use bootstrapping and report
+    uncertainty.
+
+-   **Measurement error** in fuel allocation (pooled fueling across
+    locomotives) --- consider fleet allocation rules or fuel meters.
+
+-   **Seasonality & weather**: cold weather increases fuel use; always
+    adjust or include weather as a covariate.
+
+**Quick recommended resources & contacts**
+
+-   Use LB Foster friction management product pages and their
+    "performance validation" docs for technical claims and case studies.
+    [L.B.
+    Foster+1](https://lbfoster.com/rail/friction-management/friction-management-services-support/performance-validation?utm_source=chatgpt.com)
+
+-   Use the First Analytics white paper *Analytical Approaches to
+    Validating Railroad Fuel Saving Technology* (the
+    conference/committee paper) as your statistical-methods template.
+    Rob Stevens' staff page/biography is useful for vetting consultant
+    credentials. [First
+    Analytics+1](https://firstanalytics.com/wp-content/uploads/Analytical-Approaches-to-Validating-Railroad-Fuel-Saving-Technology.pdf?utm_source=chatgpt.com)
+
+**Short, actionable next steps for you (1--3)**
+
+1.  **Inventory what data RailVision.ca already has** (fuel receipts,
+    train movement logs, GTM or gross ton & distance) --- I can help you
+    make a checklist or data schema.
+
+2.  **Pick a pilot shortline & timeframe** (I recommend at least 6
+    months baseline + 3--6 months post). If you give me the data fields
+    you can access, I'll draft a crisp statistical plan (models,
+    covariates, required sample size heuristics).
+
+3.  **If you want, I can draft the pre-registered analysis plan & sample
+    code** (R or Python) you'd need to run DiD, regression, matching and
+    ITS analyses and produce the business-case numbers.
+
+Would you like me to (A) draft a one-page pre-registered statistical
+plan tailored to a shortline pilot, or (B) build a checklist of the
+exact data fields and their formats RailVision.ca should collect? Pick
+one and I'll generate it right away.

@@ -1,13 +1,14 @@
 from pathlib import Path
 from typing import List, Dict
-from src.infrastructure.ingestion.loader import load_pdf
+from src.infrastructure.ingestion.loader import load_document
 from src.infrastructure.ingestion.segmenter import segment_pages
 from src.infrastructure.ingestion.classifier import classify_segment
 from src.infrastructure.ingestion.extractor import extract_facts
 from src.infrastructure.ingestion.validator import validate_segment
 
+
 async def run_ingestion(file_path: Path, doc_id: str, version_id: str) -> List[Dict]:
-    pages = load_pdf(file_path)
+    pages = load_document(file_path)
     segments = segment_pages(pages)
     processed: List[Dict] = []
     for seg in segments:

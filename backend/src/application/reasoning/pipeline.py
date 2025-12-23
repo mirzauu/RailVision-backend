@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 def classify_intent(question: str) -> str:
     # Placeholder for intent classification
-    return "general_query"
+    return "markets"
 
 def context_enrich(
     question: str,

@@ -123,3 +123,7 @@ class ProjectService:
 
     def list_members(self, project_id: str) -> List[ProjectMember]:
         return self.project_member_repo.get_by_project(project_id)
+
+    def get_projects_by_agent_for_user(self, agent_id: str, user_id: str, org_id: str) -> List[Project]:
+        return self.project_repo.get_by_agent_and_user(agent_id, user_id, org_id)
+

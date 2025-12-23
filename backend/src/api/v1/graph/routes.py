@@ -18,19 +18,37 @@ async def test_ingestion_and_graph(
     persist: bool = Form(True),
     current_user: User = Depends(get_current_user),
 ):
-    if file.content_type not in ("application/pdf", "application/octet-stream"):
+    # Allow common document types: PDF, DOCX, TXT, MD
+    allowed_exts = (".pdf", ".docx", ".txt", ".md")
+    orig_ext = Path(file.filename).suffix.lower()
+    
+    if orig_ext not in allowed_exts and file.content_type != "application/octet-stream":
         from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="Only PDF files are supported for this test")
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported file type. Supported extensions: {', '.join(allowed_exts)}"
+        )
 
     tmp_root = Path("storage") / "test"
     tmp_root.mkdir(parents=True, exist_ok=True)
     doc_id = str(uuid4())
     version_id = "1"
-    save_path = tmp_root / f"{doc_id}.pdf"
+    
+    # Preserve original extension
+    save_ext = orig_ext if orig_ext in allowed_exts else (".pdf" if file.content_type == "application/pdf" else ".txt")
+    save_path = tmp_root / f"{doc_id}{save_ext}"
+
     data = await file.read()
-    save_path.write_bytes(data)
+    if not data:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+        
+    with open(save_path, "wb") as f:
+        f.write(data)
+        f.flush()
 
     segments = await run_ingestion(save_path, doc_id=doc_id, version_id=version_id)
+
     entity_count = sum(len(s.get("entities", [])) for s in segments)
     rel_count = sum(len(s.get("relationships", [])) for s in segments)
 
@@ -45,8 +63,9 @@ async def test_ingestion_and_graph(
             version_id=version_id,
             hash=content_hash,
             title=title_,
-            doc_type="pdf",
+            doc_type=save_ext.lstrip('.') or "pdf",
         )
+
         client = get_neo4j_client()
         with client.session() as s:
             e_cnt = s.run("MATCH (n) WHERE n.source_doc_id = $doc_id RETURN count(n) as c", {"doc_id": doc_id}).single()["c"]

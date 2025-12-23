@@ -7,7 +7,7 @@ from src.infrastructure.database.models import User
 from src.infrastructure.database.repositories.project_repository import ProjectRepository
 from src.infrastructure.database.repositories.project_agent_repository import ProjectAgentRepository
 from src.infrastructure.database.repositories.project_member_repository import ProjectMemberRepository
-from src.infrastructure.database.repositories.agent_repository import AgentRepository
+
 from src.application.projects.service import ProjectService
 from src.api.v1.projects.schemas import (
     ProjectCreate,
@@ -26,7 +26,6 @@ def get_project_service(db: Session = Depends(get_db)) -> ProjectService:
         ProjectRepository(db),
         ProjectAgentRepository(db),
         ProjectMemberRepository(db),
-        AgentRepository(db),
     )
 
 @router.post("/", response_model=ProjectResponse)
