@@ -5,9 +5,9 @@ from pydantic import BaseModel, Field
 
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext
-from .explanation_agent import CSOExplanationAgent
-from .auditor_agent import CSOAuditorAgent
-from .diagnostics_agent import CSODiagnosticsAgent
+from .strategy_agent import CSOStrategyAgent
+from .risk_agent import CSORiskAgent
+from .execution_agent import CSOExecutionAgent
 
 
 logger = logging.getLogger(__name__)
@@ -42,15 +42,16 @@ class CSORouterAgent(ChatAgent):
     def __init__(self, llm_provider: ProviderService):
         self.llm_provider = llm_provider
         self.agents: Dict[str, ChatAgent] = {
-            "explanation": CSOExplanationAgent(llm_provider),
-            "auditor": CSOAuditorAgent(llm_provider),
-            "diagnostics": CSODiagnosticsAgent(llm_provider),
+            "strategy": CSOStrategyAgent(llm_provider),
+            "risk": CSORiskAgent(llm_provider),
+            "execution": CSOExecutionAgent(llm_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
-            "explanation": "Explains repository structure, architecture, key flows, and security-relevant components",
-            "auditor": "Audits repository for security risks, secrets handling, auth, logging, and misconfigurations",
-            "diagnostics": "Diagnoses issues from logs, traces, and errors; suggests fixes with code references",
+            "strategy": "Analyzes the business model, value proposition, and competitive positioning; identifies growth levers, strategic bets, and long-term risks",
+            "risk": "Evaluates business, operational, regulatory, and technical risks; assesses impact, likelihood, and mitigation options from an executive perspective",
+            "execution": "Assesses execution feasibility, organizational readiness, key dependencies, and bottlenecks; flags strategy–execution gaps and prioritization issues",
         }
+
         self.agent_descriptions = "\n".join(
             [
                 f"agent_id: {agent_id}\n description: {self.agent_descriptions_map[agent_id]}\n"
