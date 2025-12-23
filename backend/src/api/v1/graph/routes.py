@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from src.api.dependencies import get_current_user
 from src.infrastructure.database.models import User
+from src.application.graph.service import GraphService
 from src.infrastructure.ingestion.pipeline import run_ingestion
-from src.infrastructure.graph.writer import persist_to_graph
 from src.infrastructure.graph.neo4j_client import get_neo4j_client
 from .schemas import TestIngestionGraphResponse, IngestionSummary, GraphSummary, GraphPreviewNode, GraphPreviewRel
 
@@ -47,25 +47,28 @@ async def test_ingestion_and_graph(
         f.write(data)
         f.flush()
 
-    segments = await run_ingestion(save_path, doc_id=doc_id, version_id=version_id)
+    # Use GraphService for unified processing
+    svc = GraphService()
+    
+    if persist:
+        title_ = title or file.filename
+        segments = await svc.ingest_and_persist(
+            file_path=save_path,
+            doc_id=doc_id,
+            version_id=version_id,
+            title=title_,
+            doc_type=save_ext.lstrip('.') or "pdf",
+            content_hash=None, # Service will calculate it
+        )
+    else:
+        # Fallback to direct pipeline run if persist=False
+        segments = await run_ingestion(save_path, doc_id=doc_id, version_id=version_id)
 
     entity_count = sum(len(s.get("entities", [])) for s in segments)
     rel_count = sum(len(s.get("relationships", [])) for s in segments)
 
     graph_summary: Optional[GraphSummary] = None
     if persist:
-        title_ = title or file.filename
-        from hashlib import sha256
-        content_hash = sha256(data).hexdigest()
-        persist_to_graph(
-            processed_segments=segments,
-            doc_id=doc_id,
-            version_id=version_id,
-            hash=content_hash,
-            title=title_,
-            doc_type=save_ext.lstrip('.') or "pdf",
-        )
-
         client = get_neo4j_client()
         with client.session() as s:
             e_cnt = s.run("MATCH (n) WHERE n.source_doc_id = $doc_id RETURN count(n) as c", {"doc_id": doc_id}).single()["c"]

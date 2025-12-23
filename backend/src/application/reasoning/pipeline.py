@@ -1,19 +1,53 @@
 from typing import Optional, List
 import logging
+from pydantic import BaseModel, Field
 from src.infrastructure.vector.retriever import retrieve_context
 from src.application.reasoning.state_builder import build_state
+from src.infrastructure.llm.provider_service import ProviderService
+from src.infrastructure.graph.schema import ALLOWED_NODE_TYPES, ALLOWED_RELATIONSHIPS
 
 logger = logging.getLogger(__name__)
 
-def classify_intent(question: str) -> str:
-    # Placeholder for intent classification
-    return "markets"
+class IntentSchema(BaseModel):
+    intent: str = Field(..., description="The classified intent of the user question.")
+    confidence: float = Field(..., description="Confidence score between 0.0 and 1.0")
 
-def context_enrich(
+async def classify_intent(question: str, user_id: str = "system") -> str:
+    """
+    Classifies the user intent using LLM, referencing the graph schema.
+    """
+    svc = ProviderService(user_id=user_id)
+    
+    prompt = f"""
+    You are an intent classifier for a strategic reasoning system.
+    
+    The system uses a Knowledge Graph with the following schema:
+    Node Types: {", ".join(ALLOWED_NODE_TYPES)}
+    Relationships: {", ".join(ALLOWED_RELATIONSHIPS)}
+    
+    Analyze the user's question and determine the most likely intent.
+    The intent should be a short, descriptive string (e.g., "market_analysis", "risk_assessment", "capability_check", "general_inquiry").
+    
+    Question: {question}
+    """
+    
+    try:
+        result = await svc.call_llm_with_structured_output(
+            messages=[{"role": "user", "content": prompt}],
+            output_schema=IntentSchema,
+            config_type="inference"
+        )
+        return result.intent
+    except Exception as e:
+        logger.error(f"Intent classification failed: {e}")
+        return "general"
+
+async def context_enrich(
     question: str,
     doc_id: Optional[str] = None,
     active_version: int = 1, 
-    allowed_categories: Optional[List[str]] = None
+    allowed_categories: Optional[List[str]] = None,
+    user_id: str = "system"
 ) -> str:
     """
     Enriches the user query with Strategic State (Neo4j) and Supporting Context (Pinecone).
@@ -21,7 +55,7 @@ def context_enrich(
     if allowed_categories is None:
         allowed_categories = ["market", "go_to_market", "pricing", "general"]
 
-    intent = classify_intent(question)
+    intent = await classify_intent(question, user_id)
     logger.info(f"Intent classified as: {intent}")
     
     # 1. Retrieve Context from Pinecone (Supporting Context)

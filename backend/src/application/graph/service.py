@@ -17,17 +17,8 @@ class GraphService:
         title: str,
         doc_type: str,
         content_hash: Optional[str] = None,
-    ) -> None:
-        """
-        Ingest document and persist to both graph (truth) and vector (context) stores.
+    ) -> List[Dict]:
         
-        Flow:
-        1. Run ingestion pipeline (load, segment, classify, extract, validate)
-        2. Persist to Neo4j (graph database - truth)
-        3. Persist to Pinecone (vector database - context)
-        
-        Note: Vector DB failures are logged but don't fail the entire operation.
-        """
         logger.info(f"Starting ingestion for doc_id={doc_id}, version={version_id}")
         
         # Run ingestion pipeline
@@ -67,5 +58,5 @@ class GraphService:
                 logger.warning("Document uploaded successfully but vector embeddings were not created")
         else:
             logger.warning(f"No text segments found for vector storage (doc_id={doc_id})")
-
-
+            
+        return processed

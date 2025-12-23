@@ -1,14 +1,10 @@
 from typing import Dict, List
-
-ALLOWED_ENTITY_TYPES = {
-    "Company", "Product", "Market", "CustomerSegment",
-    "Capability", "Constraint", "Risk", "Goal", "Metric"
-}
+from src.infrastructure.graph.schema import EXTRACTABLE_NODE_TYPES
 
 def validate_segment(segment: Dict) -> Dict:
     valid_entities: List[Dict] = []
     for e in segment.get("entities", []):
-        if e.get("type") in ALLOWED_ENTITY_TYPES and e.get("name"):
+        if e.get("type") in EXTRACTABLE_NODE_TYPES and e.get("name"):
             e["source_page"] = segment.get("page_numbers", [])
             e["confidence"] = segment.get("classification_confidence", 0.8)
             e["source_doc_id"] = segment.get("doc_id")

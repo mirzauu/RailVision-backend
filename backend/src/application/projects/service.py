@@ -24,6 +24,7 @@ class ProjectService:
         tags: Optional[List[str]] = None,
         category: Optional[str] = None,
         priority: Optional[str] = None,
+        agent_id: Optional[str] = None,
     ) -> Project:
         pt = ProjectType(type) if type else ProjectType.SINGLE_CHAT
         ps = ProjectStatus(status) if status else ProjectStatus.ACTIVE
@@ -40,7 +41,18 @@ class ProjectService:
             category=category,
             priority=priority or "medium",
         )
-        return self.project_repo.create(p)
+        created_project = self.project_repo.create(p)
+        
+        if agent_id:
+            # Create project agent association
+            agent_assoc = ProjectAgent(
+                project_id=created_project.id,
+                agent_id=agent_id,
+                role=AgentRoleInProject.PRIMARY
+            )
+            self.project_agent_repo.create(agent_assoc)
+            
+        return created_project
 
     def get_by_org(self, org_id: str) -> List[Project]:
         return self.project_repo.get_by_org(org_id)

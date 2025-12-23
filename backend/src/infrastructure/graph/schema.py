@@ -8,9 +8,16 @@ ALLOWED_NODE_TYPES = {
     "Risk",
     "Goal",
     "Metric",
+    "Regulation",
+    "Person",
+    "Location",
+    "Project",
+    "Event",
     "Document",
     "DocumentVersion",
 }
+
+EXTRACTABLE_NODE_TYPES = ALLOWED_NODE_TYPES - {"Document", "DocumentVersion"}
 
 ALLOWED_RELATIONSHIPS = {
     "TARGETS",
@@ -25,6 +32,10 @@ ALLOWED_RELATIONSHIPS = {
     "OFFERS",
     "HAS_CAPABILITY",
     "USES",
-    "DEVELOPS"
+    "DEVELOPS",
+    "REGULATES",
+    "LOCATED_IN",
+    "MANAGES",
+    "PARTICIPATES_IN",
+    "AFFECTS"
 }
-
