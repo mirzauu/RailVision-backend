@@ -26,7 +26,7 @@ async def classify_intent(question: str, user_id: str = "system") -> str:
     Relationships: {", ".join(ALLOWED_RELATIONSHIPS)}
     
     Analyze the user's question and determine the most likely intent.
-    The intent should be a short, descriptive string (e.g., "market_analysis", "risk_assessment", "capability_check", "general_inquiry").
+    The intent should be one of the following: "market_analysis", "risk_assessment", "capability_check", "financial_inquiry", "general_inquiry".
     
     Question: {question}
     """
@@ -37,66 +37,68 @@ async def classify_intent(question: str, user_id: str = "system") -> str:
             output_schema=IntentSchema,
             config_type="inference"
         )
-        return result.intent
+        return result.intent.lower()
     except Exception as e:
         logger.error(f"Intent classification failed: {e}")
-        return "general"
+        return "general_inquiry"
+
+# Category Mapping Configuration
+ALL_CATEGORIES = [
+    "product", "market", "pricing", "traction", 
+    "technology", "risk", "team", "financials", "other"
+]
+
+INTENT_CATEGORY_MAP = {
+    "market_analysis": ["market", "pricing", "traction", "product"],
+    "risk_assessment": ["risk", "financials", "legal", "other"],
+    "capability_check": ["technology", "product", "team"],
+    "financial_inquiry": ["financials", "pricing", "market"],
+    "general_inquiry": ALL_CATEGORIES
+}
 
 async def context_enrich(
     question: str,
-    doc_id: Optional[str] = None,
-    active_version: int = 1, 
+    active_version: Optional[str] = None, 
     allowed_categories: Optional[List[str]] = None,
     user_id: str = "system"
 ) -> str:
     """
     Enriches the user query with Strategic State (Neo4j) and Supporting Context (Pinecone).
     """
-    if allowed_categories is None:
-        allowed_categories = ["market", "go_to_market", "pricing", "general"]
-
+    # 1. Classify Intent to optimize retrieval scope
     intent = await classify_intent(question, user_id)
     logger.info(f"Intent classified as: {intent}")
+
+    if allowed_categories is None:
+        # Use intent to narrow down categories if not explicitly provided
+        allowed_categories = INTENT_CATEGORY_MAP.get(intent, ALL_CATEGORIES)
+        logger.info(f"Derived allowed_categories from intent: {allowed_categories}")
     
-    # 1. Retrieve Context from Pinecone (Supporting Context)
+    # 2. Retrieve Context from Pinecone (Supporting Context)
     # We do this FIRST to finding relevant entities (doc_ids) for Neo4j
     context_matches = []
-    relevant_doc_ids = []
     
     try:
-        # Pass doc_id if provided (specific filter), otherwise None (broad search)
-        query_doc_id = doc_id if doc_id else None
-        
         matches = retrieve_context(
             query=question,
-            doc_id=query_doc_id,
-            active_version=str(active_version) if active_version else None, 
+            active_version=active_version, 
             allowed_categories=allowed_categories,
             top_k=5
         )
         
         if matches:
             context_matches = matches
-            # Extract doc_ids from the metadata of matched chunks
-            # m['text'] contains the full metadata dict based on retriever implementation
-            relevant_doc_ids = list(set([
-                m['text'].get('doc_id') 
-                for m in matches 
-                if isinstance(m.get('text'), dict) and m['text'].get('doc_id')
-            ]))
             
-            # If explicit doc_id was passed, ensure it is in the list
-            if doc_id and doc_id not in relevant_doc_ids:
-                relevant_doc_ids.append(doc_id)
-                
     except Exception as e:
         logger.error(f"Failed to retrieve context: {e}")
-
+    
     # 2. Build Strategic State (Neo4j)
-    # Filtered by relevant doc_ids found in Pinecone OR keyword match
+    # Filtered by keyword match only (attachment scoping removed)
     try:
-        strategic_state = build_state(doc_ids=relevant_doc_ids, query_text=question)
-        strategic_state_str = str(strategic_state)
+        strategic_state = build_state(query_text=question)
+        import json
+        # Pretty print for better LLM readability
+        strategic_state_str = json.dumps(strategic_state, indent=2)
     except Exception as e:
         logger.error(f"Failed to build strategic state: {e}")
         strategic_state_str = "No strategic state available."

@@ -6,8 +6,11 @@ from pydantic import BaseModel, Field
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext
 from .strategy_agent import CSOStrategyAgent
-from .risk_agent import CSORiskAgent
-from .execution_agent import CSOExecutionAgent
+from .value_prop_agent import CSOValuePropAgent
+from .gtm_agent import CSOGTMAgent
+from .railroad_intel_agent import CSORailroadIntelAgent
+from .mna_agent import CSOMNAAgent
+from .artifact_agent import CSOArtifactAgent
 
 
 logger = logging.getLogger(__name__)
@@ -43,13 +46,19 @@ class CSORouterAgent(ChatAgent):
         self.llm_provider = llm_provider
         self.agents: Dict[str, ChatAgent] = {
             "strategy": CSOStrategyAgent(llm_provider),
-            "risk": CSORiskAgent(llm_provider),
-            "execution": CSOExecutionAgent(llm_provider),
+            "value_prop": CSOValuePropAgent(llm_provider),
+            "gtm": CSOGTMAgent(llm_provider),
+            "railroad_intel": CSORailroadIntelAgent(llm_provider),
+            "mna": CSOMNAAgent(llm_provider),
+            "artifact": CSOArtifactAgent(llm_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
-            "strategy": "Analyzes the business model, value proposition, and competitive positioning; identifies growth levers, strategic bets, and long-term risks",
-            "risk": "Evaluates business, operational, regulatory, and technical risks; assesses impact, likelihood, and mitigation options from an executive perspective",
-            "execution": "Assesses execution feasibility, organizational readiness, key dependencies, and bottlenecks; flags strategy–execution gaps and prioritization issues",
+            "strategy": "Analyzes repository as a strategic asset; identifies business models, value creation, and strategic leverage vs constraints.",
+            "value_prop": "Converts capabilities into sharp value propositions; focuses on buyer personas, painful problems, and outcomes.",
+            "gtm": "Designs go-to-market strategies; focuses on adoption sequencing, enterprise deployment, and organizational friction.",
+            "railroad_intel": "Builds mental models of specific railroads; focuses on network structure, decision dynamics, and operational constraints.",
+            "mna": "Thinks like a corporate development executive; identifies strategic buyers, synergies, and defensive value.",
+            "artifact": "Converts inputs into polished artifacts; organizes and sharpens language without generating new strategy.",
         }
 
         self.agent_descriptions = "\n".join(
@@ -80,7 +89,7 @@ class CSORouterAgent(ChatAgent):
                 messages=messages,
                 output_schema=ClassificationResponse,
             )
-            selected_agent_id = classification.agent_id if classification and classification.agent_id in self.agents else "explanation"
+            selected_agent_id = classification.agent_id if classification and classification.agent_id in self.agents else "strategy"
             logger.info(
                 "CSORouterAgent selected '%s' with confidence %.2f",
                 selected_agent_id,
@@ -91,8 +100,8 @@ class CSORouterAgent(ChatAgent):
                 getattr(classification, "confidence_score", 0.0) or 0.0,)
             
         except Exception as e:
-            logger.error("Classification error, falling back to explanation agent: %s", e)
-            selected_agent_id = "explanation"
+            logger.error("Classification error, falling back to strategy agent: %s", e)
+            selected_agent_id = "strategy"
         return self.agents[selected_agent_id]
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:

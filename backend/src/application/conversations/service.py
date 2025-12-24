@@ -103,8 +103,8 @@ class ConversationService:
         
         # Enrich the query with Reasoning (Neo4j + Pinecone)
         from src.application.reasoning.pipeline import context_enrich
-        # We assume attachment is the doc_id if provided
-        enriched_query = await context_enrich(query, doc_id=None, user_id=user_id)
+        # We pass attachment as doc_id if it exists
+        enriched_query = await context_enrich(query, user_id=user_id)
         
         ctx = ChatContext(project_id=project_id or "default", history=history, query=enriched_query, additional_context=attachment or "")
         agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic")
@@ -157,7 +157,7 @@ class ConversationService:
         
         # Enrich the query with Reasoning (Neo4j + Pinecone)
         from src.application.reasoning.pipeline import context_enrich
-        enriched_query = await context_enrich(query, doc_id=None, user_id=user_id)
+        enriched_query = await context_enrich(query, user_id=user_id)
         
         ctx = ChatContext(project_id=project_id or "default", history=history, query=enriched_query, additional_context=attachment or "")
         agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic")
