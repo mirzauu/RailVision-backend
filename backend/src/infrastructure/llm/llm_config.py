@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional
 import os
 
-DEFAULT_CHAT_MODEL = "openai/gpt-5"
+DEFAULT_CHAT_MODEL = "openai/gpt-5.1"
 DEFAULT_INFERENCE_MODEL = "openai/gpt-4.1-mini"
 
 MODEL_CONFIG_MAP = {
@@ -17,7 +17,7 @@ MODEL_CONFIG_MAP = {
         "base_url": None,
         "api_version": None,
     },
-    "openai/gpt-5": {
+    "openai/gpt-5.1": {
         "provider": "openai",
         "default_params": {"temperature": 1},
         "capabilities": {
