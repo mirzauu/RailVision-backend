@@ -43,16 +43,19 @@ async def classify_intent(question: str, user_id: str = "system") -> str:
         return "general_inquiry"
 
 # Category Mapping Configuration
+# Based on allowed Neo4j Node Types (excluding System types like Document/Version)
 ALL_CATEGORIES = [
-    "product", "market", "pricing", "traction", 
-    "technology", "risk", "team", "financials", "other"
+    "product", "market", "customersegment", "capability", 
+    "constraint", "risk", "goal", "metric", "regulation", 
+    "person", "location", "project", "event", "company"
 ]
 
 INTENT_CATEGORY_MAP = {
-    "market_analysis": ["market", "pricing", "traction", "product"],
-    "risk_assessment": ["risk", "financials", "legal", "other"],
-    "capability_check": ["technology", "product", "team"],
-    "financial_inquiry": ["financials", "pricing", "market"],
+    "market_analysis": ["market", "customersegment", "product", "company", "location"],
+    "risk_assessment": ["risk", "constraint", "regulation", "market"],
+    "capability_check": ["capability", "product", "technology", "metric"],
+    "financial_inquiry": ["metric", "goal", "market", "product"],
+    "strategy_alignment": ["goal", "project", "company", "event"],
     "general_inquiry": ALL_CATEGORIES
 }
 
@@ -95,7 +98,11 @@ async def context_enrich(
     # 2. Build Strategic State (Neo4j)
     # Filtered by keyword match only (attachment scoping removed)
     try:
-        strategic_state = build_state(query_text=question)
+        # Pass the retrieved doc_ids from Pinecone to narrow down the graph search
+        doc_ids = [m['text'].get('doc_id') for m in context_matches if m.get('text') and m['text'].get('doc_id')]
+        doc_ids = list(set(doc_ids)) if doc_ids else None
+        
+        strategic_state = build_state(doc_ids=doc_ids, query_text=question)
         import json
         # Pretty print for better LLM readability
         strategic_state_str = json.dumps(strategic_state, indent=2)

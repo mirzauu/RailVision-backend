@@ -49,6 +49,17 @@ class PydanticChatAgent(ChatAgent):
 
         provider = llm_provider.chat_config.provider
         api_key = llm_provider._get_api_key(llm_provider.chat_config.auth_provider)
+        if not api_key and provider == "openai":
+            try:
+                from src.config.settings import settings
+                if getattr(settings, "openai_api_key", None):
+                    api_key = settings.openai_api_key
+            except Exception:
+                pass
+            if not api_key:
+                import os
+                api_key = os.environ.get("OPENAI_API_KEY")
+
         model_id = llm_provider.chat_config.model.split("/")[-1]
 
         if provider == "openai":
@@ -155,4 +166,3 @@ class PydanticChatAgent(ChatAgent):
                                 )
                 elif PydanticAgent.is_end_node(node):
                     logger.info("result streamed successfully")
-

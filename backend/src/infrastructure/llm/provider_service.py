@@ -392,6 +392,20 @@ class ProviderService:
         env_key = os.getenv(f"{provider.upper()}_API_KEY")
         if env_key:
             return env_key
+        if provider.lower() == "openai":
+            env_key = os.getenv("OPENAI_API_KEY")
+            if env_key:
+                return env_key
+        try:
+            from src.config.settings import settings
+            if provider.lower() == "openai" and getattr(settings, "openai_api_key", None):
+                return settings.openai_api_key
+            if provider.lower() == "anthropic" and getattr(settings, "claude_api_key", None):
+                return settings.claude_api_key
+            if provider.lower() == "perplexity" and getattr(settings, "perplexity_api_key", None):
+                return settings.perplexity_api_key
+        except Exception:
+            pass
         return None
 
     def _build_llm_params(self, config: LLMProviderConfig) -> Dict[str, Any]:
@@ -787,6 +801,11 @@ class ProviderService:
             api_key = os.environ.get("OLLAMA_API_KEY", "ollama")
         if not api_key:
             api_key = os.environ.get("LLM_API_KEY", api_key)
+        
+        # If API key is still missing for OpenAI, try fallback from env
+        if not api_key and config.auth_provider == "openai":
+            api_key = os.environ.get("OPENAI_API_KEY")
+
         if not api_key and config.auth_provider not in {"ollama"}:
             raise UnsupportedProviderError(f"API key not found for provider '{config.auth_provider}'.")
         model_name = target_model.split("/", 1)[1] if "/" in target_model else target_model
