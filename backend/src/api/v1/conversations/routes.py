@@ -68,7 +68,7 @@ async def chat_stream(
             agent=body.agent,
             attachment=body.attachment,
         ):
-            yield json.dumps(chunk.model_dump()) + "\n"
+            yield json.dumps(chunk.model_dump(), default=str) + "\n"
 
     return StreamingResponse(stream_response(), media_type="application/json")
 

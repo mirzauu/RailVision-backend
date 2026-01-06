@@ -1,10 +1,14 @@
 import logging
-from typing import AsyncGenerator, Dict
+from typing import AsyncGenerator, Dict, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext
+
+if TYPE_CHECKING:
+    from src.application.tools.service import ToolService
+
 from .strategy_agent import CSOStrategyAgent
 from .value_prop_agent import CSOValuePropAgent
 from .gtm_agent import CSOGTMAgent
@@ -42,10 +46,11 @@ classification_prompt = (
 
 
 class CSORouterAgent(ChatAgent):
-    def __init__(self, llm_provider: ProviderService):
+    def __init__(self, llm_provider: ProviderService, tools_provider: "ToolService"):
         self.llm_provider = llm_provider
+        self.tools_provider = tools_provider
         self.agents: Dict[str, ChatAgent] = {
-            "strategy": CSOStrategyAgent(llm_provider),
+            "strategy": CSOStrategyAgent(llm_provider, tools_provider),
             "value_prop": CSOValuePropAgent(llm_provider),
             "gtm": CSOGTMAgent(llm_provider),
             "railroad_intel": CSORailroadIntelAgent(llm_provider),

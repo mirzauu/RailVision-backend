@@ -6,12 +6,13 @@ from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext, Ag
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
 from src.infrastructure.agents.crewai_agent import CrewAIChatAgent
 from src.application.agents.cso.router_agent import CSORouterAgent
+from src.application.tools.service import ToolService
 
 logger = logging.getLogger(__name__)
 
 
 class ExecuterAgent(ChatAgent):
-    def __init__(self, llm_provider: ProviderService, config: AgentConfig, framework: str = "pydantic"):
+    def __init__(self, llm_provider: ProviderService, config: AgentConfig, framework: str = "pydantic", tools_provider: Optional[ToolService] = None):
         self.framework = framework.lower()
         self.pydantic_agent: Optional[PydanticChatAgent] = None
         self.crewai_agent: Optional[CrewAIChatAgent] = None
@@ -21,7 +22,9 @@ class ExecuterAgent(ChatAgent):
         elif self.framework == "crewai":
             self.crewai_agent = CrewAIChatAgent(config)
         elif self.framework in {"router", "cso_router", "cso"}:
-            self.router_agent = CSORouterAgent(llm_provider)
+            if not tools_provider:
+                raise ValueError("tools_provider is required for router framework")
+            self.router_agent = CSORouterAgent(llm_provider, tools_provider)
         else:
             self.pydantic_agent = PydanticChatAgent(llm_provider, config)
         chosen = (

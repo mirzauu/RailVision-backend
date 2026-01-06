@@ -2,6 +2,7 @@ import logging
 import re
 from typing import AsyncGenerator, List
 
+from langchain_core.tools import StructuredTool
 from pydantic_ai import Agent as PydanticAgent
 from pydantic_ai import Tool
 from pydantic_ai.messages import (
@@ -43,9 +44,21 @@ class PydanticChatAgent(ChatAgent):
         self.tasks = config.tasks
         self.max_iter = config.max_iter
 
+        final_tools = []
         tools = tools or []
-        for i, tool in enumerate(tools):
-            tools[i].name = re.sub(r" ", "", tool.name)
+        for tool in tools:
+            clean_name = re.sub(r" ", "", tool.name)
+            
+            if isinstance(tool, StructuredTool):
+                func = tool.coroutine if tool.coroutine else tool.func
+                final_tools.append(Tool(func, name=clean_name, description=tool.description))
+            else:
+                if hasattr(tool, "name"):
+                    try:
+                        tool.name = clean_name
+                    except AttributeError:
+                        pass
+                final_tools.append(tool)
 
         provider = llm_provider.chat_config.provider
         api_key = llm_provider._get_api_key(llm_provider.chat_config.auth_provider)
@@ -70,12 +83,12 @@ class PydanticChatAgent(ChatAgent):
             model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key))
 
         model_settings = {"max_tokens": 8000}
-        if tools and len(tools) > 0:
+        if final_tools and len(final_tools) > 0:
             model_settings["parallel_tool_calls"] = True
 
         self.agent = PydanticAgent(
             model=model,
-            tools=tools,
+            tools=final_tools,
             system_prompt=f"Role: {config.role}\nGoal: {config.goal}\nBackstory: {config.backstory}. Respond to the user query",
             retries=3,
             defer_model_check=True,

@@ -1,13 +1,17 @@
-from typing import AsyncGenerator
+from typing import AsyncGenerator, TYPE_CHECKING
 
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import AgentConfig, ChatAgent, ChatAgentResponse, ChatContext, TaskConfig
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
 
+if TYPE_CHECKING:
+    from src.application.tools.service import ToolService
+
 
 class CSOStrategyAgent(ChatAgent):
-    def __init__(self, llm_provider: ProviderService):
+    def __init__(self, llm_provider: ProviderService, tools_provider: "ToolService"):
         self.llm_provider = llm_provider
+        self.tools_provider = tools_provider
 
     def _build_agent(self) -> ChatAgent:
         agent_config = AgentConfig(
@@ -26,7 +30,7 @@ class CSOStrategyAgent(ChatAgent):
             ),
             tasks=[
                 TaskConfig(
-                    description=STRATEGY_MODE_PROMPT,
+                    description=STRATEGY_MODE_PROMPT2,
                     expected_output=(
                         "A Markdown-formatted strategic compression that names the strategy, "
                         "identifies the dominant constraint, and lists only asymmetric failure modes."
@@ -35,8 +39,9 @@ class CSOStrategyAgent(ChatAgent):
             ],
         )
 
+        tools = self.tools_provider.get_tools(["think"])
 
-        return PydanticChatAgent(self.llm_provider, agent_config, tools=[])
+        return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
         return await self._build_agent().run(ctx)
@@ -128,6 +133,38 @@ OUTPUT RULES (VERY IMPORTANT):
 If a single sentence is sufficient, stop after one sentence.
 If a table communicates better than text, use a table.
 If a risk is obvious, state it plainly.
+
+Your goal is clarity, not completeness.
+
+"""
+
+STRATEGY_MODE_PROMPT2 = """
+You are operating in STRATEGY MODE.
+use "think" tool to think step by step and userquery.
+You are a Chief Strategy Officer.
+Your job is to help make a decision — not to produce a report.
+
+FACT DISCIPLINE (MANDATORY):
+- Do NOT invent facts, numbers, customers, metrics, timelines, or outcomes.
+- Clearly distinguish between:
+  • VERIFIED FACTS (explicitly stated or previously confirmed)
+  • REASONED INFERENCES (logical conclusions from facts)
+  • ASSUMPTIONS (beliefs that may be wrong)
+- If critical information is missing, say so explicitly.
+
+DECISION PRIORITY RULE:
+- Identify the single most important value driver and the single most important break point.
+- If multiple factors exist, explicitly rank them.
+- Prefer eliminating information over adding more.
+- Ignore projections, roadmaps, and future optionality unless they directly affect the break point.
+
+
+THINKING RULES:
+- Prioritize factors within management’s control (pricing, contracts, scope, enforcement)
+  over external uncertainty (market readiness, regulation, culture).
+- Identify failure modes before upside.
+- If the correct answer is “this depends,” explain *what it depends on*.
+
 
 Your goal is clarity, not completeness.
 

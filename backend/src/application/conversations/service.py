@@ -7,6 +7,7 @@ from src.infrastructure.database.models.conversations import Message, Conversati
 from src.infrastructure.llm.provider_service import ProviderService
 from src.application.agents.executer_agent import ExecuterAgent
 from src.domain.agents.base import AgentConfig, TaskConfig, ChatContext, ChatAgentResponse
+from src.application.tools.service import ToolService
 
 class ConversationService:
     def __init__(self, provider: ProviderService):
@@ -107,7 +108,8 @@ class ConversationService:
         enriched_query = await context_enrich(query, user_id=user_id)
         
         ctx = ChatContext(project_id=project_id or "default", history=history, query=enriched_query, additional_context=attachment or "")
-        agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic")
+        tool_service = ToolService(db, user_id)
+        agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic", tools_provider=tool_service)
         resp = await agent_runner.run(ctx)
         ai_msg = Message(
             conversation_id=conv.id,
@@ -160,7 +162,8 @@ class ConversationService:
         enriched_query = await context_enrich(query, user_id=user_id)
         
         ctx = ChatContext(project_id=project_id or "default", history=history, query=enriched_query, additional_context=attachment or "")
-        agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic")
+        tool_service = ToolService(db, user_id)
+        agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic", tools_provider=tool_service)
         full = []
         print("Agent running...",enriched_query)
         async for chunk in agent_runner.run_stream(ctx):
