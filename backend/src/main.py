@@ -4,6 +4,8 @@ from src.config.logging import setup_logging
 from src.config.settings import settings
 from src.api.v1.router import api_router
 from src.infrastructure.graph.indexes import create_indexes
+from fastapi.staticfiles import StaticFiles
+import os
 
 setup_logging()
 
@@ -13,6 +15,10 @@ app = FastAPI(
     docs_url="/docs" if settings.is_development else None,  # Disable docs in production
     redoc_url="/redoc" if settings.is_development else None,
 )
+
+# Mount storage for static file access
+os.makedirs("storage", exist_ok=True)
+app.mount("/storage", StaticFiles(directory="storage"), name="storage")
 
 # CORS Middleware
 app.add_middleware(
