@@ -11,6 +11,9 @@ from src.infrastructure.database.models import User
 from src.application.conversations.service import ConversationService
 from src.infrastructure.llm.provider_service import ProviderService
 from src.api.v1.conversations.schemas import ChatHistoryResponse
+from src.application.agents.cso.router_agent import CSORouterAgent
+from src.application.tools.service import ToolService
+from src.domain.agents.base import ChatContext
 
 router = APIRouter()
 
@@ -31,6 +34,7 @@ async def chat(
 ):
     if body.model and "/" in body.model and body.model.strip().lower() not in {"string", "null", "none"}:
         os.environ["CHAT_MODEL"] = body.model
+
     service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
     resp = await service.chat(
         db=db,
@@ -54,6 +58,28 @@ async def chat_stream(
 ):
     if body.model and "/" in body.model and body.model.strip().lower() not in {"string", "null", "none"}:
         os.environ["CHAT_MODEL"] = body.model
+
+    if body.framework == "cso" and body.agent and body.agent != "auto":
+        provider = ProviderService.create(user_id=str(current_user.id))
+        tools = ToolService(db, str(current_user.id))
+        
+        # Use RouterAgent to get the specific agent directly
+        router_agent = CSORouterAgent(provider, tools)
+        target_agent = router_agent.get_agent(body.agent)
+
+        ctx = ChatContext(
+            project_id=body.project_id,
+            history=[],
+            query=body.query,
+            additional_context=body.attachment or ""
+        )
+
+        async def stream_cso_agent():
+            async for chunk in target_agent.run_stream(ctx):
+                yield json.dumps(chunk.model_dump(), default=str) + "\n"
+
+        return StreamingResponse(stream_cso_agent(), media_type="application/json")
+
     service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
 
     async def stream_response():

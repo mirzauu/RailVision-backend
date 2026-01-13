@@ -7,7 +7,16 @@ from src.infrastructure.database.models import User
 from src.application.graph.service import GraphService
 from src.infrastructure.ingestion.pipeline import run_ingestion
 from src.infrastructure.graph.neo4j_client import get_neo4j_client
-from .schemas import TestIngestionGraphResponse, IngestionSummary, GraphSummary, GraphPreviewNode, GraphPreviewRel
+from .schemas import (
+    TestIngestionGraphResponse, 
+    IngestionSummary, 
+    GraphSummary, 
+    GraphPreviewNode, 
+    GraphPreviewRel,
+    GraphVisualizationResponse,
+    GraphNode,
+    GraphRelationship
+)
 
 router = APIRouter()
 
@@ -110,3 +119,73 @@ async def test_ingestion_and_graph(
         ),
         graph=graph_summary,
     )
+
+@router.get("/visualization", response_model=GraphVisualizationResponse)
+async def get_graph_visualization(
+    limit: int = 1000,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get graph data for visualization.
+    Returns nodes and relationships up to the specified limit.
+    """
+    client = get_neo4j_client()
+    query = """
+    MATCH (n)
+    OPTIONAL MATCH (n)-[r]->(m)
+    RETURN n, r, m
+    LIMIT $limit
+    """
+    
+    with client.session() as session:
+        result = session.run(query, limit=limit)
+        
+        nodes_map = {}
+        links_map = {}
+        
+        for record in result:
+            n = record["n"]
+            r = record["r"]
+            m = record["m"]
+            
+            # Process node n
+            if n is not None:
+                # Use element_id if available (Neo4j 5+), else fallback to id
+                n_id = getattr(n, "element_id", str(n.id))
+                if n_id not in nodes_map:
+                    nodes_map[n_id] = GraphNode(
+                        id=n_id,
+                        labels=list(n.labels),
+                        properties=dict(n)
+                    )
+            
+            # Process node m
+            if m is not None:
+                m_id = getattr(m, "element_id", str(m.id))
+                if m_id not in nodes_map:
+                    nodes_map[m_id] = GraphNode(
+                        id=m_id,
+                        labels=list(m.labels),
+                        properties=dict(m)
+                    )
+            
+            # Process relationship r
+            if r is not None:
+                r_id = getattr(r, "element_id", str(r.id))
+                if r_id not in links_map:
+                    # Resolve start/end node IDs
+                    start_node_id = getattr(r.start_node, "element_id", str(r.start_node.id))
+                    end_node_id = getattr(r.end_node, "element_id", str(r.end_node.id))
+                    
+                    links_map[r_id] = GraphRelationship(
+                        id=r_id,
+                        source=start_node_id,
+                        target=end_node_id,
+                        type=r.type,
+                        properties=dict(r)
+                    )
+                    
+        return GraphVisualizationResponse(
+            nodes=list(nodes_map.values()),
+            links=list(links_map.values())
+        )

@@ -30,3 +30,19 @@ class TestIngestionGraphResponse(BaseModel):
     ingestion: IngestionSummary
     graph: Optional[GraphSummary] = None
 
+class GraphNode(BaseModel):
+    id: str
+    labels: List[str]
+    properties: Dict[str, Any]
+
+class GraphRelationship(BaseModel):
+    id: str
+    source: str
+    target: str
+    type: str
+    properties: Dict[str, Any]
+
+class GraphVisualizationResponse(BaseModel):
+    nodes: List[GraphNode]
+    links: List[GraphRelationship]
+

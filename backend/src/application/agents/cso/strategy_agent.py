@@ -3,6 +3,7 @@ from typing import AsyncGenerator, TYPE_CHECKING
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import AgentConfig, ChatAgent, ChatAgentResponse, ChatContext, TaskConfig
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
+from src.application.reasoning.pipeline import context_enrich
 
 if TYPE_CHECKING:
     from src.application.tools.service import ToolService
@@ -44,10 +45,18 @@ class CSOStrategyAgent(ChatAgent):
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
-        return await self._build_agent().run(ctx)
+        # Enrich the query with Reasoning (Neo4j + Pinecone)
+        enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
+        # Create new context with enriched query
+        new_ctx = ctx.model_copy(update={"query": enriched_query})
+        return await self._build_agent().run(new_ctx)
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
-        async for chunk in self._build_agent().run_stream(ctx):
+        # Enrich the query with Reasoning (Neo4j + Pinecone)
+        enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
+        # Create new context with enriched query
+        new_ctx = ctx.model_copy(update={"query": enriched_query})
+        async for chunk in self._build_agent().run_stream(new_ctx):
             yield chunk
 
 

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # Security
     jwt_secret: Optional[str] = "dev-secret-key-change-in-production"
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    access_token_expire_minutes: int = 300000
     
     # LLM Providers
     openai_api_key: Optional[str] = None

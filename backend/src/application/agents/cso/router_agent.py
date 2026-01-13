@@ -109,6 +109,10 @@ class CSORouterAgent(ChatAgent):
             selected_agent_id = "strategy"
         return self.agents[selected_agent_id]
 
+    def get_agent(self, agent_id: str) -> ChatAgent:
+        """Directly retrieve an agent by ID without classification."""
+        return self.agents.get(agent_id) or self.agents["strategy"]
+
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
         agent = await self._run_classification(ctx, self.agent_descriptions)
         return await agent.run(ctx)
