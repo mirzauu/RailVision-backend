@@ -15,6 +15,7 @@ from .gtm_agent import CSOGTMAgent
 from .railroad_intel_agent import CSORailroadIntelAgent
 from .mna_agent import CSOMNAAgent
 from .artifact_agent import CSOArtifactAgent
+from .general_agent import CSOGeneralAgent
 
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,7 @@ class CSORouterAgent(ChatAgent):
             "railroad_intel": CSORailroadIntelAgent(llm_provider),
             "mna": CSOMNAAgent(llm_provider),
             "artifact": CSOArtifactAgent(llm_provider),
+            "general": CSOGeneralAgent(llm_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
             "strategy": "Analyzes repository as a strategic asset; identifies business models, value creation, and strategic leverage vs constraints.",
@@ -64,6 +66,7 @@ class CSORouterAgent(ChatAgent):
             "railroad_intel": "Builds mental models of specific railroads; focuses on network structure, decision dynamics, and operational constraints.",
             "mna": "Thinks like a corporate development executive; identifies strategic buyers, synergies, and defensive value.",
             "artifact": "Converts inputs into polished artifacts; organizes and sharpens language without generating new strategy.",
+            "general": "Handles greetings and simple open-ended questions; acts as a friendly front-door assistant for the CSO system.",
         }
 
         self.agent_descriptions = "\n".join(
@@ -93,6 +96,7 @@ class CSORouterAgent(ChatAgent):
             classification: ClassificationResponse = await self.llm_provider.call_llm_with_structured_output(
                 messages=messages,
                 output_schema=ClassificationResponse,
+                config_type="inference",
             )
             selected_agent_id = classification.agent_id if classification and classification.agent_id in self.agents else "strategy"
             logger.info(

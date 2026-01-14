@@ -65,6 +65,10 @@ async def chat_stream(
         
         # Use RouterAgent to get the specific agent directly
         router_agent = CSORouterAgent(provider, tools)
+        # Check if the agent exists
+        if not router_agent.get_agent(body.agent):
+            return {"error": f"Agent {body.agent} not found"}
+
         target_agent = router_agent.get_agent(body.agent)
 
         ctx = ChatContext(
