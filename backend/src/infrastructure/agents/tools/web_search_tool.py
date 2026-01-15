@@ -5,6 +5,7 @@ from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from src.infrastructure.llm.provider_service import ProviderService
+from src.config.settings import settings
 
 
 class WebSearchToolInput(BaseModel):
@@ -24,26 +25,14 @@ class WebSearchTool:
     def __init__(self, sql_db: Session, user_id: str):
         self.sql_db = sql_db
         self.user_id = user_id
-        self.api_key = os.getenv("OPENROUTER_API_KEY", "None")
+        self.api_key = os.getenv("PERPLEXITY_API_KEY") or os.getenv("LLM_API_KEY") or (settings.perplexity_api_key or "None")
         self.temperature = 0.3
         self.max_tokens = 12000
         self.output_schema = WebSearchToolOutput
         self.provider_service = ProviderService(self.user_id)
 
     async def arun(self, query: str) -> Dict[str, Any]:
-        return await asyncio.to_thread(self.run, query)
-
-    def run(self, query: str) -> Dict[str, Any]:
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        try:
-            resp = loop.run_until_complete(self._make_llm_call(query))
-        finally:
-            if not loop.is_running():
-                loop.close()
+        resp = await self._make_llm_call(query)
         if not resp:
             return {"success": False, "content": "Tool Call Failed", "citations": []}
         return resp
@@ -52,7 +41,7 @@ class WebSearchTool:
         try:
             messages = [{"role": "user", "content": query}]
             text_response = await self.provider_service.call_llm_with_specific_model(
-                model_identifier="openrouter/perplexity/sonar",
+                model_identifier="perplexity/sonar",
                 messages=messages,
                 temperature=self.temperature,
                 max_tokens=self.max_tokens,
@@ -75,7 +64,6 @@ def web_search_tool(sql_db: Session, user_id: str) -> Optional[StructuredTool]:
         return None
     return StructuredTool.from_function(
         coroutine=tool_instance.arun,
-        func=tool_instance.run,
         name=tool_instance.name,
         description=tool_instance.description,
         args_schema=WebSearchToolInput,

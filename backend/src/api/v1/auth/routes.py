@@ -38,6 +38,7 @@ def login(user_in: UserLogin, auth_service: AuthService = Depends(get_auth_servi
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    auth_service.mark_user_login(user)
     return auth_service.create_login_response(user)
 
 @router.post("/token", response_model=Token)

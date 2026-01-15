@@ -336,9 +336,9 @@ AVAILABLE_MODELS = [
         is_inference_model=True,
     ),
     AvailableModelOption(
-        id="openrouter/perplexity/llama-3.1-sonar-large-128k-online",
-        name="Perplexity Sonar Large Online",
-        description="Perplexity Sonar large online model via OpenRouter",
+        id="perplexity/sonar",
+        name="Perplexity Sonar",
+        description="Perplexity Sonar model (direct API)",
         provider="perplexity",
         is_chat_model=True,
         is_inference_model=True,
@@ -423,6 +423,11 @@ class ProviderService:
         if not api_key:
             api_key = os.environ.get("LLM_API_KEY", api_key)
         params = config.get_llm_params(api_key)
+        if config.auth_provider == "perplexity":
+            try:
+                params["model"] = params["model"].split("/", 1)[1]
+            except Exception:
+                pass
         if config.base_url:
             base_url = config.base_url
             if config.auth_provider == "ollama":
@@ -824,7 +829,7 @@ class ProviderService:
             provider_kwargs["base_url"] = config.base_url
         if config.api_version:
             provider_kwargs["api_version"] = config.api_version
-        openai_like_providers = {"openai", "openrouter", "azure", "ollama"}
+        openai_like_providers = {"openai", "openrouter", "azure", "ollama", "perplexity"}
         if config.auth_provider in openai_like_providers:
             if config.auth_provider == "ollama":
                 base_url_root = config.base_url or os.environ.get("LLM_API_BASE") or "http://localhost:11434"

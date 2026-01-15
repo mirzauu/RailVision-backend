@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 
 from src.infrastructure.database.repositories.org_repository import OrganizationRepository
 from src.infrastructure.database.models import Organization
+from datetime import datetime, timezone
 
 class AuthService:
     def __init__(self, user_repo: UserRepository, role_repo: RoleRepository, org_repo: OrganizationRepository, hasher: PasswordHasher, token_provider: TokenProvider):
@@ -79,3 +80,11 @@ class AuthService:
         }
         tok["user"] = user_payload
         return tok
+
+    def mark_user_login(self, user: User):
+        now = datetime.now(timezone.utc)
+        user.last_login_at = now
+        user.last_active_at = now
+        self.user_repo.db.add(user)
+        self.user_repo.db.commit()
+        self.user_repo.db.refresh(user)

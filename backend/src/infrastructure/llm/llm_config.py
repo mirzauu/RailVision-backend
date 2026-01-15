@@ -190,9 +190,9 @@ MODEL_CONFIG_MAP = {
         "base_url": "https://openrouter.ai/api/v1",
         "api_version": None,
     },
-    "openrouter/perplexity/llama-3.1-sonar-large-128k-online": {
+    "perplexity/sonar": {
         "provider": "perplexity",
-        "auth_provider": "openrouter",
+        "auth_provider": "perplexity",
         "default_params": {"temperature": 0.2},
         "capabilities": {
             "supports_pydantic": True,
@@ -200,7 +200,7 @@ MODEL_CONFIG_MAP = {
             "supports_vision": False,
             "supports_tool_parallelism": True,
         },
-        "base_url": "https://openrouter.ai/api/v1",
+        "base_url": "https://api.perplexity.ai",
         "api_version": None,
     },
 }
