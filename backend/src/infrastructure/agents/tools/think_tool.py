@@ -15,7 +15,24 @@ class ThinkTool:
     """Tool for thinking and processing thoughts."""
 
     name = "think"
-    description = """Use the tool to think about something. It will not obtain new information or make any changes to the repository, but just log the thought. Use it when complex reasoning or brainstorming is needed. For example, if you explore the repo and discover the source of a bug, call this tool to brainstorm several unique ways of fixing the bug, and assess which change(s) are likely to be simplest and most effective. Alternatively, if you receive some test results, call this tool to brainstorm ways to fix the failing tests."""
+    description = """
+Use this tool to reason deeply about a company using existing information only.
+It does NOT fetch or discover new data.
+
+Use it to analyze user questions about a company’s business, strategy, operations,
+revenue model, risks, positioning, or decision-making based on:
+- previously provided company information
+- known assumptions
+- logical inference and structured reasoning
+
+This tool is meant for internal thinking, hypothesis testing, scenario analysis,
+and evaluating trade-offs (e.g. where the company makes money, where it could fail,
+what decisions make sense, or what is unclear).
+
+Do NOT use this tool for code analysis, debugging, repository exploration,
+or technical implementation details.
+"""
+
 
     def __init__(self, sql_db: Session, user_id: str):
         self.sql_db = sql_db
@@ -81,7 +98,7 @@ class ThinkTool:
 
         try:
             response = await self.provider_service.call_llm(
-                messages=messages, config_type="chat"
+                messages=messages, config_type="inference"
             )
             return {"success": True, "analysis": response}
         except Exception as e:

@@ -52,11 +52,11 @@ class CSORouterAgent(ChatAgent):
         self.tools_provider = tools_provider
         self.agents: Dict[str, ChatAgent] = {
             "strategy": CSOStrategyAgent(llm_provider, tools_provider),
-            "value_prop": CSOValuePropAgent(llm_provider),
-            "gtm": CSOGTMAgent(llm_provider),
-            "railroad_intel": CSORailroadIntelAgent(llm_provider),
-            "mna": CSOMNAAgent(llm_provider),
-            "artifact": CSOArtifactAgent(llm_provider),
+            "value_prop": CSOValuePropAgent(llm_provider, tools_provider),
+            "gtm": CSOGTMAgent(llm_provider, tools_provider),
+            "railroad_intel": CSORailroadIntelAgent(llm_provider, tools_provider),
+            "mna": CSOMNAAgent(llm_provider, tools_provider),
+            "artifact": CSOArtifactAgent(llm_provider, tools_provider),
             "general": CSOGeneralAgent(llm_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {

@@ -22,7 +22,7 @@ class CSOStrategyAgent(ChatAgent):
                 "constraint, and surface asymmetric failure modes that determine success or failure."
             ),
             backstory=(
-                "You are a battle-tested Chief Strategy Officer. "
+                "You are a battle-tested Chief Strategy Officer of Railvision. "
                 "You do not summarize businesses — you reduce them. "
                 "You actively challenge management narratives, projections, and optimism. "
                 "You are comfortable making sharp calls and naming uncomfortable truths. "
@@ -33,14 +33,14 @@ class CSOStrategyAgent(ChatAgent):
                 TaskConfig(
                     description=STRATEGY_MODE_PROMPT2,
                     expected_output=(
-                        "A Markdown-formatted strategic compression that names the strategy, "
+                        "A Markdown-formatted"
                         "identifies the dominant constraint, and lists only asymmetric failure modes."
                     ),
                 )
             ],
         )
 
-        tools = self.tools_provider.get_tools(["think"])
+        tools = self.tools_provider.get_tools(["think", "web_search_tool"])
 
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 

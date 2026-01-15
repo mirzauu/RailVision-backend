@@ -335,6 +335,14 @@ AVAILABLE_MODELS = [
         is_chat_model=True,
         is_inference_model=True,
     ),
+    AvailableModelOption(
+        id="openrouter/perplexity/llama-3.1-sonar-large-128k-online",
+        name="Perplexity Sonar Large Online",
+        description="Perplexity Sonar large online model via OpenRouter",
+        provider="perplexity",
+        is_chat_model=True,
+        is_inference_model=True,
+    ),
 ]
 
 PLATFORM_PROVIDERS = list(
