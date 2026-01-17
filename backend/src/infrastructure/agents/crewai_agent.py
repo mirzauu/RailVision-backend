@@ -10,7 +10,7 @@ class CrewAIChatAgent(ChatAgent):
         self.agent = CrewAgent(role=config.role, goal=config.goal, backstory=config.backstory)
 
     def _create_task(self, task_config: TaskConfig, ctx: ChatContext) -> Task:
-        description = f"User Query: {ctx.query}\nProject ID: {ctx.project_id}\n{ctx.additional_context}"
+        description = f"User Query: {ctx.query}\n{ctx.additional_context}"
         return Task(
             description=f"{task_config.description}\n\n{description}",
             expected_output=task_config.expected_output,

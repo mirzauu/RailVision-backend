@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends, Body, HTTPException
 import os
 from fastapi.responses import StreamingResponse
 import json
@@ -14,6 +14,8 @@ from src.api.v1.conversations.schemas import ChatHistoryResponse
 from src.application.agents.cso.router_agent import CSORouterAgent
 from src.application.tools.service import ToolService
 from src.domain.agents.base import ChatContext
+from src.infrastructure.database.models.projects import Project
+from src.infrastructure.database.models.conversations import Conversation, Message, MessageRole, MessageStatus
 
 router = APIRouter()
 
@@ -71,16 +73,67 @@ async def chat_stream(
 
         target_agent = router_agent.get_agent(body.agent)
 
+        # Build conversation and history (persist user message)
+        project = db.query(Project).filter(Project.id == body.project_id).first() if body.project_id else None
+        if project:
+            conv = db.query(Conversation).filter(Conversation.project_id == project.id).first()
+            if not conv:
+                conv = Conversation(project_id=project.id, org_id=current_user.org_id, title="Conversation")
+                db.add(conv)
+                db.commit()
+                db.refresh(conv)
+        else:
+            conv = db.query(Conversation).filter(Conversation.org_id == current_user.org_id).first()
+            if not conv:
+                raise HTTPException(status_code=400, detail="conversation requires a valid project")
+
+        user_msg = Message(
+            conversation_id=conv.id,
+            project_id=conv.project_id,
+            org_id=current_user.org_id,
+            role=MessageRole.USER,
+            user_id=str(current_user.id),
+            content=body.query,
+            status=MessageStatus.SENT,
+            attachments=[body.attachment] if body.attachment else [],
+        )
+        db.add(user_msg)
+        db.commit()
+        db.refresh(user_msg)
+
+        msgs = (
+            db.query(Message)
+            .filter(Message.project_id == conv.project_id)
+            .order_by(Message.created_at.asc())
+            .limit(20)
+            .all()
+        )
+        history = [m.content for m in msgs if m.content]
+
         ctx = ChatContext(
-            project_id=body.project_id,
-            history=[],
+            history=history,
             query=body.query,
             additional_context=body.attachment or ""
         )
 
         async def stream_cso_agent():
+            full: List[str] = []
             async for chunk in target_agent.run_stream(ctx):
+                if chunk.response:
+                    full.append(chunk.response)
                 yield json.dumps(chunk.model_dump(), default=str) + "\n"
+            ai_msg = Message(
+                conversation_id=conv.id,
+                project_id=conv.project_id,
+                org_id=current_user.org_id,
+                role=MessageRole.ASSISTANT,
+                agent_id=None,
+                content="".join(full),
+                status=MessageStatus.SENT,
+            )
+            db.add(ai_msg)
+            db.commit()
+            db.refresh(ai_msg)
 
         return StreamingResponse(stream_cso_agent(), media_type="application/json")
 

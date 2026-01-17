@@ -40,7 +40,7 @@ class WebSearchTool:
     async def _make_llm_call(self, query: str) -> Dict[str, Any]:
         try:
             messages = [{"role": "user", "content": query}]
-            text_response = await self.providerm_service.call_llm_with_specific_model(
+            text_response = await self.provider_service.call_llm_with_specific_model(
                 model_identifier="perplexity/sonar",
                 messages=messages,
                 temperature=self.temperature,

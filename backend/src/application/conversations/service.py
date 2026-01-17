@@ -102,7 +102,7 @@ class ConversationService:
         db.refresh(user_msg)
         config = self._build_agent_config(resolved_agent)
         
-        ctx = ChatContext(project_id=project_id or "default", history=history, query=query, additional_context=attachment or "")
+        ctx = ChatContext(history=history, query=query, additional_context=attachment or "")
         tool_service = ToolService(db, user_id)
         agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic", tools_provider=tool_service)
         resp = await agent_runner.run(ctx)
@@ -152,7 +152,7 @@ class ConversationService:
         db.refresh(user_msg)
         config = self._build_agent_config(resolved_agent)
         
-        ctx = ChatContext(project_id=project_id or "default", history=history, query=query, additional_context=attachment or "")
+        ctx = ChatContext(history=history, query=query, additional_context=attachment or "")
         tool_service = ToolService(db, user_id)
         agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic", tools_provider=tool_service)
         full = []

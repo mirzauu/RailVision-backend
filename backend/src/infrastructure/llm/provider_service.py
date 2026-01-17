@@ -394,9 +394,6 @@ class ProviderService:
         return {"message": "AI provider configuration updated successfully"}
 
     def _get_api_key(self, provider: str) -> str | None:
-        env_key = os.getenv("LLM_API_KEY", None)
-        if env_key:
-            return env_key
         env_key = os.getenv(f"{provider.upper()}_API_KEY")
         if env_key:
             return env_key
@@ -420,8 +417,6 @@ class ProviderService:
         api_key = self._get_api_key(config.auth_provider)
         if not api_key and config.auth_provider == "ollama":
             api_key = os.environ.get("OLLAMA_API_KEY", "ollama")
-        if not api_key:
-            api_key = os.environ.get("LLM_API_KEY", api_key)
         params = config.get_llm_params(api_key)
         if config.auth_provider == "perplexity":
             try:
@@ -582,7 +577,7 @@ class ProviderService:
         routing_provider = config.provider
         request_kwargs = {key: params[key] for key in ("api_key", "base_url", "api_version") if key in params}
         try:
-            if instructor is not None:
+            if instructor is not None and config.auth_provider not in {"perplexity"}:
                 if config.provider == "ollama":
                     ollama_base_root = (
                         params.get("base_url")
@@ -626,11 +621,28 @@ class ProviderService:
                         fields = list(output_schema.__fields__.keys())
                 except Exception:
                     fields = []
-                extra = {
-                    "role": "system",
-                    "content": "Return a JSON object with keys: " + ", ".join(fields or ["category", "confidence", "reason"]) + ".",
-                }
-                m = messages + [extra]
+                instruction_text = "Return a JSON object with keys: " + ", ".join(fields or ["category", "confidence", "reason"]) + "."
+                m = list(messages)
+                target_index = None
+                for i in range(len(m) - 1, -1, -1):
+                    if m[i].get("role") == "user":
+                        target_index = i
+                        break
+                if target_index is not None:
+                    content = m[target_index].get("content", "")
+                    if isinstance(content, str):
+                        m[target_index]["content"] = (content.rstrip() + "\n\n" + instruction_text).strip()
+                    else:
+                        m.append({"role": "user", "content": instruction_text})
+                else:
+                    if m and m[0].get("role") == "system":
+                        sys_content = m[0].get("content", "")
+                        if isinstance(sys_content, str):
+                            m[0]["content"] = (str(sys_content).rstrip() + "\n\n" + instruction_text).strip()
+                        else:
+                            m.append({"role": "user", "content": instruction_text})
+                    else:
+                        m.append({"role": "user", "content": instruction_text})
                 resp = await acompletion(messages=m, **params)
                 content = resp.choices[0].message.content
                 data = {}
@@ -812,8 +824,7 @@ class ProviderService:
         api_key = self._get_api_key(config.auth_provider)
         if not api_key and config.auth_provider == "ollama":
             api_key = os.environ.get("OLLAMA_API_KEY", "ollama")
-        if not api_key:
-            api_key = os.environ.get("LLM_API_KEY", api_key)
+        # Do not fallback to generic LLM_API_KEY for non-matching providers
         
         # If API key is still missing for OpenAI, try fallback from env
         if not api_key and config.auth_provider == "openai":

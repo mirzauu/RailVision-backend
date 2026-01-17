@@ -57,7 +57,7 @@ class CSORouterAgent(ChatAgent):
             "railroad_intel": CSORailroadIntelAgent(llm_provider, tools_provider),
             "mna": CSOMNAAgent(llm_provider, tools_provider),
             "artifact": CSOArtifactAgent(llm_provider, tools_provider),
-            "general": CSOGeneralAgent(llm_provider),
+            "general": CSOGeneralAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
             "strategy": "Analyzes repository as a strategic asset; identifies business models, value creation, and strategic leverage vs constraints.",

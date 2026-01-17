@@ -24,7 +24,6 @@ class ChatAgentResponse(BaseModel):
 
 
 class ChatContext(BaseModel):
-    project_id: str
     history: List[str]
     query: str
     additional_context: str = ""
@@ -52,4 +51,3 @@ class ChatAgent(ABC):
     @abstractmethod
     def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
         pass
-
