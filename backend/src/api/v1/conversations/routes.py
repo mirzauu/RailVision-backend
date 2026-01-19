@@ -61,9 +61,12 @@ async def chat_stream(
     if body.model and "/" in body.model and body.model.strip().lower() not in {"string", "null", "none"}:
         os.environ["CHAT_MODEL"] = body.model
 
+    user_id = str(current_user.id)
+    org_id = current_user.org_id
+
     if body.framework == "cso" and body.agent and body.agent != "auto":
-        provider = ProviderService.create(user_id=str(current_user.id))
-        tools = ToolService(db, str(current_user.id))
+        provider = ProviderService.create(user_id=user_id)
+        tools = ToolService(db, user_id)
         
         # Use RouterAgent to get the specific agent directly
         router_agent = CSORouterAgent(provider, tools)
@@ -78,21 +81,21 @@ async def chat_stream(
         if project:
             conv = db.query(Conversation).filter(Conversation.project_id == project.id).first()
             if not conv:
-                conv = Conversation(project_id=project.id, org_id=current_user.org_id, title="Conversation")
+                conv = Conversation(project_id=project.id, org_id=org_id, title="Conversation")
                 db.add(conv)
                 db.commit()
                 db.refresh(conv)
         else:
-            conv = db.query(Conversation).filter(Conversation.org_id == current_user.org_id).first()
+            conv = db.query(Conversation).filter(Conversation.org_id == org_id).first()
             if not conv:
                 raise HTTPException(status_code=400, detail="conversation requires a valid project")
 
         user_msg = Message(
             conversation_id=conv.id,
             project_id=conv.project_id,
-            org_id=current_user.org_id,
+            org_id=org_id,
             role=MessageRole.USER,
-            user_id=str(current_user.id),
+            user_id=user_id,
             content=body.query,
             status=MessageStatus.SENT,
             attachments=[body.attachment] if body.attachment else [],
@@ -122,16 +125,22 @@ async def chat_stream(
             additional_context=body.attachment or ""
         )
 
+        # Capture IDs for the generator to avoid DetachedInstanceError
+        conv_id = conv.id
+        conv_project_id = conv.project_id
+
         async def stream_cso_agent():
             full: List[str] = []
             async for chunk in target_agent.run_stream(ctx):
                 if chunk.response:
                     full.append(chunk.response)
                 yield json.dumps(chunk.model_dump(), default=str) + "\n"
+            
+            # Re-fetch or use captured IDs to avoid detachment
             ai_msg = Message(
-                conversation_id=conv.id,
-                project_id=conv.project_id,
-                org_id=current_user.org_id,
+                conversation_id=conv_id,
+                project_id=conv_project_id,
+                org_id=org_id,
                 role=MessageRole.ASSISTANT,
                 agent_id=None,
                 content="".join(full),
@@ -143,13 +152,13 @@ async def chat_stream(
 
         return StreamingResponse(stream_cso_agent(), media_type="application/json")
 
-    service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
+    service = ConversationService(ProviderService.create(user_id=user_id))
 
     async def stream_response():
         async for chunk in service.chat_stream(
             db=db,
-            user_id=str(current_user.id),
-            org_id=current_user.org_id,
+            user_id=user_id,
+            org_id=org_id,
             query=body.query,
             project_id=body.project_id,
             framework=body.framework,
