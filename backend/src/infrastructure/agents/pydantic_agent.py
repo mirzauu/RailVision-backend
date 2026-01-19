@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, List, Dict
 
 from langchain_core.tools import StructuredTool
 from pydantic_ai import Agent as PydanticAgent
@@ -8,11 +8,13 @@ from pydantic_ai import Tool
 from pydantic_ai.messages import (
     FunctionToolCallEvent,
     FunctionToolResultEvent,
+    ModelRequest,
     ModelResponse,
     PartDeltaEvent,
     PartStartEvent,
     TextPart,
     TextPartDelta,
+    UserPromptPart,
 )
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.models.anthropic import AnthropicModel
@@ -60,8 +62,11 @@ class PydanticChatAgent(ChatAgent):
                         pass
                 final_tools.append(tool)
 
-        provider = llm_provider.chat_config.provider
-        api_key = llm_provider._get_api_key(llm_provider.chat_config.auth_provider)
+        provider_config = llm_provider.chat_config
+        provider = provider_config.provider
+        auth_provider = provider_config.auth_provider
+        api_key = llm_provider._get_api_key(auth_provider)
+        base_url = provider_config.base_url
         if not api_key and provider == "openai":
             try:
                 from src.config.settings import settings
@@ -73,14 +78,18 @@ class PydanticChatAgent(ChatAgent):
                 import os
                 api_key = os.environ.get("OPENAI_API_KEY")
 
-        model_id = llm_provider.chat_config.model.split("/")[-1]
+        model_id = provider_config.model.split("/")[-1]
 
         if provider == "openai":
-            model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key))
+            model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key, base_url=base_url))
         elif provider == "anthropic":
-            model = AnthropicModel(model_name=model_id, provider=AnthropicProvider(api_key=api_key))
+            model = AnthropicModel(model_name=model_id, provider=AnthropicProvider(api_key=api_key, base_url=base_url))
         else:
-            model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key))
+            model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key, base_url=base_url))
+
+        supports_tools = provider_config.capabilities.get("supports_tool_parallelism", True)
+        if not supports_tools:
+            final_tools = []
 
         model_settings = {"max_tokens": 8000}
         if final_tools and len(final_tools) > 0:
@@ -101,10 +110,45 @@ class PydanticChatAgent(ChatAgent):
             f"\n                CONTEXT:\n                User Query: {ctx.query}\n                \n                Additional Context:\n                {ctx.additional_context if ctx.additional_context != '' else 'no additional context'}\n\n                TASK:\n                {task_config.description}\n\n                Expected Output:\n                {task_config.expected_output}\n\n                INSTRUCTIONS:\n                1. Use the available tools to gather information\n                2. Process and synthesize the gathered information\n                3. Format your response in markdown, make sure it's well formatted\n                4. Include relevant code snippets and file references\n                5. Provide clear explanations\n                6. Verify your output before submitting\n\n                IMPORTANT:\n                - Use tools efficiently and avoid unnecessary API calls\n                - Only use the tools listed below\n\n                With above information answer the user query: {ctx.query}\n            "
         )
 
+    def _build_history(self, history: List[Dict[str, str]]) -> tuple[List[ModelRequest | ModelResponse], str | None]:
+        if not history:
+            return [], None
+
+        final_msgs = []
+        last_role = None
+        current_parts = []
+
+        for m in history:
+            role = m.get("role")
+            content = m.get("content", "")
+            if role == last_role:
+                current_parts.append(content)
+            else:
+                if last_role:
+                    merged_content = "\n\n".join(current_parts)
+                    if last_role == "user":
+                        final_msgs.append(ModelRequest([UserPromptPart(content=merged_content)]))
+                    else:
+                        final_msgs.append(ModelResponse([TextPart(content=merged_content)]))
+                current_parts = [content]
+                last_role = role
+
+        # Process the last group
+        last_user_content = None
+        if last_role == "user":
+            last_user_content = "\n\n".join(current_parts)
+        elif last_role == "assistant":
+            merged_content = "\n\n".join(current_parts)
+            final_msgs.append(ModelResponse([TextPart(content=merged_content)]))
+
+        return final_msgs, last_user_content
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
         logger.info("running pydantic-ai agent")
         task = self._create_task_description(self.tasks[0], ctx)
-        resp = await self.agent.run(user_prompt=task)
+        message_history, extra_user_content = self._build_history(ctx.history)
+        if extra_user_content:
+            task = f"Additional User Context:\n{extra_user_content}\n\n{task}"
+        resp = await self.agent.run(user_prompt=task, message_history=message_history)
         response_text = None
         if isinstance(resp, str):
             response_text = resp
@@ -130,9 +174,12 @@ class PydanticChatAgent(ChatAgent):
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
         task = self._create_task_description(self.tasks[0], ctx)
+        message_history, extra_user_content = self._build_history(ctx.history)
+        if extra_user_content:
+            task = f"Additional User Context:\n{extra_user_content}\n\n{task}"
         async with self.agent.iter(
             user_prompt=task,
-            message_history=[ModelResponse([TextPart(content=msg)]) for msg in ctx.history],
+            message_history=message_history,
         ) as run:
             async for node in run:
                 if PydanticAgent.is_model_request_node(node):

@@ -1,5 +1,5 @@
 from .organizations import Organization
-from .users import User, Role, UserInvitation, RefreshToken, UserStatus, InvitationStatus
+from .users import User, Role, UserInvitation, RefreshToken, UserStatus, InvitationStatus, PasswordReset
 from .agents import Agent, AgentType, AgentStatus
 from .projects import Project, ProjectAgent, ProjectMember, ProjectType, ProjectStatus, AgentRoleInProject, MemberRoleInProject
 from .conversations import Conversation, Message, ConversationType, ConversationStatus, MessageRole, MessageStatus

@@ -129,3 +129,14 @@ class RefreshToken(Base, UUIDMixin):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="refresh_tokens")
+
+class PasswordReset(Base, UUIDMixin, TimestampMixin):
+    __tablename__ = "password_resets"
+
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    otp = Column(String(10), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_used = Column(Boolean, default=False)
+    
+    user = relationship("User")
+

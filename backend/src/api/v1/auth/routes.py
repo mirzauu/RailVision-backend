@@ -6,7 +6,7 @@ from src.application.auth.auth_service import AuthService
 from src.infrastructure.database.repositories.user_repository import UserRepository
 from src.infrastructure.database.repositories.role_repository import RoleRepository
 from src.infrastructure.database.repositories.org_repository import OrganizationRepository
-from src.api.v1.auth.schemas import UserCreate, Token, UserResponse, UserLogin, LoginResponse
+from src.api.v1.auth.schemas import UserCreate, Token, UserResponse, UserLogin, LoginResponse, ForgotPasswordRequest, ResetPasswordRequest
 from src.infrastructure.security.password_hasher import PasslibPasswordHasher
 from src.infrastructure.security.token_provider import JoseJwtTokenProvider
 
@@ -51,3 +51,13 @@ def token(form_data: OAuth2PasswordRequestForm = Depends(), auth_service: AuthSe
             headers={"WWW-Authenticate": "Bearer"},
         )
     return auth_service.create_token_for_user(user)
+    
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, auth_service: AuthService = Depends(get_auth_service)):
+    await auth_service.request_password_reset(request.email)
+    return {"message": "If the email is registered, an OTP has been sent."}
+
+@router.post("/reset-password")
+def reset_password(request: ResetPasswordRequest, auth_service: AuthService = Depends(get_auth_service)):
+    auth_service.reset_password(request.email, request.otp, request.new_password)
+    return {"message": "Password has been reset successfully."}

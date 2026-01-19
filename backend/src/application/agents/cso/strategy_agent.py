@@ -71,7 +71,7 @@ You must first determine whether strategy mode is even appropriate.
 STEP 0: UNDERSTAND USER INTENT (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━
 
-Before answering, use the `think` tool to silently determine:
+Before answering, determine:
 
 - User intent category:
   • Greeting / casual

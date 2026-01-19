@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, List, Optional
+from typing import AsyncGenerator, List, Optional, Dict
 import os
 from sqlalchemy.orm import Session
 from src.infrastructure.database.models.projects import Project, ProjectAgent, AgentRoleInProject
@@ -27,7 +27,7 @@ class ConversationService:
         a = db.query(Agent).filter(Agent.org_id == org_id).first()
         return a
 
-    def _build_history(self, db: Session, project_id: Optional[str]) -> List[str]:
+    def _build_history(self, db: Session, project_id: Optional[str]) -> List[Dict[str, str]]:
         if not project_id:
             return []
         msgs = (
@@ -37,7 +37,12 @@ class ConversationService:
             .limit(20)
             .all()
         )
-        return [m.content for m in msgs if m.content]
+        history = []
+        for m in msgs:
+            if m.content:
+                role = "user" if m.role == MessageRole.USER else "assistant"
+                history.append({"role": role, "content": m.content})
+        return history
 
     def _get_or_create_conversation(self, db: Session, project: Optional[Project], org_id: str) -> Conversation:
         if project:

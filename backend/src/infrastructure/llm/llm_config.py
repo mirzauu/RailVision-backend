@@ -195,10 +195,10 @@ MODEL_CONFIG_MAP = {
         "auth_provider": "perplexity",
         "default_params": {"temperature": 0.2},
         "capabilities": {
-            "supports_pydantic": True,
+            "supports_pydantic": False,
             "supports_streaming": True,
             "supports_vision": False,
-            "supports_tool_parallelism": True,
+            "supports_tool_parallelism": False,
         },
         "base_url": "https://api.perplexity.ai",
         "api_version": None,

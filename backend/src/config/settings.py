@@ -43,6 +43,18 @@ class Settings(BaseSettings):
     cors_allow_methods: str = "GET,POST,PUT,DELETE,OPTIONS"
     cors_allow_headers: str = "Content-Type,Authorization"
     
+    # Email Configuration
+    mail_username: Optional[str] = None
+    mail_password: Optional[str] = None
+    mail_from: Optional[str] = None
+    mail_port: int = 587
+    mail_server: Optional[str] = "smtp.gmail.com"
+    mail_from_name: Optional[str] = "RailVision"
+    mail_starttls: bool = True
+    mail_ssl_tls: bool = False
+    use_credentials: bool = True
+    validate_certs: bool = True
+    
     @property
     def is_production(self) -> bool:
         return self.app_env.lower() == "production"

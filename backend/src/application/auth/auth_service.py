@@ -9,13 +9,20 @@ from src.infrastructure.database.repositories.org_repository import Organization
 from src.infrastructure.database.models import Organization
 from datetime import datetime, timezone
 
+from src.infrastructure.email.email_service import EmailService
+import random
+import string
+from datetime import datetime, timezone, timedelta
+from src.infrastructure.database.models import PasswordReset
+
 class AuthService:
-    def __init__(self, user_repo: UserRepository, role_repo: RoleRepository, org_repo: OrganizationRepository, hasher: PasswordHasher, token_provider: TokenProvider):
+    def __init__(self, user_repo: UserRepository, role_repo: RoleRepository, org_repo: OrganizationRepository, hasher: PasswordHasher, token_provider: TokenProvider, email_service: EmailService = None):
         self.user_repo = user_repo
         self.role_repo = role_repo
         self.org_repo = org_repo
         self.hasher = hasher
         self.token_provider = token_provider
+        self.email_service = email_service or EmailService()
 
     def authenticate_user(self, email: str, password: str):
         user = self.user_repo.get_by_email(email)
@@ -88,3 +95,44 @@ class AuthService:
         self.user_repo.db.add(user)
         self.user_repo.db.commit()
         self.user_repo.db.refresh(user)
+
+    async def request_password_reset(self, email: str):
+        user = self.user_repo.get_by_email(email)
+        if not user:
+            # We don't want to reveal if a user exists or not for security reasons
+            # but usually for internal tools it's fine. 
+            # For now, let's just return success anyway.
+            return True
+        
+        # Generate a 6-digit OTP
+        otp = ''.join(random.choices(string.digits, k=6))
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+        
+        reset_obj = PasswordReset(
+            user_id=user.id,
+            otp=otp,
+            expires_at=expires_at
+        )
+        self.user_repo.create_password_reset(reset_obj)
+        
+        # Send email
+        await self.email_service.send_otp(email, otp)
+        return True
+
+    def reset_password(self, email: str, otp: str, new_password: str):
+        user = self.user_repo.get_by_email(email)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        reset_obj = self.user_repo.get_password_reset(user.id, otp)
+        if not reset_obj:
+            raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+        
+        # Update password
+        user.hashed_password = self.hasher.hash(new_password)
+        reset_obj.is_used = True
+        
+        self.user_repo.db.add(user)
+        self.user_repo.db.add(reset_obj)
+        self.user_repo.db.commit()
+        return True

@@ -108,7 +108,13 @@ async def chat_stream(
             .limit(20)
             .all()
         )
-        history = [m.content for m in msgs if m.content]
+        history = []
+        # Exclude the message we just added to avoid duplication in history
+        history_msgs = msgs[:-1] if msgs else []
+        for m in history_msgs:
+            if m.content:
+                role = "user" if m.role == MessageRole.USER else "assistant"
+                history.append({"role": role, "content": m.content})
 
         ctx = ChatContext(
             history=history,

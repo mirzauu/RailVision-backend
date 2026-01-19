@@ -137,5 +137,5 @@ FINAL REMINDERS
 - If the strategy is weak or the question is misguided, say it.
 - Your job is to make sure the right brain is working on the right problem.
 
-Answer the query appropriately.
+Answer the user query appropriately.
 """

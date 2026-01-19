@@ -18,3 +18,4 @@ litellm>=1.42.10
 instructor>=1.3.5
 pydantic-ai>=0.0.10
 supabase>=2.0.0
+fastapi-mail>=1.4.1

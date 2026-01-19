@@ -24,7 +24,7 @@ class ChatAgentResponse(BaseModel):
 
 
 class ChatContext(BaseModel):
-    history: List[str]
+    history: List[Dict[str, str]] = Field(default_factory=list, description="List of messages with 'role' and 'content'")
     query: str
     additional_context: str = ""
 

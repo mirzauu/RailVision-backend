@@ -82,7 +82,7 @@ class CSORouterAgent(ChatAgent):
     async def _run_classification(self, ctx: ChatContext, agent_descriptions: str) -> ChatAgent:
         prompt = classification_prompt.format(
             query=ctx.query,
-            history=", ".join(message for message in ctx.history),
+            history=", ".join(f"{m['role']}: {m['content']}" for m in ctx.history),
             agent_descriptions=agent_descriptions,
         )
         messages = [
