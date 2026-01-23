@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, HTTPException
+from fastapi import APIRouter, Depends, Body, HTTPException, File, UploadFile, Form
 import os
 from fastapi.responses import StreamingResponse
 import json
@@ -16,6 +16,7 @@ from src.application.tools.service import ToolService
 from src.domain.agents.base import ChatContext
 from src.infrastructure.database.models.projects import Project
 from src.infrastructure.database.models.conversations import Conversation, Message, MessageRole, MessageStatus
+from src.application.attachments.service import AttachmentService
 
 router = APIRouter()
 
@@ -54,30 +55,67 @@ async def chat(
 
 @router.post("/chat/stream")
 async def chat_stream(
-    body: ChatRequest = Body(...),
+    query: str = Form(...),
+    project_id: str = Form("default"),
+    framework: str = Form("pydantic"),
+    model: Optional[str] = Form(None),
+    agent: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if body.model and "/" in body.model and body.model.strip().lower() not in {"string", "null", "none"}:
-        os.environ["CHAT_MODEL"] = body.model
+    """
+    Chat endpoint with streaming response.
+    
+    Supports optional file attachments. When a file is provided:
+    1. The file is parsed and indexed to Pinecone
+    2. Relevant context is retrieved using RAG
+    3. Context is passed to the AI agent
+    """
+    if model and "/" in model and model.strip().lower() not in {"string", "null", "none"}:
+        os.environ["CHAT_MODEL"] = model
 
     user_id = str(current_user.id)
     org_id = current_user.org_id
+    
+    # Process file attachment if provided
+    attachment_context = ""
+    attachment_id = None
+    if file and file.filename:
+        attachment_service = AttachmentService()
+        file_bytes = await file.read()
+        
+        # Process and index the attachment
+        attachment_id = await attachment_service.process_attachment(
+            db=db,
+            file_bytes=file_bytes,
+            filename=file.filename,
+            user_id=user_id,
+            org_id=org_id,
+            project_id=project_id if project_id != "default" else None
+        )
+        
+        # Retrieve relevant context from the attachment
+        attachment_context = attachment_service.retrieve_attachment_context(
+            query=query,
+            attachment_id=attachment_id,
+            top_k=5,
+        )
 
-    if body.framework == "cso" and body.agent and body.agent != "auto":
+    if framework == "cso" and agent and agent != "auto":
         provider = ProviderService.create(user_id=user_id)
         tools = ToolService(db, user_id)
         
         # Use RouterAgent to get the specific agent directly
         router_agent = CSORouterAgent(provider, tools)
         # Check if the agent exists
-        if not router_agent.get_agent(body.agent):
-            return {"error": f"Agent {body.agent} not found"}
+        if not router_agent.get_agent(agent):
+            return {"error": f"Agent {agent} not found"}
 
-        target_agent = router_agent.get_agent(body.agent)
+        target_agent = router_agent.get_agent(agent)
 
         # Build conversation and history (persist user message)
-        project = db.query(Project).filter(Project.id == body.project_id).first() if body.project_id else None
+        project = db.query(Project).filter(Project.id == project_id).first() if project_id else None
         if project:
             conv = db.query(Conversation).filter(Conversation.project_id == project.id).first()
             if not conv:
@@ -96,9 +134,9 @@ async def chat_stream(
             org_id=org_id,
             role=MessageRole.USER,
             user_id=user_id,
-            content=body.query,
+            content=query,
             status=MessageStatus.SENT,
-            attachments=[body.attachment] if body.attachment else [],
+            attachments=[attachment_id] if attachment_id else [],
         )
         db.add(user_msg)
         db.commit()
@@ -121,8 +159,8 @@ async def chat_stream(
 
         ctx = ChatContext(
             history=history,
-            query=body.query,
-            additional_context=body.attachment or ""
+            query=query,
+            additional_context=attachment_context
         )
 
         # Capture IDs for the generator to avoid DetachedInstanceError
@@ -159,16 +197,18 @@ async def chat_stream(
             db=db,
             user_id=user_id,
             org_id=org_id,
-            query=body.query,
-            project_id=body.project_id,
-            framework=body.framework,
-            model=body.model,
-            agent=body.agent,
-            attachment=body.attachment,
+            query=query,
+            project_id=project_id,
+            framework=framework,
+            model=model,
+            agent=agent,
+            attachment=attachment_context,
+            attachment_id=attachment_id,
         ):
             yield json.dumps(chunk.model_dump(), default=str) + "\n"
 
     return StreamingResponse(stream_response(), media_type="application/json")
+
 
 @router.get("/history/{project_id}", response_model=ChatHistoryResponse)
 def get_history(

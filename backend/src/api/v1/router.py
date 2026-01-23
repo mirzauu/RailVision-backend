@@ -11,6 +11,7 @@ from src.api.v1.projects import routes as project_routes
 from src.api.v1.admin import routes as admin_routes
 from src.api.v1.graph import routes as graph_routes
 from src.api.v1.tools import routes as tool_routes
+from src.api.v1.dashboard import routes as dashboard_routes
 
 api_router = APIRouter()
 
@@ -26,3 +27,4 @@ api_router.include_router(provider_routes.router, prefix="/provider", tags=["pro
 api_router.include_router(project_routes.router, prefix="/projects", tags=["projects"])
 api_router.include_router(graph_routes.router, prefix="/graph", tags=["graph"])
 api_router.include_router(tool_routes.router, prefix="/tools", tags=["tools"])
+api_router.include_router(dashboard_routes.router, prefix="/dashboard", tags=["dashboard"])

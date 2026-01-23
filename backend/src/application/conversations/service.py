@@ -85,7 +85,8 @@ class ConversationService:
         framework: Optional[str],
         model: Optional[str],
         agent: Optional[str],
-        attachment: Optional[str],
+        attachment: Optional[str] = None,
+        attachment_id: Optional[str] = None,
     ) -> ChatAgentResponse:
         # Do not override global model here; routing layer handles model selection safely
         project = db.query(Project).filter(Project.id == project_id).first() if project_id else None
@@ -100,7 +101,7 @@ class ConversationService:
             user_id=user_id,
             content=query,
             status=MessageStatus.SENT,
-            attachments=[attachment] if attachment else [],
+            attachments=[attachment_id] if attachment_id else [],
         )
         db.add(user_msg)
         db.commit()
@@ -135,7 +136,8 @@ class ConversationService:
         framework: Optional[str],
         model: Optional[str],
         agent: Optional[str],
-        attachment: Optional[str],
+        attachment: Optional[str] = None,
+        attachment_id: Optional[str] = None,
     ) -> AsyncGenerator[ChatAgentResponse, None]:
         # Do not override global model here; routing layer handles model selection safely
         project = db.query(Project).filter(Project.id == project_id).first() if project_id else None
@@ -150,7 +152,7 @@ class ConversationService:
             user_id=user_id,
             content=query,
             status=MessageStatus.SENT,
-            attachments=[attachment] if attachment else [],
+            attachments=[attachment_id] if attachment_id else [],
         )
         db.add(user_msg)
         db.commit()
