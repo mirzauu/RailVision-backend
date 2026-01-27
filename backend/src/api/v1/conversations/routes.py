@@ -36,7 +36,7 @@ async def chat(
     current_user: User = Depends(get_current_user),
 ):
     if body.model and "/" in body.model and body.model.strip().lower() not in {"string", "null", "none"}:
-        os.environ["CHAT_MODEL"] = body.model
+        os.environ["CHAT_MODEL"] = "anthropic/claude-3-haiku-20240307"
 
     service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
     resp = await service.chat(
@@ -73,7 +73,7 @@ async def chat_stream(
     3. Context is passed to the AI agent
     """
     if model and "/" in model and model.strip().lower() not in {"string", "null", "none"}:
-        os.environ["CHAT_MODEL"] = model
+        os.environ["CHAT_MODEL"] = "anthropic/claude-3-haiku-20240307"
 
     user_id = str(current_user.id)
     org_id = current_user.org_id

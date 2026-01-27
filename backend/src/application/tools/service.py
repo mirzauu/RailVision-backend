@@ -4,6 +4,7 @@ from langchain_core.tools import StructuredTool
 
 from src.infrastructure.agents.tools.think_tool import think_tool
 from src.infrastructure.agents.tools.web_search_tool import web_search_tool
+from src.infrastructure.agents.tools.knowledge_base_tool import knowledge_base_tool
 from src.api.v1.tools.schemas import ToolInfo, ToolInfoWithParameters
 from src.infrastructure.llm.provider_service import ProviderService
 
@@ -29,6 +30,8 @@ class ToolService:
         ws = web_search_tool(self.db, self.user_id)
         if ws:
             tools["web_search_tool"] = ws
+
+        tools["knowledge_base"] = knowledge_base_tool(self.db, self.user_id)
 
         if self.webpage_extractor_tool:
             tools["webpage_extractor"] = self.webpage_extractor_tool

@@ -33,7 +33,7 @@ class CSORailroadIntelAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["think", "web_search_tool"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base"]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:

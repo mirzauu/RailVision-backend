@@ -40,16 +40,16 @@ class CSOStrategyAgent(ChatAgent):
             ],
         )
 
-        tools = self.tools_provider.get_tools(["think", "web_search_tool"])
+        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base"])
 
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
         # Enrich the query with Reasoning (Neo4j + Pinecone)
-        enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
+        # enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
         # Create new context with enriched query
-        new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
-        return await self._build_agent().run(new_ctx)
+        # new_ctx = ctx.model_copy(update={"additional_context": ctx.query})
+        return await self._build_agent().run(ctx)
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
         # Enrich the query with Reasoning (Neo4j + Pinecone)
@@ -168,6 +168,7 @@ If a decision is involved:
 TOOL USAGE 
 ━━━━━━━━━━━━━━━━━━━━━━
 
+- Use `knowledge_base` tool to get relevent info from the knowledge graph.
 - Use `think` tool **ONLY AFTER** you have determined that Strategy Mode (full CSO reasoning) is required.
 - Do NOT use `think` for greetings, clarifications, or simple tactical advice that doesn't reach the "Strategy" threshold.
 - Use `web_search_tool` ONLY to verify facts that materially affect the decision and finding from web.

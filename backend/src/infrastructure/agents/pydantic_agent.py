@@ -91,7 +91,7 @@ class PydanticChatAgent(ChatAgent):
         if not supports_tools:
             final_tools = []
 
-        model_settings = {"max_tokens": 8000}
+        model_settings = {"max_tokens": provider_config.default_params.get("max_tokens", 8000)}
         if final_tools and len(final_tools) > 0:
             model_settings["parallel_tool_calls"] = True
 
