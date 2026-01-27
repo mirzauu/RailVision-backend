@@ -1,12 +1,12 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List, Any
 from datetime import datetime
 
 class DocumentResponse(BaseModel):
     id: str
     org_id: str
     project_id: Optional[str] = None
-    uploaded_by: str
+    uploaded_by: str = Field(validation_alias="uploader")
     filename: str
     original_filename: str
     file_type: str
@@ -22,6 +22,15 @@ class DocumentResponse(BaseModel):
     category: Optional[str] = None
     tags: List[str]
     created_at: datetime
+
+    @field_validator('uploaded_by', mode='before')
+    @classmethod
+    def get_uploader_name(cls, v: Any) -> str:
+        if hasattr(v, 'full_name'):
+            return v.full_name or v.email or "Unknown"
+        if hasattr(v, 'email'):
+            return v.email
+        return str(v) if v else "Unknown"
 
     class Config:
         from_attributes = True

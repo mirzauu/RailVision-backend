@@ -1,5 +1,5 @@
 from typing import Optional, List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from src.infrastructure.database.models import Document
 
 class DocumentRepository:
@@ -7,12 +7,14 @@ class DocumentRepository:
         self.db = db
 
     def get_by_id(self, document_id: str) -> Optional[Document]:
-        return self.db.query(Document).filter(Document.id == document_id).first()
+        return self.db.query(Document).options(joinedload(Document.uploader)).filter(Document.id == document_id).first()
 
     def get_by_org(self, org_id: str) -> List[Document]:
         return (
             self.db.query(Document)
+            .options(joinedload(Document.uploader))
             .filter(Document.org_id == org_id)
+            .filter(Document.project_id.is_(None))
             .order_by(Document.created_at.desc())
             .all()
         )

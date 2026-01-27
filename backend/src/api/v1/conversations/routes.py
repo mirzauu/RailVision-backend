@@ -73,7 +73,7 @@ async def chat_stream(
     3. Context is passed to the AI agent
     """
     if model and "/" in model and model.strip().lower() not in {"string", "null", "none"}:
-        os.environ["CHAT_MODEL"] = "anthropic/claude-3-haiku-20240307"
+        os.environ["CHAT_MODEL"] = model
 
     user_id = str(current_user.id)
     org_id = current_user.org_id
