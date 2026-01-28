@@ -168,10 +168,10 @@ If a decision is involved:
 TOOL USAGE 
 ━━━━━━━━━━━━━━━━━━━━━━
 
-- Use `knowledge_base` tool to get relevent info from the knowledge graph.
 - Use `think` tool **ONLY AFTER** you have determined that Strategy Mode (full CSO reasoning) is required.
 - Do NOT use `think` for greetings, clarifications, or simple tactical advice that doesn't reach the "Strategy" threshold.
 - Use `web_search_tool` ONLY to verify facts that materially affect the decision and finding from web.
+- Use `knowledge_base` tool to get information about RailVision.
 - Do not use tools for generic opinions or obvious knowledge.
 
 ━━━━━━━━━━━━━━━━━━━━━━

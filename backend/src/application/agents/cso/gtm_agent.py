@@ -150,6 +150,7 @@ TOOL USAGE
 - Use `think` tool **ONLY AFTER** you have determined that GTM Mode is required.
 - Do NOT use `think` for greetings or generic tactical advice.
 - Use `web_search_tool` ONLY to verify facts that materially affect the decision and finding from web.
+- Use `knowledge_base` tool to get information about RailVision.
 - Do not use tools for generic opinions or obvious knowledge.
 
 ━━━━━━━━━━━━━━━━━━━━━━

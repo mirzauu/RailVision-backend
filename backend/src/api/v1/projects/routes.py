@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
@@ -199,9 +200,16 @@ def list_members(
 @router.get("/by-agent/{agent_id}", response_model=List[ProjectResponse])
 def list_projects_by_agent(
     agent_id: str,
+    db: Session = Depends(get_db),
     svc: ProjectService = Depends(get_project_service),
     current_user: User = Depends(get_current_user),
 ):
     if not current_user.org_id:
         return []
+    
+    # Update last active timestamp
+    current_user.last_active_at = datetime.now(timezone.utc)
+    db.add(current_user)
+    db.commit()
+
     return svc.get_projects_by_agent_for_user(agent_id, current_user.id, current_user.org_id)

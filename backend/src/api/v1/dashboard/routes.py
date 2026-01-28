@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 from src.config.database import get_db
 from src.api.dependencies import get_current_user
 from src.infrastructure.database.models import User
@@ -13,11 +14,17 @@ def get_dashboard_service(db: Session = Depends(get_db)) -> DashboardService:
 
 @router.get("/", response_model=DashboardResponse)
 def get_dashboard(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     dashboard_service: DashboardService = Depends(get_dashboard_service)
 ):
     if not current_user.org_id:
         raise HTTPException(status_code=400, detail="User is not associated with an organization")
+    
+    # Update last active timestamp
+    current_user.last_active_at = datetime.now(timezone.utc)
+    db.add(current_user)
+    db.commit()
         
     try:
         return dashboard_service.get_dashboard_data(current_user.org_id)
