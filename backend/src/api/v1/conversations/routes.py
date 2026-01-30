@@ -104,16 +104,7 @@ async def chat_stream(
 
     if framework == "cso" and agent and agent != "auto":
         provider = ProviderService.create(user_id=user_id)
-        tools = ToolService(db, user_id)
         
-        # Use RouterAgent to get the specific agent directly
-        router_agent = CSORouterAgent(provider, tools)
-        # Check if the agent exists
-        if not router_agent.get_agent(agent):
-            return {"error": f"Agent {agent} not found"}
-
-        target_agent = router_agent.get_agent(agent)
-
         # Build conversation and history (persist user message)
         project = db.query(Project).filter(Project.id == project_id).first() if project_id else None
         if project:
@@ -128,9 +119,22 @@ async def chat_stream(
             if not conv:
                 raise HTTPException(status_code=400, detail="conversation requires a valid project")
 
+        conv_id = conv.id
+        conv_project_id = conv.project_id
+        
+        tools = ToolService(db, user_id, conversation_id=conv_id)
+        
+        # Use RouterAgent to get the specific agent directly
+        router_agent = CSORouterAgent(provider, tools)
+        # Check if the agent exists
+        if not router_agent.get_agent(agent):
+            return {"error": f"Agent {agent} not found"}
+
+        target_agent = router_agent.get_agent(agent)
+
         user_msg = Message(
-            conversation_id=conv.id,
-            project_id=conv.project_id,
+            conversation_id=conv_id,
+            project_id=conv_project_id,
             org_id=org_id,
             role=MessageRole.USER,
             user_id=user_id,
@@ -144,7 +148,7 @@ async def chat_stream(
 
         msgs = (
             db.query(Message)
-            .filter(Message.project_id == conv.project_id)
+            .filter(Message.project_id == conv_project_id)
             .order_by(Message.created_at.asc())
             .limit(20)
             .all()
@@ -162,10 +166,6 @@ async def chat_stream(
             query=query,
             additional_context=attachment_context
         )
-
-        # Capture IDs for the generator to avoid DetachedInstanceError
-        conv_id = conv.id
-        conv_project_id = conv.project_id
 
         async def stream_cso_agent():
             full: List[str] = []

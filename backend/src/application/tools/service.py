@@ -5,15 +5,17 @@ from langchain_core.tools import StructuredTool
 from src.infrastructure.agents.tools.think_tool import think_tool
 from src.infrastructure.agents.tools.web_search_tool import web_search_tool
 from src.infrastructure.agents.tools.knowledge_base_tool import knowledge_base_tool
+from src.infrastructure.agents.tools.ppt_tool import ppt_generation_tool
 from src.api.v1.tools.schemas import ToolInfo, ToolInfoWithParameters
 from src.infrastructure.llm.provider_service import ProviderService
 
 
 
 class ToolService:
-    def __init__(self, db: Session, user_id: str):
+    def __init__(self, db: Session, user_id: str, conversation_id: str | None = None):
         self.db = db
         self.user_id = user_id
+        self.conversation_id = conversation_id
         
         # Initialize tools properties (placeholders for now)
         self.webpage_extractor_tool = None # webpage_extractor_tool(db, user_id)
@@ -41,6 +43,11 @@ class ToolService:
 
         if self.web_search_tool:
             tools["web_search_tool"] = self.web_search_tool
+
+        # PPT Generation Tools
+        ppt_tools = ppt_generation_tool(self.db, self.user_id, self.conversation_id)
+        for ppt_tool in ppt_tools:
+            tools[ppt_tool.name] = ppt_tool
 
         return tools
 

@@ -7,4 +7,5 @@ from .documents import Document, DocumentChunk, DocumentType, DocumentStatus, Do
 from .integrations import Integration, IntegrationType, IntegrationStatus
 from .notifications import Notification, NotificationType, NotificationStatus
 from .logs import LLMUsageLog, AuditLog, AgentCollaborationLog, AuditAction, CollaborationType
+from .ppt import Presentation, PresentationSlide
 from .mixins import UUIDMixin, TimestampMixin

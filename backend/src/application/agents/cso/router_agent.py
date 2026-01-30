@@ -15,6 +15,7 @@ from .gtm_agent import CSOGTMAgent
 from .railroad_intel_agent import CSORailroadIntelAgent
 from .mna_agent import CSOMNAAgent
 from .artifact_agent import CSOArtifactAgent
+from .ppt_agent import CSOPPTAgent
 from .general_agent import CSOGeneralAgent
 
 
@@ -57,6 +58,7 @@ class CSORouterAgent(ChatAgent):
             "railroad_intel": CSORailroadIntelAgent(llm_provider, tools_provider),
             "mna": CSOMNAAgent(llm_provider, tools_provider),
             "artifact": CSOArtifactAgent(llm_provider, tools_provider),
+            "ppt": CSOPPTAgent(llm_provider, tools_provider),
             "general": CSOGeneralAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
@@ -65,7 +67,8 @@ class CSORouterAgent(ChatAgent):
             "gtm": "Designs go-to-market strategies; focuses on adoption sequencing, enterprise deployment, and organizational friction.",
             "railroad_intel": "Builds mental models of specific railroads; focuses on network structure, decision dynamics, and operational constraints.",
             "mna": "Thinks like a corporate development executive; identifies strategic buyers, synergies, and defensive value.",
-            "artifact": "Converts inputs into polished artifacts; organizes and sharpens language without generating new strategy.",
+            "artifact": "Converts inputs into polished artifacts like memos, emails, and briefings.",
+            "ppt": "Specialized in creating and updating PowerPoint slide decks; focuses on visual hierarchy and strategic narrative.",
             "general": "Handles greetings and simple open-ended questions; acts as a friendly front-door assistant for the CSO system.",
         }
 
