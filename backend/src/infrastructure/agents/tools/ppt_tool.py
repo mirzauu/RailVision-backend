@@ -129,7 +129,8 @@ def ppt_generation_tool(sql_db: Session, user_id: str, conversation_id: Optional
     """Returns tools in StructuredTool format for project integration"""
     
     if not conversation_id:
-        # Fallback if no conversation_id is provided, though it's required for DB storage
+        import logging
+        logging.warning("ppt_generation_tool called without conversation_id. PPT tools will not be available.")
         return []
 
     async def create_ppt(title: str) -> str:

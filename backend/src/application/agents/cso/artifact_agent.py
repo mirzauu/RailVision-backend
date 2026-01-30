@@ -34,7 +34,7 @@ class CSOArtifactAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "create_ppt", "add_slide", "list_slides", "update_ppt"]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
@@ -147,6 +147,7 @@ TOOL USAGE
 - Do NOT use `think` for greetings or queries that don't involve artifact production.
 - Use `web_search_tool` ONLY to verify facts that materially affect the decision and finding from web.
 - Use `knowledge_base` tool to get information about RailVision.
+- **PowerPoint Generation**: If the user wants a slide deck, you MUST use the PPT tools (`create_ppt`, `add_slide`). DO NOT just write the content as text. Note: slides are stored in the DB linked to this conversation.
 - Do not use tools for generic opinions or obvious knowledge.
 
 ━━━━━━━━━━━━━━━━━━━━━━

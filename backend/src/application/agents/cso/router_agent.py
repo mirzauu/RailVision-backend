@@ -67,8 +67,8 @@ class CSORouterAgent(ChatAgent):
             "gtm": "Designs go-to-market strategies; focuses on adoption sequencing, enterprise deployment, and organizational friction.",
             "railroad_intel": "Builds mental models of specific railroads; focuses on network structure, decision dynamics, and operational constraints.",
             "mna": "Thinks like a corporate development executive; identifies strategic buyers, synergies, and defensive value.",
-            "artifact": "Converts inputs into polished artifacts like memos, emails, and briefings.",
-            "ppt": "Specialized in creating and updating PowerPoint slide decks; focuses on visual hierarchy and strategic narrative.",
+            "artifact": "Converts inputs into polished artifacts like memos, emails, briefings, and action plans.",
+            "ppt": "The primary agent for building and updating PowerPoint slide decks; use this for ANY request involving slides, presentations, or decks.",
             "general": "Handles greetings and simple open-ended questions; acts as a friendly front-door assistant for the CSO system.",
         }
 
