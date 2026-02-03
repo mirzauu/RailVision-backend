@@ -106,6 +106,8 @@ async def chat_stream(
             attachment_id=attachment_id,
             top_k=5,
         )
+        if attachment_id:
+            attachment_context = f"user attach a doc with the user query, the attchment doc content is {attachment_context}"
         
         # Get attachment info to include in response
         attachment_doc = db.query(Document).filter(Document.id == attachment_id).first()

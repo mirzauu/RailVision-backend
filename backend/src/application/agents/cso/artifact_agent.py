@@ -34,7 +34,7 @@ class CSOArtifactAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "create_ppt", "add_slide", "list_slides", "update_ppt", "create_pdf", "add_pdf_section", "list_pdf_sections", "update_pdf"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "create_ppt", "add_slide", "list_slides", "update_ppt", "create_pdf", "add_pdf_section", "list_pdf_sections", "update_pdf", "search_attachments"]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
@@ -149,6 +149,7 @@ TOOL USAGE
 - Use `knowledge_base` tool to get information about RailVision.
 - **PowerPoint Generation**: If the user wants a slide deck, you MUST use the PPT tools (`create_ppt`, `add_slide`). DO NOT just write the content as text.
 - **PDF Generation**: If the user wants a PDF document, report, or memo, you MUST use the PDF tools (`create_pdf`, `add_pdf_section`). DO NOT just write the content as text.
+- **Search Attachments**: Use `search_attachments` tool to find and retrieve specific information from documents that the user has attached to this conversation or project. This is essential for answering questions based on the content of uploaded documents.
 - Note: Both slides and PDF segments are stored in the DB linked to this conversation.
 - Do not use tools for generic opinions or obvious knowledge.
 

@@ -34,7 +34,7 @@ class CSOMNAAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "search_attachments"]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
@@ -148,6 +148,7 @@ TOOL USAGE
 - Do NOT use `think` for greetings or basic financial advice.
 - Use `web_search_tool` ONLY to verify facts that materially affect the decision and finding from web.
 - Use `knowledge_base` tool to get information about RailVision.
+- Use `search_attachments` tool to find and retrieve specific information from documents that the user has attached to this conversation or project. This is essential for answering questions based on the content of uploaded documents.
 - Do not use tools for generic opinions or obvious knowledge.
 
 ━━━━━━━━━━━━━━━━━━━━━━

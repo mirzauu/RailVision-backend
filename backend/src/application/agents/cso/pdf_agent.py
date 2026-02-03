@@ -41,7 +41,8 @@ class CSOPDFAgent(ChatAgent):
             "create_pdf", 
             "add_pdf_section", 
             "list_pdf_sections", 
-            "update_pdf"
+            "update_pdf",
+            "search_attachments"
         ]) if self.tools_provider else []
         
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
@@ -92,6 +93,7 @@ CONSTRAINTS
 - **USE TOOLS OR FAIL**: If you do not use `create_pdf` and `add_pdf_section`, the user cannot see the document.
 - DO NOT invent data points not supported by the knowledge base or provided context.
 - If the input is sparse, use the `knowledge_base` tool to find supporting facts about RailVision.
+- Use the `search_attachments` tool to find and retrieve specific information from documents that the user has attached to this conversation or project.
 - All documents are stored in the database as structured sections.
 
 ━━━━━━━━━━━━━━━━━━━━━━

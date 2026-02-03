@@ -33,7 +33,7 @@ class CSOGeneralAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "search_attachments"]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
@@ -129,6 +129,7 @@ TOOL USAGE
 - Use `think` for architectural triage and philosophical alignment.
 - Use `web_search_tool` to orient yourself with the *current* industry context if the query involves outside entities.
 - Use `knowledge_base` tool to get information about RailVision.
+- Use `search_attachments` tool to find and retrieve specific information from documents that the user has attached to this conversation or project. This is essential for answering questions based on the content of uploaded documents.
 - Do not use tools for generic opinions or obvious knowledge.
 
 ━━━━━━━━━━━━━━━━━━━━━━

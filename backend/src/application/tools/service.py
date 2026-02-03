@@ -7,6 +7,7 @@ from src.infrastructure.agents.tools.web_search_tool import web_search_tool
 from src.infrastructure.agents.tools.knowledge_base_tool import knowledge_base_tool
 from src.infrastructure.agents.tools.ppt_tool import ppt_generation_tool
 from src.infrastructure.agents.tools.pdf_tool import pdf_generation_tool
+from src.infrastructure.agents.tools.attachment_tool import attachment_search_tool
 from src.api.v1.tools.schemas import ToolInfo, ToolInfoWithParameters
 from src.infrastructure.llm.provider_service import ProviderService
 
@@ -52,8 +53,14 @@ class ToolService:
 
         # PDF Generation Tools
         pdf_tools = pdf_generation_tool(self.db, self.user_id, self.conversation_id)
-        for pdf_tool in pdf_tools:
-            tools[pdf_tool.name] = pdf_tool
+        if pdf_tools:
+            for pdf_tool in pdf_tools:
+                tools[pdf_tool.name] = pdf_tool
+
+        # Attachment Search Tool
+        att_tool = attachment_search_tool(self.db, self.user_id, self.conversation_id)
+        if att_tool:
+            tools[att_tool.name] = att_tool
 
         return tools
 
