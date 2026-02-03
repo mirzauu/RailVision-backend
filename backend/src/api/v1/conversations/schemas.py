@@ -37,8 +37,27 @@ class PresentationResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class PDFSectionResponse(BaseModel):
+    id: str
+    title: Optional[str] = None
+    content: Optional[str] = None
+    section_type: str
+    order: int
+
+    class Config:
+        from_attributes = True
+
+class GeneratedPDFResponse(BaseModel):
+    id: str
+    title: str
+    sections: List[PDFSectionResponse]
+
+    class Config:
+        from_attributes = True
+
 class ChatHistoryResponse(BaseModel):
     conversation_id: Optional[str] = None
     project_id: str
     messages: List[MessageResponse]
     presentations: List[PresentationResponse] = []
+    generated_pdfs: List[GeneratedPDFResponse] = []

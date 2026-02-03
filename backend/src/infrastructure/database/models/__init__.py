@@ -8,4 +8,5 @@ from .integrations import Integration, IntegrationType, IntegrationStatus
 from .notifications import Notification, NotificationType, NotificationStatus
 from .logs import LLMUsageLog, AuditLog, AgentCollaborationLog, AuditAction, CollaborationType
 from .ppt import Presentation, PresentationSlide
+from .generated_pdf import GeneratedPDF, PDFSection
 from .mixins import UUIDMixin, TimestampMixin

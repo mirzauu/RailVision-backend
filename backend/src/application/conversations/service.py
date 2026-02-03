@@ -5,6 +5,7 @@ from src.infrastructure.database.models.projects import Project, ProjectAgent, A
 from src.infrastructure.database.models.agents import Agent
 from src.infrastructure.database.models.conversations import Message, Conversation, MessageRole, MessageStatus
 from src.infrastructure.database.models.ppt import Presentation
+from src.infrastructure.database.models.generated_pdf import GeneratedPDF
 from src.infrastructure.llm.provider_service import ProviderService
 from src.application.agents.executer_agent import ExecuterAgent
 from src.domain.agents.base import AgentConfig, TaskConfig, ChatContext, ChatAgentResponse
@@ -197,10 +198,16 @@ class ConversationService:
         
         # Fetch presentations link to this conversation
         presentations = []
+        generated_pdfs = []
         if conv:
             presentations = (
                 db.query(Presentation)
                 .filter(Presentation.conversation_id == conv.id)
+                .all()
+            )
+            generated_pdfs = (
+                db.query(GeneratedPDF)
+                .filter(GeneratedPDF.conversation_id == conv.id)
                 .all()
             )
 
@@ -208,5 +215,6 @@ class ConversationService:
             "conversation_id": conv.id if conv else None,
             "project_id": project_id,
             "messages": msgs,
-            "presentations": presentations
+            "presentations": presentations,
+            "generated_pdfs": generated_pdfs
         }
