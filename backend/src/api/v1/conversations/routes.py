@@ -4,10 +4,11 @@ from fastapi.responses import StreamingResponse
 import json
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Any
 from src.config.database import get_db
 from src.api.dependencies import get_current_user
 from src.infrastructure.database.models import User
+from src.infrastructure.database.models.documents import Document
 from src.application.conversations.service import ConversationService
 from src.infrastructure.llm.provider_service import ProviderService
 from src.api.v1.conversations.schemas import ChatHistoryResponse
@@ -39,6 +40,7 @@ async def chat(
         os.environ["CHAT_MODEL"] = "anthropic/claude-3-haiku-20240307"
 
     service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
+    body.query = body.query.replace("\x00", "")
     resp = await service.chat(
         db=db,
         user_id=str(current_user.id),
@@ -78,6 +80,9 @@ async def chat_stream(
     user_id = str(current_user.id)
     org_id = current_user.org_id
     
+    # Sanitize query to remove NULL bytes which PostgreSQL doesn't support
+    query = query.replace("\x00", "")
+    
     # Process file attachment if provided
     attachment_context = ""
     attachment_id = None
@@ -101,6 +106,21 @@ async def chat_stream(
             attachment_id=attachment_id,
             top_k=5,
         )
+        
+        # Get attachment info to include in response
+        attachment_doc = db.query(Document).filter(Document.id == attachment_id).first()
+        if attachment_doc:
+            attachment_info = {
+                "id": attachment_doc.id,
+                "filename": attachment_doc.original_filename,
+                "file_type": str(attachment_doc.file_type),
+                "file_size_bytes": attachment_doc.file_size_bytes,
+                "status": str(attachment_doc.status)
+            }
+        else:
+            attachment_info = None
+    else:
+        attachment_info = None
 
     if framework == "cso" and agent and agent != "auto":
         provider = ProviderService.create(user_id=user_id)
@@ -140,7 +160,7 @@ async def chat_stream(
             user_id=user_id,
             content=query,
             status=MessageStatus.SENT,
-            attachments=[attachment_id] if attachment_id else [],
+            attachments=[attachment_info] if attachment_info else [],
         )
         db.add(user_msg)
         db.commit()
@@ -169,9 +189,15 @@ async def chat_stream(
 
         async def stream_cso_agent():
             full: List[str] = []
+            first_chunk = True
             async for chunk in target_agent.run_stream(ctx):
                 if chunk.response:
                     full.append(chunk.response)
+                
+                if first_chunk and attachment_info:
+                    chunk.attachments = [attachment_info]
+                    first_chunk = False
+                
                 yield json.dumps(chunk.model_dump(), default=str) + "\n"
             
             # Re-fetch or use captured IDs to avoid detachment
@@ -181,8 +207,9 @@ async def chat_stream(
                 org_id=org_id,
                 role=MessageRole.ASSISTANT,
                 agent_id=None,
-                content="".join(full),
+                content="".join(full).replace("\x00", ""),
                 status=MessageStatus.SENT,
+                attachments=[attachment_info] if attachment_info else [],
             )
             db.add(ai_msg)
             db.commit()

@@ -21,6 +21,7 @@ class ChatAgentResponse(BaseModel):
     response: str = Field(..., description="Full response to the query")
     tool_calls: List[ToolCallResponse] = Field([], description="List of tool calls")
     citations: List[str] = Field(..., description="List of file names referenced in the response")
+    attachments: Optional[List[Any]] = Field(None, description="List of attachments")
 
 
 class ChatContext(BaseModel):

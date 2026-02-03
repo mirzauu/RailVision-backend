@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
 from datetime import datetime
 from src.infrastructure.database.models.conversations import MessageRole, MessageStatus
 
@@ -13,7 +13,7 @@ class MessageResponse(BaseModel):
     agent_id: Optional[str] = None
     content: str
     status: MessageStatus
-    attachments: List[str] | None = None
+    attachments: List[Any] | None = None
     created_at: datetime
 
     class Config:

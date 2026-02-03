@@ -40,6 +40,12 @@ class AttachmentService:
         }
         return mapping.get(ext, DocumentType.TXT)
     
+    def _sanitize_text(self, text: Optional[str]) -> str:
+        if not text:
+            return ""
+        # Remove NULL bytes which PostgreSQL doesn't support
+        return text.replace("\x00", "")
+
     async def process_attachment(
         self,
         db: Session,
@@ -98,6 +104,11 @@ class AttachmentService:
             pages = load_document(target_path)
             logger.info(f"Extracted {len(pages)} pages from attachment")
             
+            # Sanitize extracted text
+            for page in pages:
+                if "text" in page:
+                    page["text"] = self._sanitize_text(page["text"])
+
             if not pages:
                 logger.warning(f"No content extracted from {filename}")
                 doc.status = DocumentStatus.FAILED
@@ -139,9 +150,11 @@ class AttachmentService:
             return attachment_id
             
         except Exception as e:
+            # Important: rollback if commit failed
+            db.rollback()
             logger.error(f"Failed to process attachment {filename}: {e}", exc_info=True)
             doc.status = DocumentStatus.FAILED
-            doc.ingestion_error = str(e)
+            doc.ingestion_error = self._sanitize_text(str(e))
             db.commit()
             raise
     
@@ -187,7 +200,7 @@ class AttachmentService:
             
             context = "\n\n---\n\n".join(context_parts)
             logger.info(f"Retrieved {len(context_parts)} chunks for context ({len(context)} chars)")
-            return context
+            return self._sanitize_text(context)
             
         except Exception as e:
             logger.error(f"Failed to retrieve context for attachment {attachment_id}: {e}")
