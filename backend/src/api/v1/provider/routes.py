@@ -1,4 +1,4 @@
-from typing import List
+from typing import List,Optional
 from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,8 @@ from src.api.v1.provider.schemas import (
     SetProviderRequest,
     GetProviderResponse,
     AvailableModelsResponse,
+    UsageCostRequest,
+    UsageCostResponse,
 )
 
 
@@ -65,3 +67,25 @@ async def get_global_ai_provider(
         return await service.get_global_ai_provider()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting global AI provider: {str(e)}")
+
+
+@router.get("/openai-usage/", response_model=UsageCostResponse)
+async def get_openai_usage(
+    start_time: Optional[int] = None,
+    end_time: Optional[int] = None,
+    limit: Optional[int] = None,
+    bucket_width: Optional[str] = "1d",
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        service = ProviderService.create(user_id=user.id)
+        request = UsageCostRequest(
+            start_time=start_time,
+            end_time=end_time,
+            limit=limit,
+            bucket_width=bucket_width
+        )
+        return await service.get_openai_usage_costs(request)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting OpenAI usage: {str(e)}")

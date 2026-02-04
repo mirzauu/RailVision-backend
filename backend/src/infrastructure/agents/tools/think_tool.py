@@ -29,8 +29,7 @@ This tool is meant for internal thinking, hypothesis testing, scenario analysis,
 and evaluating trade-offs (e.g. where the company makes money, where it could fail,
 what decisions make sense, or what is unclear).
 
-Do NOT use this tool for code analysis, debugging, repository exploration,
-or technical implementation details.
+
 """
 
 

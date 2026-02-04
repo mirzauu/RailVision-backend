@@ -4,6 +4,7 @@ import json
 import random
 import time
 import asyncio
+import httpx
 from functools import wraps
 from typing import List, Dict, Any, Union, AsyncGenerator, Optional
 
@@ -40,6 +41,8 @@ from src.api.v1.provider.schemas import (
     AvailableModelOption,
     SetProviderRequest,
     ModelInfo,
+    UsageCostRequest,
+    UsageCostResponse,
 )
 from src.infrastructure.llm.llm_config import (
     LLMProviderConfig,
@@ -514,6 +517,42 @@ class ProviderService:
             chat_model=ModelInfo(provider=chat_provider, id=chat_model_id, name=chat_model_name),
             inference_model=ModelInfo(provider=inference_provider, id=inference_model_id, name=inference_model_name),
         )
+
+    async def get_openai_usage_costs(self, request: UsageCostRequest) -> UsageCostResponse:
+        api_key = self._get_api_key("openai")
+        if not api_key:
+            raise ValueError("OpenAI API key not found")
+            
+        params = {}
+        if request.start_time:
+            params["start_time"] = request.start_time
+        if request.end_time:
+            params["end_time"] = request.end_time
+        if request.limit:
+            params["limit"] = request.limit
+        if request.bucket_width:
+            params["bucket_width"] = request.bucket_width
+            
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://api.openai.com/v1/organization/costs",
+                headers={"Authorization": f"Bearer {api_key}"},
+                params=params
+            )
+            if response.status_code != 200:
+                error_detail = response.text
+                try:
+                    error_json = response.json()
+                    if "error" in error_json:
+                        error_detail = error_json["error"]["message"]
+                except Exception:
+                    pass
+                raise Exception(f"OpenAI API Error: {response.status_code} - {error_detail}")
+                
+            data = response.json()
+            # If data is list, wrap it in object/data structure if needed, but schema expects object/data
+            # OpenAI response for costs is usually {"object": "list", "data": [...]}
+            return UsageCostResponse(**data)
 
     def supports_pydantic(self, config_type: str = "chat") -> bool:
         config = self.chat_config if config_type == "chat" else self.inference_config

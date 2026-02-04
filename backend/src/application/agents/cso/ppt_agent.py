@@ -82,7 +82,7 @@ If you respond with slide content as text without having called the tools, you h
 OPERATING PRINCIPLES
 ━━━━━━━━━━━━━━━━━━━━━━
 
-1. Visual Hierarchy: Use titles for the 'Bottom Line Up Front' (BLUF).
+1. Visual Hierarchy: Use titles for the 'Bottom Line Up Front'.
 2. Signal-to-Noise: Every word on a slide must earn its place. Replace prose with high-impact bullets.
 3. Narrative Arc: Ensure the sequence of slides tells a cohesive story (Problem -> Analysis -> Solution -> Action).
 4. Executive Ready: Design for stakeholders who have 10 seconds to grasp the main point of each slide.

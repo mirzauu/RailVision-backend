@@ -2,7 +2,7 @@ from typing import Dict, Any, Optional
 import os
 
 DEFAULT_CHAT_MODEL = "openai/gpt-5.1"
-DEFAULT_INFERENCE_MODEL = "openai/gpt-4o"
+DEFAULT_INFERENCE_MODEL = "openai/gpt-5.1"
 
 MODEL_CONFIG_MAP = {
     "openai/gpt-4.1-mini": {

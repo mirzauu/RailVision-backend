@@ -81,7 +81,7 @@ If you respond with document content as text without having called the tools, yo
 OPERATING PRINCIPLES
 ━━━━━━━━━━━━━━━━━━━━━━
 
-1. BLUF (Bottom Line Up Front): The most critical insight must be visible in the first section.
+1. The most critical insight must be visible in the first section.
 2. Signal-to-Noise: Every word must earn its place. Use clear headings and structured sections.
 3. Logical Flow: Ensure the sequence of sections tells a cohesive story (Context -> Analysis -> Recommendations).
 4. Executive Ready: Design for stakeholders who need to scan for key takeaways.
