@@ -103,6 +103,29 @@ def load_pptx(path: Path) -> List[Dict]:
         print(f"Error loading pptx {path}: {e}")
         return load_text(path)
 
+def load_xlsx(path: Path) -> List[Dict]:
+    try:
+        import pandas as pd
+        dfs = pd.read_excel(path, sheet_name=None) # Read all sheets
+        pages = []
+        for i, (sheet_name, df) in enumerate(dfs.items(), 1):
+            text = f"Sheet: {sheet_name}\n" + df.to_string(index=False)
+            pages.append({"page_number": i, "text": text})
+        return pages
+    except Exception as e:
+        print(f"Error loading xlsx {path}: {e}")
+        return load_text(path)
+
+def load_csv(path: Path) -> List[Dict]:
+    try:
+        import pandas as pd
+        df = pd.read_csv(path)
+        text = df.to_string(index=False)
+        return [{"page_number": 1, "text": text}]
+    except Exception as e:
+        print(f"Error loading csv {path}: {e}")
+        return load_text(path)
+
 def load_document(path: Path) -> List[Dict]:
     ext = path.suffix.lower()
     if ext == ".pdf":
@@ -111,6 +134,10 @@ def load_document(path: Path) -> List[Dict]:
         return load_docx(path)
     elif ext == ".pptx":
         return load_pptx(path)
+    elif ext == ".xlsx":
+        return load_xlsx(path)
+    elif ext == ".csv":
+        return load_csv(path)
     elif ext in (".txt", ".md"):
         return load_text(path)
     # Default to text if unknown

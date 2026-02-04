@@ -62,7 +62,7 @@ async def chat_stream(
     framework: str = Form("pydantic"),
     model: Optional[str] = Form(None),
     agent: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None),
+    file: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -85,44 +85,50 @@ async def chat_stream(
     
     # Process file attachment if provided
     attachment_context = ""
-    attachment_id = None
-    if file and file.filename:
+    attachment_ids = []
+    attachment_infos = []
+
+    if file:
         attachment_service = AttachmentService()
-        file_bytes = await file.read()
+        for idx, f in enumerate(file, 1):
+            if not f.filename:
+                continue
+                
+            file_bytes = await f.read()
+            
+            # Process and index the attachment
+            att_id = await attachment_service.process_attachment(
+                db=db,
+                file_bytes=file_bytes,
+                filename=f.filename,
+                user_id=user_id,
+                org_id=org_id,
+                project_id=project_id if project_id != "default" else None
+            )
+            
+            if att_id:
+                attachment_ids.append(att_id)
+                # Retrieve relevant context from the attachment
+                context = attachment_service.retrieve_attachment_context(
+                    query=query,
+                    attachment_id=att_id,
+                    top_k=5,
+                )
+                attachment_context += f"\nuser attached file {idx}- {f.filename} : {context}"
+                
+                # Get attachment info to include in response
+                attachment_doc = db.query(Document).filter(Document.id == att_id).first()
+                if attachment_doc:
+                    attachment_infos.append({
+                        "id": attachment_doc.id,
+                        "filename": attachment_doc.original_filename,
+                        "file_type": str(attachment_doc.file_type),
+                        "file_size_bytes": attachment_doc.file_size_bytes,
+                        "status": str(attachment_doc.status)
+                    })
         
-        # Process and index the attachment
-        attachment_id = await attachment_service.process_attachment(
-            db=db,
-            file_bytes=file_bytes,
-            filename=file.filename,
-            user_id=user_id,
-            org_id=org_id,
-            project_id=project_id if project_id != "default" else None
-        )
-        
-        # Retrieve relevant context from the attachment
-        attachment_context = attachment_service.retrieve_attachment_context(
-            query=query,
-            attachment_id=attachment_id,
-            top_k=5,
-        )
-        if attachment_id:
-            attachment_context = f"user attach a doc with the user query, the attchment doc content is {attachment_context}"
-        
-        # Get attachment info to include in response
-        attachment_doc = db.query(Document).filter(Document.id == attachment_id).first()
-        if attachment_doc:
-            attachment_info = {
-                "id": attachment_doc.id,
-                "filename": attachment_doc.original_filename,
-                "file_type": str(attachment_doc.file_type),
-                "file_size_bytes": attachment_doc.file_size_bytes,
-                "status": str(attachment_doc.status)
-            }
-        else:
-            attachment_info = None
-    else:
-        attachment_info = None
+        if attachment_context:
+            attachment_context = f"user attached docs with the user query, the attachment content is: {attachment_context}"
 
     if framework == "cso" and agent and agent != "auto":
         provider = ProviderService.create(user_id=user_id)
@@ -162,7 +168,7 @@ async def chat_stream(
             user_id=user_id,
             content=query,
             status=MessageStatus.SENT,
-            attachments=[attachment_info] if attachment_info else [],
+            attachments=attachment_infos,
         )
         db.add(user_msg)
         db.commit()
@@ -196,8 +202,8 @@ async def chat_stream(
                 if chunk.response:
                     full.append(chunk.response)
                 
-                if first_chunk and attachment_info:
-                    chunk.attachments = [attachment_info]
+                if first_chunk and attachment_infos:
+                    chunk.attachments = attachment_infos
                     first_chunk = False
                 
                 yield json.dumps(chunk.model_dump(), default=str) + "\n"
@@ -211,7 +217,7 @@ async def chat_stream(
                 agent_id=None,
                 content="".join(full).replace("\x00", ""),
                 status=MessageStatus.SENT,
-                attachments=[attachment_info] if attachment_info else [],
+                attachments=attachment_infos,
             )
             db.add(ai_msg)
             db.commit()
@@ -232,7 +238,7 @@ async def chat_stream(
             model=model,
             agent=agent,
             attachment=attachment_context,
-            attachment_id=attachment_id,
+            attachment_ids=attachment_ids,
         ):
             yield json.dumps(chunk.model_dump(), default=str) + "\n"
 

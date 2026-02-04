@@ -89,7 +89,7 @@ class ConversationService:
         model: Optional[str],
         agent: Optional[str],
         attachment: Optional[str] = None,
-        attachment_id: Optional[str] = None,
+        attachment_ids: Optional[List[str]] = None,
     ) -> ChatAgentResponse:
         # Do not override global model here; routing layer handles model selection safely
         project = db.query(Project).filter(Project.id == project_id).first() if project_id else None
@@ -97,17 +97,17 @@ class ConversationService:
         resolved_agent = self._resolve_agent(db, project, org_id, agent)
         conv = self._get_or_create_conversation(db, project, org_id)
         
-        attachment_info = None
-        if attachment_id:
-            attachment_doc = db.query(Document).filter(Document.id == attachment_id).first()
-            if attachment_doc:
-                attachment_info = {
-                    "id": attachment_doc.id,
-                    "filename": attachment_doc.original_filename,
-                    "file_type": str(attachment_doc.file_type),
-                    "file_size_bytes": attachment_doc.file_size_bytes,
-                    "status": str(attachment_doc.status)
-                }
+        attachment_infos = []
+        if attachment_ids:
+            documents = db.query(Document).filter(Document.id.in_(attachment_ids)).all()
+            for doc in documents:
+                attachment_infos.append({
+                    "id": doc.id,
+                    "filename": doc.original_filename,
+                    "file_type": str(doc.file_type),
+                    "file_size_bytes": doc.file_size_bytes,
+                    "status": str(doc.status)
+                })
 
         user_msg = Message(
             conversation_id=conv.id,
@@ -117,7 +117,7 @@ class ConversationService:
             user_id=user_id,
             content=query,
             status=MessageStatus.SENT,
-            attachments=[attachment_info] if attachment_info else [],
+            attachments=attachment_infos,
         )
         db.add(user_msg)
         db.commit()
@@ -128,8 +128,8 @@ class ConversationService:
         tool_service = ToolService(db, user_id, conversation_id=conv.id)
         agent_runner = ExecuterAgent(self.provider, config, framework=framework or "pydantic", tools_provider=tool_service)
         resp = await agent_runner.run(ctx)
-        if attachment_info:
-            resp.attachments = [attachment_info]
+        if attachment_infos:
+            resp.attachments = attachment_infos
         ai_msg = Message(
             conversation_id=conv.id,
             project_id=conv.project_id,
@@ -138,7 +138,7 @@ class ConversationService:
             agent_id=resolved_agent.id if resolved_agent else None,
             content=resp.response.replace("\x00", ""),
             status=MessageStatus.SENT,
-            attachments=[attachment_info] if attachment_info else [],
+            attachments=attachment_infos,
         )
         db.add(ai_msg)
         db.commit()
@@ -156,7 +156,7 @@ class ConversationService:
         model: Optional[str],
         agent: Optional[str],
         attachment: Optional[str] = None,
-        attachment_id: Optional[str] = None,
+        attachment_ids: Optional[List[str]] = None,
     ) -> AsyncGenerator[ChatAgentResponse, None]:
         # Do not override global model here; routing layer handles model selection safely
         project = db.query(Project).filter(Project.id == project_id).first() if project_id else None
@@ -164,17 +164,17 @@ class ConversationService:
         resolved_agent = self._resolve_agent(db, project, org_id, agent)
         conv = self._get_or_create_conversation(db, project, org_id)
 
-        attachment_info = None
-        if attachment_id:
-            attachment_doc = db.query(Document).filter(Document.id == attachment_id).first()
-            if attachment_doc:
-                attachment_info = {
-                    "id": attachment_doc.id,
-                    "filename": attachment_doc.original_filename,
-                    "file_type": str(attachment_doc.file_type),
-                    "file_size_bytes": attachment_doc.file_size_bytes,
-                    "status": str(attachment_doc.status)
-                }
+        attachment_infos = []
+        if attachment_ids:
+            documents = db.query(Document).filter(Document.id.in_(attachment_ids)).all()
+            for doc in documents:
+                attachment_infos.append({
+                    "id": doc.id,
+                    "filename": doc.original_filename,
+                    "file_type": str(doc.file_type),
+                    "file_size_bytes": doc.file_size_bytes,
+                    "status": str(doc.status)
+                })
 
         user_msg = Message(
             conversation_id=conv.id,
@@ -184,7 +184,7 @@ class ConversationService:
             user_id=user_id,
             content=query,
             status=MessageStatus.SENT,
-            attachments=[attachment_info] if attachment_info else [],
+            attachments=attachment_infos,
         )
         db.add(user_msg)
         db.commit()
@@ -200,8 +200,8 @@ class ConversationService:
         async for chunk in agent_runner.run_stream(ctx):
             if chunk.response:
                 full.append(chunk.response)
-            if first_chunk and attachment_info:
-                chunk.attachments = [attachment_info]
+            if first_chunk and attachment_infos:
+                chunk.attachments = attachment_infos
                 first_chunk = False
             yield chunk
         ai_msg = Message(
@@ -212,7 +212,7 @@ class ConversationService:
             agent_id=resolved_agent.id if resolved_agent else None,
             content="".join(full).replace("\x00", ""),
             status=MessageStatus.SENT,
-            attachments=[attachment_info] if attachment_info else [],
+            attachments=attachment_infos,
         )
         db.add(ai_msg)
         db.commit()

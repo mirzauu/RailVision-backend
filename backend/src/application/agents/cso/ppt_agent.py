@@ -55,7 +55,7 @@ class CSOPPTAgent(ChatAgent):
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
         enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id) if self.tools_provider else ctx.query
-        new_ctx = ctx.model_copy(update={"query": enriched_query})
+        new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
         async for chunk in self._build_agent().run_stream(new_ctx):
             yield chunk
 
