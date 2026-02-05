@@ -57,7 +57,7 @@ class CSOStrategyAgent(ChatAgent):
         # Create new context with enriched query
         new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
         print(new_ctx)
-        async for chunk in self._build_agent().run_stream(new_ctx):
+        async for chunk in self._build_agent().run_stream(ctx):
             yield chunk
 
 CSO_STRATEGY_PROMPT = """
@@ -179,6 +179,7 @@ TOOL USAGE
 FINAL REMINDERS
 ━━━━━━━━━━━━━━━━━━━━━━
 
+- IMPORTANT: Use the additional context only if needed. If the required info is not in the additional context, then use the `knowledge_base` tool to find the relevant info.
 - If strategy is unnecessary, keep it simple.
 - If the correct answer is “do nothing,” say it.
 - If the strategy is weak, call it out.

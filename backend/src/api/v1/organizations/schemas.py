@@ -33,6 +33,7 @@ class OrgUserResponse(BaseModel):
     role: RoleLite
     created_at: datetime
     last_login_at: Optional[datetime] = None
+    last_active_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

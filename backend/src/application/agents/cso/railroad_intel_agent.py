@@ -146,6 +146,7 @@ TOOL USAGE
 FINAL REMINDERS
 ━━━━━━━━━━━━━━━━━━━━━━
 
+- IMPORTANT: Use the additional context only if needed. If the required info is not in the additional context, then use the `knowledge_base` tool to find the relevant info.
 - If a railroad's technical stack is too old for Railvision, say it.
 - If their current leadership is distracted by a merger or crisis, call it out.
 - Your job is to provide the "ground truth" of the railroad.
