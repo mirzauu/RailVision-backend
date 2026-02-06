@@ -115,7 +115,7 @@ MODEL_CONFIG_MAP = {
     },
     "anthropic/claude-sonnet-4-5-20250929": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "default_params": {"temperature": 0.3, "max_tokens": 60000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -127,7 +127,7 @@ MODEL_CONFIG_MAP = {
     },
     "anthropic/claude-sonnet-4-20250514": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "default_params": {"temperature": 0.3, "max_tokens": 6000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -139,7 +139,7 @@ MODEL_CONFIG_MAP = {
     },
     "anthropic/claude-opus-4-1-20250805": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "default_params": {"temperature": 0.3, "max_tokens": 30000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -149,6 +149,21 @@ MODEL_CONFIG_MAP = {
         "base_url": None,
         "api_version": None,
     },
+    "anthropic/claude-opus-4-6": {
+        "provider": "anthropic",
+        "default_params": {
+            "temperature": 0.3,
+            "max_tokens": 4096  
+        },
+        "capabilities": {
+            "supports_pydantic": True,
+            "supports_streaming": True,
+            "supports_vision": True,
+            "supports_tool_parallelism": True
+        },
+        "base_url": None,
+        "api_version": "2023-06-01"
+        },
     "anthropic/claude-3-7-sonnet-20250219": {
         "provider": "anthropic",
         "default_params": {"temperature": 0.3, "max_tokens": 8000},

@@ -6,7 +6,7 @@ def retrieve_context(
     doc_id: str = None,
     active_version: str = None,
     allowed_categories: list[str] = None,
-    top_k: int = 5
+    top_k: int = 3
 ):
     """
     Retrieves execution-safe context from Pinecone.

@@ -83,7 +83,13 @@ class PydanticChatAgent(ChatAgent):
         if provider == "openai":
             model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key, base_url=base_url))
         elif provider == "anthropic":
-            model = AnthropicModel(model_name=model_id, provider=AnthropicProvider(api_key=api_key, base_url=base_url))
+            try:
+                from anthropic import AsyncAnthropic
+                # Initialize custom client with higher retries for rate limit handling
+                client = AsyncAnthropic(api_key=api_key, base_url=base_url, max_retries=10)
+                model = AnthropicModel(model_name=model_id, provider=AnthropicProvider(anthropic_client=client))
+            except ImportError:
+                model = AnthropicModel(model_name=model_id, provider=AnthropicProvider(api_key=api_key, base_url=base_url))
         else:
             model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key, base_url=base_url))
 

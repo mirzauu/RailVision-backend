@@ -86,7 +86,7 @@ async def context_enrich(
             query=question,
             active_version=active_version, 
             allowed_categories=allowed_categories,
-            top_k=5
+            top_k=3
         )
         
         if matches:

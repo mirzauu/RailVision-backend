@@ -36,7 +36,7 @@ def build_state(doc_ids: Optional[List[str]] = None, query_text: Optional[str] =
         MATCH (n)
         WHERE n.source_doc_id IN $doc_ids
         RETURN n, labels(n) as lbls
-        LIMIT 50
+        LIMIT 10
         """)
         
     # If we have query text, we need to search by name/description
@@ -49,7 +49,7 @@ def build_state(doc_ids: Optional[List[str]] = None, query_text: Optional[str] =
            OR toLower(coalesce(n.description, '')) CONTAINS toLower($query)
            OR toLower(coalesce(n.function, '')) CONTAINS toLower($query)
         RETURN n, labels(n) as lbls
-        LIMIT 20
+        LIMIT 5
         """)
 
     if not queries:

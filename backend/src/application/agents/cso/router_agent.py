@@ -4,7 +4,8 @@ from typing import AsyncGenerator, Dict, TYPE_CHECKING
 from pydantic import BaseModel, Field
 
 from src.infrastructure.llm.provider_service import ProviderService
-from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext
+from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext, AgentConfig, TaskConfig
+from src.infrastructure.agents.pydantic_multi_agent import PydanticMultiAgent
 
 if TYPE_CHECKING:
     from src.application.tools.service import ToolService
@@ -24,8 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 class ClassificationResponse(BaseModel):
-    agent_id: str = Field(description="agent_id of the best matching agent")
+    agent_id: str = Field(description="agent_id of the best matching agent. Use 'multi_agent' if multiple agents are required.")
     confidence_score: float = Field(description="confidence score between 0 and 1")
+    is_multi_agent: bool = Field(default=False, description="Set to True if the query requires coordination between multiple agents")
 
 
 classification_prompt = (
@@ -83,12 +85,25 @@ class CSORouterAgent(ChatAgent):
         )
         if not self.agent_descriptions:
             self.agent_descriptions = "No agents available for routing"
+        
+        self.supervisor_config = AgentConfig(
+            role="CSO Supervisor",
+            goal="Coordinate specialized CSO agents to provide comprehensive strategic answers.",
+            backstory="You are the Chief of Staff to the CSO. You coordinate specialized agents (Strategy, GTM, M&A, etc.) to answer complex queries that require multiple perspectives.",
+            tasks=[
+                TaskConfig(
+                    description="Analyze the user query and consult the appropriate specialized agents to provide a comprehensive answer.",
+                    expected_output="A well-reasoned, comprehensive response that integrates insights from multiple specialized agents."
+                )
+            ]
+        )
+        
         logger.info(f"CSORouterAgent initialized with {len(self.agents)} agents")
 
     async def _run_classification(self, ctx: ChatContext, agent_descriptions: str) -> ChatAgent:
         prompt = classification_prompt.format(
             query=ctx.query,
-            history=", ".join(f"{m['role']}: {m['content']}" for m in ctx.history),
+            history=", ".join(f"{m['role']}: {m['content']}" for m in ctx.history[-5:]),
             agent_descriptions=agent_descriptions,
         )
         messages = [
@@ -104,15 +119,24 @@ class CSORouterAgent(ChatAgent):
                 output_schema=ClassificationResponse,
                 config_type="inference",
             )
-            selected_agent_id = classification.agent_id if classification and classification.agent_id in self.agents else "strategy"
+            logger.info(f"Classification result: {classification}")
+            selected_agent_id = classification.agent_id if classification and (classification.agent_id in self.agents or classification.agent_id == "multi_agent") else "strategy"
+            
+            # Check for multi-agent
+            if classification.is_multi_agent or selected_agent_id == "multi_agent":
+                logger.info("CSORouterAgent selected 'multi_agent' mode")
+                return PydanticMultiAgent(
+                    llm_provider=self.llm_provider,
+                    config=self.supervisor_config,
+                    existing_delegates=self.agents,
+                    delegate_descriptions=self.agent_descriptions_map
+                )
+
             logger.info(
                 "CSORouterAgent selected '%s' with confidence %.2f",
                 selected_agent_id,
                 getattr(classification, "confidence_score", 0.0) or 0.0,
             )
-            print("CSORouterAgent selected '%s' with confidence %.2f",
-                selected_agent_id,
-                getattr(classification, "confidence_score", 0.0) or 0.0,)
             
         except Exception as e:
             logger.error("Classification error, falling back to strategy agent: %s", e)

@@ -1,6 +1,0 @@
-import{w as i,n as e,q as n,B as d,X as c}from"./index-DsmxdUUT.js";/**
- * @license lucide-react v0.462.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */const m=i("Clock",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["polyline",{points:"12 6 12 12 16 14",key:"68esgv"}]]);function f({isOpen:o,onClose:r,title:a,subtitle:l,children:t,width:s="md"}){return o?e.jsxs(e.Fragment,{children:[e.jsx("div",{className:"fixed inset-0 z-40 bg-foreground/10 backdrop-blur-sm",onClick:r}),e.jsxs("aside",{className:n("fixed right-0 top-0 z-50 h-full bg-card border-l border-border shadow-lg animate-slide-in-right overflow-hidden flex flex-col",s==="sm"&&"w-80",s==="md"&&"w-[420px]",s==="lg"&&"w-[560px]"),children:[e.jsxs("div",{className:"flex items-start justify-between border-b border-border p-4",children:[e.jsxs("div",{children:[e.jsx("h2",{className:"text-lg font-semibold text-foreground",children:a}),l&&e.jsx("p",{className:"mt-0.5 text-sm text-muted-foreground",children:l})]}),e.jsx(d,{variant:"ghost",size:"icon",onClick:r,className:"h-8 w-8 text-muted-foreground",children:e.jsx(c,{className:"h-4 w-4"})})]}),e.jsx("div",{className:"flex-1 overflow-auto p-4 scrollbar-thin",children:t})]})]}):null}export{m as C,f as S};
