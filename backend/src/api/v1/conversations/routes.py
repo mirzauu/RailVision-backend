@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Body, HTTPException, File, UploadFile, Form
 import os
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 import json
+from datetime import datetime
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import List, Optional, Any
@@ -198,58 +199,110 @@ async def chat_stream(
         async def stream_cso_agent():
             full: List[str] = []
             first_chunk = True
-            async for chunk in target_agent.run_stream(ctx):
-                if chunk.response:
-                    full.append(chunk.response)
+            try:
+                async for chunk in target_agent.run_stream(ctx):
+                    if chunk.response:
+                        full.append(chunk.response)
+                    
+                    if first_chunk and attachment_infos:
+                        chunk.attachments = attachment_infos
+                        first_chunk = False
+                    
+                    yield json.dumps(chunk.model_dump(), default=str) + "\n"
                 
-                if first_chunk and attachment_infos:
-                    chunk.attachments = attachment_infos
-                    first_chunk = False
-                
-                yield json.dumps(chunk.model_dump(), default=str) + "\n"
-            
-            # Re-fetch or use captured IDs to avoid detachment
-            ai_msg = Message(
-                conversation_id=conv_id,
-                project_id=conv_project_id,
-                org_id=org_id,
-                role=MessageRole.ASSISTANT,
-                agent_id=None,
-                content="".join(full).replace("\x00", ""),
-                status=MessageStatus.SENT,
-                attachments=attachment_infos,
-            )
-            db.add(ai_msg)
-            db.commit()
-            db.refresh(ai_msg)
+                # Re-fetch or use captured IDs to avoid detachment
+                ai_msg = Message(
+                    conversation_id=conv_id,
+                    project_id=conv_project_id,
+                    org_id=org_id,
+                    role=MessageRole.ASSISTANT,
+                    agent_id=None,
+                    content="".join(full).replace("\x00", ""),
+                    status=MessageStatus.SENT,
+                    attachments=attachment_infos,
+                )
+                db.add(ai_msg)
+                db.commit()
+                db.refresh(ai_msg)
+            except Exception as e:
+                error_msg = str(e).lower()
+                # Check for rate limit or credit exhaustion errors (Claude/OpenAI)
+                if any(x in error_msg for x in ["rate limit", "credit", "quota", "insufficient_quota", "429", "overloaded"]):
+                    logger_msg = f"LLM Rate Limit/Quota Error: {str(e)}"
+                    print(logger_msg) # Ensure it logs to terminal
+                    # Send a structured error message to the client
+                    yield json.dumps({
+                        "response": "⚠️ **Service Alert**: The AI provider has reached its usage limit or credits are exhausted. Please recharge your Claude/OpenAI credits to continue.",
+                        "error": str(e),
+                        "type": "error"
+                    }) + "\n"
+                else:
+                    logger_msg = f"LLM Streaming Error: {str(e)}"
+                    print(logger_msg)
+                    yield json.dumps({
+                        "response": f"❌ An error occurred while generating the response: {str(e)}",
+                        "error": str(e),
+                        "type": "error"
+                    }) + "\n"
 
         return StreamingResponse(stream_cso_agent(), media_type="application/json")
 
-    service = ConversationService(ProviderService.create(user_id=user_id))
+    service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
 
     async def stream_response():
-        async for chunk in service.chat_stream(
-            db=db,
-            user_id=user_id,
-            org_id=org_id,
-            query=query,
-            project_id=project_id,
-            framework=framework,
-            model=model,
-            agent=agent,
-            attachment=attachment_context,
-            attachment_ids=attachment_ids,
-        ):
-            yield json.dumps(chunk.model_dump(), default=str) + "\n"
+        try:
+            async for chunk in service.chat_stream(
+                db=db,
+                user_id=user_id,
+                org_id=org_id,
+                query=query,
+                project_id=project_id,
+                framework=framework,
+                model=model,
+                agent=agent,
+                attachment=attachment_context,
+                attachment_ids=attachment_ids,
+            ):
+                yield json.dumps(chunk.model_dump(), default=str) + "\n"
+        except Exception as e:
+            error_msg = str(e).lower()
+            if any(x in error_msg for x in ["rate limit", "credit", "quota", "insufficient_quota", "429", "overloaded"]):
+                print(f"LLM Rate Limit/Quota Error: {str(e)}")
+                yield json.dumps({
+                    "response": "⚠️ **Service Alert**: The AI provider has reached its usage limit. Please recharge your Claude/OpenAI credits to continue.",
+                    "error": str(e),
+                    "type": "error"
+                }) + "\n"
+            else:
+                print(f"LLM Streaming Error: {str(e)}")
+                yield json.dumps({
+                    "response": f"❌ An error occurred while generating the response: {str(e)}",
+                    "error": str(e),
+                    "type": "error"
+                }) + "\n"
 
     return StreamingResponse(stream_response(), media_type="application/json")
 
 
-@router.get("/history/{project_id}", response_model=ChatHistoryResponse)
+@router.get("/history/{project_id}")
 def get_history(
     project_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
-    return service.get_chat_history(db=db, org_id=current_user.org_id, project_id=project_id)
+    data = service.get_chat_history(db=db, org_id=current_user.org_id, project_id=project_id)
+    
+    # Ensure all values are JSON-serializable (convert datetime etc.)
+    def make_serializable(obj):
+        if isinstance(obj, dict):
+            return {k: make_serializable(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [make_serializable(item) for item in obj]
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
+        elif hasattr(obj, '__str__') and not isinstance(obj, (str, int, float, bool, type(None))):
+            return str(obj)
+        return obj
+    
+    return JSONResponse(content=make_serializable(data))

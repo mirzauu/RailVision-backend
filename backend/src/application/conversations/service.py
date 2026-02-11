@@ -6,6 +6,7 @@ from src.infrastructure.database.models.agents import Agent
 from src.infrastructure.database.models.conversations import Message, Conversation, MessageRole, MessageStatus
 from src.infrastructure.database.models.ppt import Presentation
 from src.infrastructure.database.models.generated_pdf import GeneratedPDF
+from src.infrastructure.database.models.generated_word import GeneratedWord
 from src.infrastructure.database.models.documents import Document
 from src.infrastructure.llm.provider_service import ProviderService
 from src.application.agents.executer_agent import ExecuterAgent
@@ -234,6 +235,7 @@ class ConversationService:
         # Fetch presentations link to this conversation
         presentations = []
         generated_pdfs = []
+        generated_word_docs = []
         if conv:
             presentations = (
                 db.query(Presentation)
@@ -245,11 +247,43 @@ class ConversationService:
                 .filter(GeneratedPDF.conversation_id == conv.id)
                 .all()
             )
+            generated_word_docs = (
+                db.query(GeneratedWord)
+                .filter(GeneratedWord.conversation_id == conv.id)
+                .all()
+            )
+
+        # Convert SQLAlchemy models to dictionaries
+        def model_to_dict(obj):
+            if obj is None:
+                return None
+            return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+
+        # Enhanced serialization helper
+        def serialize_presentation(ppt):
+            if not ppt: return None
+            data = model_to_dict(ppt)
+            data['slides'] = [model_to_dict(s) for s in ppt.slides]
+            return data
+
+        def serialize_pdf(pdf):
+            if not pdf: return None
+            data = model_to_dict(pdf)
+            data['sections'] = [model_to_dict(s) for s in pdf.sections]
+            return data
+
+        def serialize_word(word):
+            if not word: return None
+            data = model_to_dict(word)
+            data['sections'] = [model_to_dict(s) for s in word.sections]
+            return data
 
         return {
             "conversation_id": conv.id if conv else None,
             "project_id": project_id,
-            "messages": msgs,
-            "presentations": presentations,
-            "generated_pdfs": generated_pdfs
+            "messages": [model_to_dict(m) for m in msgs],
+            "presentations": [serialize_presentation(p) for p in presentations],
+            "generated_pdfs": [serialize_pdf(p) for p in generated_pdfs],
+            "generated_word_docs": [serialize_word(w) for w in generated_word_docs]
         }
+

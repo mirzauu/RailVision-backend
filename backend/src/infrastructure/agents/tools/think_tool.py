@@ -29,7 +29,7 @@ This tool is meant for internal thinking, hypothesis testing, scenario analysis,
 and evaluating trade-offs (e.g. where the company makes money, where it could fail,
 what decisions make sense, or what is unclear).
 
-
+j
 """
 
 
@@ -64,7 +64,9 @@ what decisions make sense, or what is unclear).
         User wants to book 3 tickets to NYC with 2 checked bags each
         - Need user ID to check:
           * Membership tier for baggage allowance
-          * Which payments methods exist in profile
+ ma
+ 1z
+ o0n fvou86jb        * Which payments methods exist in profile
         - Baggage calculation:
           * Economy class × 3 passengers
           * If regular member: 1 free bag each → 3 extra bags = $150
