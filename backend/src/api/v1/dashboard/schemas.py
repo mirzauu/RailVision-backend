@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from decimal import Decimal
+from src.api.v1.dashboard.commercial_schemas import CommercialMetricsResponse
 
 class QuotaInfo(BaseModel):
     used: float
@@ -32,5 +33,6 @@ class DashboardResponse(BaseModel):
     quotas: Dict[str, QuotaInfo]
     stats: DashboardStats
     recent_activity: List[RecentItem]
+    commercial: Optional[CommercialMetricsResponse] = None
     
     metadata: Dict[str, Any] = {}

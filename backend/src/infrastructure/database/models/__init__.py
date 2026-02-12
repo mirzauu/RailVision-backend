@@ -10,4 +10,5 @@ from .logs import LLMUsageLog, AuditLog, AgentCollaborationLog, AuditAction, Col
 from .ppt import Presentation, PresentationSlide
 from .generated_pdf import GeneratedPDF, PDFSection
 from .generated_word import GeneratedWord, WordSection
+from .commercial import Account, AccountPipeline, PerformanceStudy, Partner, PartnerGeography
 from .mixins import UUIDMixin, TimestampMixin
