@@ -21,6 +21,7 @@ from .ppt_agent import CSOPPTAgent
 from .pdf_agent import CSOPDFAgent
 from .word_agent import CSOWordAgent
 from .general_agent import CSOGeneralAgent
+from .brutall_agent import CSOBrutallAgent
 
 
 logger = logging.getLogger(__name__)
@@ -67,6 +68,7 @@ class CSORouterAgent(ChatAgent):
             "pdf": CSOPDFAgent(llm_provider, tools_provider),
             "word": CSOWordAgent(llm_provider, tools_provider),
             "general": CSOGeneralAgent(llm_provider, tools_provider),
+            "brutall": CSOBrutallAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
             "strategy": "Analyzes repository as a strategic asset; identifies business models, value creation, and strategic leverage vs constraints.",
@@ -79,6 +81,7 @@ class CSORouterAgent(ChatAgent):
             "pdf": "Specialized in creating and updating structured PDF documents and reports; use this for ANY request involving PDF reports, memos, or briefs.",
             "word": "Specialized in creating and updating structured Word documents and reports; use this for ANY request involving Word docs, reports, or memos.",
             "general": "Handles greetings and simple open-ended questions; acts as a friendly front-door assistant for the CSO system.",
+            "brutall": "Ruthless mentor that challenges ideas, debates, and provides brutally honest feedback to test resilience. Use this when the user wants to be challenged or have their ideas torn apart.",
         }
 
         self.agent_descriptions = "\n".join(

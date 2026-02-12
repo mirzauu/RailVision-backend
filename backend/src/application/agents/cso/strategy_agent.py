@@ -53,10 +53,10 @@ class CSOStrategyAgent(ChatAgent):
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
         # Enrich the query with Reasoning (Neo4j + Pinecone)
-        enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
+        # enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
         # Create new context with enriched query
-        new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
-        print(new_ctx)
+        # new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
+        # print(new_ctx)
         async for chunk in self._build_agent().run_stream(ctx):
             yield chunk
 
