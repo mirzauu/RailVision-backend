@@ -14,6 +14,7 @@ from src.application.conversations.service import ConversationService
 from src.infrastructure.llm.provider_service import ProviderService
 from src.api.v1.conversations.schemas import ChatHistoryResponse
 from src.application.agents.cso.router_agent import CSORouterAgent
+from src.application.agents.cco.router_agent import CCORouterAgent
 from src.application.tools.service import ToolService
 from src.domain.agents.base import ChatContext
 from src.infrastructure.database.models.projects import Project
@@ -131,7 +132,7 @@ async def chat_stream(
         if attachment_context:
             attachment_context = f"user attached docs with the user query, the attachment content is: {attachment_context}"
 
-    if framework == "cso" and agent and agent != "auto":
+    if framework in ("cso", "cco") and agent and agent != "auto":
         provider = ProviderService.create(user_id=user_id)
         
         # Build conversation and history (persist user message)
@@ -153,8 +154,11 @@ async def chat_stream(
         
         tools = ToolService(db, user_id, conversation_id=conv_id)
         
-        # Use RouterAgent to get the specific agent directly
-        router_agent = CSORouterAgent(provider, tools)
+        # Use the appropriate RouterAgent based on the framework
+        if framework == "cco":
+            router_agent = CCORouterAgent(provider, tools)
+        else:
+            router_agent = CSORouterAgent(provider, tools)
         # Check if the agent exists
         if not router_agent.get_agent(agent):
             return {"error": f"Agent {agent} not found"}

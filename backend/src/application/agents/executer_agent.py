@@ -6,6 +6,7 @@ from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext, Ag
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
 from src.infrastructure.agents.crewai_agent import CrewAIChatAgent
 from src.application.agents.cso.router_agent import CSORouterAgent
+from src.application.agents.cco.router_agent import CCORouterAgent
 from src.application.tools.service import ToolService
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ class ExecuterAgent(ChatAgent):
         self.pydantic_agent: Optional[PydanticChatAgent] = None
         self.crewai_agent: Optional[CrewAIChatAgent] = None
         self.router_agent: Optional[CSORouterAgent] = None
+        self.cco_router_agent: Optional[CCORouterAgent] = None
         if self.framework == "pydantic":
             self.pydantic_agent = PydanticChatAgent(llm_provider, config)
         elif self.framework == "crewai":
@@ -25,15 +27,23 @@ class ExecuterAgent(ChatAgent):
             if not tools_provider:
                 raise ValueError("tools_provider is required for router framework")
             self.router_agent = CSORouterAgent(llm_provider, tools_provider)
+        elif self.framework in {"cco_router", "cco"}:
+            if not tools_provider:
+                raise ValueError("tools_provider is required for CCO router framework")
+            self.cco_router_agent = CCORouterAgent(llm_provider, tools_provider)
         else:
             self.pydantic_agent = PydanticChatAgent(llm_provider, config)
         chosen = (
-            "router" if self.router_agent else ("pydantic" if self.pydantic_agent else ("crewai" if self.crewai_agent else "none"))
+            "cco_router" if self.cco_router_agent else ("router" if self.router_agent else ("pydantic" if self.pydantic_agent else ("crewai" if self.crewai_agent else "none")))
         )
         logger.info("ExecuterAgent initialized using framework '%s' -> '%s'", self.framework, chosen)
         print(f"ExecuterAgent initialized using framework '{self.framework}' -> '{chosen}'")
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
+        if self.cco_router_agent:
+            print("ExecuterAgent delegating to CCORouterAgent")
+            logger.info("ExecuterAgent delegating to CCORouterAgent")
+            return await self.cco_router_agent.run(ctx)
         if self.router_agent:
             print("ExecuterAgent delegating to CSORouterAgent")
             logger.info("ExecuterAgent delegating to CSORouterAgent")
@@ -49,6 +59,12 @@ class ExecuterAgent(ChatAgent):
         return ChatAgentResponse(response="", tool_calls=[], citations=[])
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
+        if self.cco_router_agent:
+            print("ExecuterAgent streaming via CCORouterAgent")
+            logger.info("ExecuterAgent streaming via CCORouterAgent")
+            async for chunk in self.cco_router_agent.run_stream(ctx):
+                yield chunk
+            return
         if self.router_agent:
             print("ExecuterAgent streaming via CSORouterAgent")
             logger.info("ExecuterAgent streaming via CSORouterAgent")

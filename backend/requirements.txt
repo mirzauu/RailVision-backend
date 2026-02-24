@@ -20,3 +20,7 @@ pydantic-ai>=0.0.10
 supabase>=2.0.0
 fastapi-mail>=1.4.1
 anthropic>=0.18.0
+
+
+neo4j
+langchain-core
