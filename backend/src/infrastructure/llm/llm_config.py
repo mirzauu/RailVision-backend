@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional
 import os
 
-DEFAULT_CHAT_MODEL = "openai/gpt-5.1"
+DEFAULT_CHAT_MODEL = "anthropic/claude-opus-4-6"
 DEFAULT_INFERENCE_MODEL = "openai/gpt-5.1"
 
 MODEL_CONFIG_MAP = {
