@@ -48,3 +48,4 @@ class Organization(Base, UUIDMixin, TimestampMixin):
     integrations = relationship("Integration", back_populates="organization", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="organization", cascade="all, delete-orphan")
     invitations = relationship("UserInvitation", back_populates="organization", cascade="all, delete-orphan")
+    knowledge_entries = relationship("KnowledgeBase", back_populates="organization", cascade="all, delete-orphan")

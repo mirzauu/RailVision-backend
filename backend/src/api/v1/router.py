@@ -13,6 +13,7 @@ from src.api.v1.graph import routes as graph_routes
 from src.api.v1.tools import routes as tool_routes
 from src.api.v1.dashboard import routes as dashboard_routes
 from src.api.v1.dashboard import commercial_routes
+from src.api.v1.knowledge import routes as knowledge_routes
 
 api_router = APIRouter()
 
@@ -30,3 +31,4 @@ api_router.include_router(graph_routes.router, prefix="/graph", tags=["graph"])
 api_router.include_router(tool_routes.router, prefix="/tools", tags=["tools"])
 api_router.include_router(dashboard_routes.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(commercial_routes.router, prefix="/dashboard/commercial", tags=["dashboard-commercial"])
+api_router.include_router(knowledge_routes.router, prefix="/knowledge", tags=["knowledge"])

@@ -11,4 +11,5 @@ from .ppt import Presentation, PresentationSlide
 from .generated_pdf import GeneratedPDF, PDFSection
 from .generated_word import GeneratedWord, WordSection
 from .commercial import Account, AccountPipeline, PerformanceStudy, Partner, PartnerGeography
+from .knowledge_base import KnowledgeBase, KnowledgeSourceType, KnowledgeStatus
 from .mixins import UUIDMixin, TimestampMixin
