@@ -17,6 +17,7 @@ from .general_agent import CCOGeneralAgent
 from .ppt_agent import CCOPPTAgent
 from .pdf_agent import CCOPDFAgent
 from .word_agent import CCOWordAgent
+from .brutall_agent import CCOBrutallAgent
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class CCORouterAgent(ChatAgent):
             "pdf": CCOPDFAgent(llm_provider, tools_provider),
             "word": CCOWordAgent(llm_provider, tools_provider),
             "general": CCOGeneralAgent(llm_provider, tools_provider),
+            "brutall": CCOBrutallAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
             "sales_strategy": "Designs commercial strategy, pricing architecture, packaging, and go-to-market plans for North American shortline railroads; focuses on value propositions, territory design, sales process optimization, and pipeline velocity.",
@@ -69,6 +71,7 @@ class CCORouterAgent(ChatAgent):
             "pdf": "Specialized in creating and updating structured PDF documents and reports; use this for ANY request involving PDF reports, memos, or briefs summarizing CCO topics.",
             "word": "Specialized in creating and updating structured Word documents and reports; use this for ANY request involving Word docs, reports, or memos summarizing CCO findings.",
             "general": "Handles greetings and simple open-ended commercial questions; acts as a friendly front-door assistant for the CCO system, triaging queries to the right specialist.",
+            "brutall": "Ruthless mentor that challenges commercial ideas, sales strategies, debates deals, and provides brutally honest feedback to test resilience. Use this when the user wants to be challenged or have their ideas torn apart.",
         }
 
         self.agent_descriptions = "\n".join(
