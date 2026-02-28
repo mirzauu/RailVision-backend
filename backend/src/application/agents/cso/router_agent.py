@@ -44,12 +44,13 @@ classification_prompt = (
     "Analysis Instructions (do not include these in the final answer):\n"
     "1. Identify key topics, technical terms, and the user’s intent.\n"
     "2. Compare these elements to each agent’s specialty description.\n"
-    "3. Favor specialized agents over general ones for close matches.\n\n"
+    "3. Favor specialized agents over general ones for close matches.\n"
+    "4. MULTI-AGENT REQUIRED: If the query requires expertise from multiple different domains or combining insights from more than one agent, explicitly select 'multi_agent' as the agent_id and set is_multi_agent to True.\n\n"
     "Confidence Scoring Guidelines:\n"
     "- 0.9-1.0: Ideal match with core expertise.\n"
     "- 0.7-0.9: Strong match with known capabilities.\n"
     "- 0.5-0.7: Partial or related match.\n"
-    "If no agent is an ideal match, choose the best available option.\n"
+    "If multiple areas of expertise are needed, choose the 'multi_agent' option. If no agent is an ideal match, choose the best available option.\n"
 )
 
 

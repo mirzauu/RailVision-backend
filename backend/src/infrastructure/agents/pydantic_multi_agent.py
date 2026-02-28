@@ -89,6 +89,15 @@ class PydanticMultiAgent(PydanticChatAgent):
         
         logger.info(f"Initialized PydanticMultiAgent with delegates: {list(self.delegates.keys())}")
 
+    async def run(self, ctx: ChatContext) -> ChatAgentResponse:
+        self.current_ctx = ctx
+        return await super().run(ctx)
+
+    async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
+        self.current_ctx = ctx
+        async for chunk in super().run_stream(ctx):
+            yield chunk
+
     def _create_existing_delegate_tool(self, agent_name: str, description: str) -> Tool:
         """
         Creates a Tool instance for an existing delegate agent.
@@ -111,11 +120,16 @@ class PydanticMultiAgent(PydanticChatAgent):
                 return f"Error: Agent {agent_name} not found."
                 
             # Create a context for the delegate
+            # We inject the current supervisor's context history and additional_context
+            # so the sub-agent has full awareness of the conversation history.
+            parent_ctx = getattr(self, "current_ctx", None)
+            delegate_history = parent_ctx.history if parent_ctx else []
+            delegate_additional_context = parent_ctx.additional_context if parent_ctx else ""
+            
             delegate_ctx = ChatContext(
                 query=query,
-                history=[],  # Start fresh for the specific delegated task
-                conversation_id=f"delegate-{agent_name}",
-                user_id="system-delegation"
+                history=delegate_history,
+                additional_context=delegate_additional_context
             )
             
             try:
@@ -154,12 +168,16 @@ class PydanticMultiAgent(PydanticChatAgent):
                 return f"Error: Agent {agent_type} not found."
                 
             # Create a context for the delegate
-            # We create a fresh context treating the 'query' as the user's input to the delegate
+            # We inject the current supervisor's context history and additional_context
+            # so the sub-agent has full awareness of the conversation history.
+            parent_ctx = getattr(self, "current_ctx", None)
+            delegate_history = parent_ctx.history if parent_ctx else []
+            delegate_additional_context = parent_ctx.additional_context if parent_ctx else ""
+            
             delegate_ctx = ChatContext(
                 query=query,
-                history=[],  # Start fresh for the specific delegated task
-                conversation_id=f"delegate-{agent_type}",
-                user_id="system-delegation"
+                history=delegate_history,
+                additional_context=delegate_additional_context
             )
             
             try:

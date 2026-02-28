@@ -14,7 +14,9 @@ from .sales_strategy_agent import CCOSalesStrategyAgent
 from .customer_success_agent import CCOCustomerSuccessAgent
 from .contract_agent import CCOContractAgent
 from .general_agent import CCOGeneralAgent
-
+from .ppt_agent import CCOPPTAgent
+from .pdf_agent import CCOPDFAgent
+from .word_agent import CCOWordAgent
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +38,13 @@ classification_prompt = (
     "Analysis Instructions (do not include these in the final answer):\n"
     "1. Identify key topics, technical terms, and the user's intent.\n"
     "2. Compare these elements to each agent's specialty description.\n"
-    "3. Favor specialized agents over general ones for close matches.\n\n"
+    "3. Favor specialized agents over general ones for close matches.\n"
+    "4. MULTI-AGENT REQUIRED: If the query requires expertise from multiple different domains or combining insights from more than one agent, explicitly select 'multi_agent' as the agent_id and set is_multi_agent to True.\n\n"
     "Confidence Scoring Guidelines:\n"
     "- 0.9-1.0: Ideal match with core expertise.\n"
     "- 0.7-0.9: Strong match with known capabilities.\n"
     "- 0.5-0.7: Partial or related match.\n"
-    "If no agent is an ideal match, choose the best available option.\n"
+    "If multiple areas of expertise are needed, choose the 'multi_agent' option. If no agent is an ideal match, choose the best available option.\n"
 )
 
 
@@ -53,12 +56,18 @@ class CCORouterAgent(ChatAgent):
             "sales_strategy": CCOSalesStrategyAgent(llm_provider, tools_provider),
             "contract": CCOContractAgent(llm_provider, tools_provider),
             "customer_success": CCOCustomerSuccessAgent(llm_provider, tools_provider),
+            "ppt": CCOPPTAgent(llm_provider, tools_provider),
+            "pdf": CCOPDFAgent(llm_provider, tools_provider),
+            "word": CCOWordAgent(llm_provider, tools_provider),
             "general": CCOGeneralAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
             "sales_strategy": "Designs commercial strategy, pricing architecture, packaging, and go-to-market plans for North American shortline railroads; focuses on value propositions, territory design, sales process optimization, and pipeline velocity.",
             "contract": "Leads end-to-end contract execution — from pilot-to-contract conversion through negotiation, deal structuring, signature, and renewal; handles multi-year agreements, risk management, and revenue protection.",
             "customer_success": "Builds and maintains senior-level customer relationships, drives account expansion and renewals, manages partner/channel development, and develops industry alliances (ASLRRA); focuses on retention, NRR, and customer advocacy.",
+            "ppt": "The primary agent for building and updating PowerPoint slide decks; use this for ANY request involving slides, presentations, or decks visualizing CCO themes.",
+            "pdf": "Specialized in creating and updating structured PDF documents and reports; use this for ANY request involving PDF reports, memos, or briefs summarizing CCO topics.",
+            "word": "Specialized in creating and updating structured Word documents and reports; use this for ANY request involving Word docs, reports, or memos summarizing CCO findings.",
             "general": "Handles greetings and simple open-ended commercial questions; acts as a friendly front-door assistant for the CCO system, triaging queries to the right specialist.",
         }
 

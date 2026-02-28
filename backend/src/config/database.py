@@ -15,7 +15,13 @@ else:
         db_url = db_url.replace("postgresql+asyncpg", "postgresql+psycopg2")
     if "supabase.co" in db_url and "sslmode=" not in db_url:
         db_url = db_url + ("&sslmode=require" if "?" in db_url else "?sslmode=require")
-    engine = create_engine(db_url)
+    engine = create_engine(
+        db_url,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+        pool_size=5,
+        max_overflow=10
+    )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
