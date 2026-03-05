@@ -382,7 +382,7 @@ async def create_word_db(input_data: CreateWordInput, sql_db: Session, user_id: 
         sql_db.refresh(word_doc)
         
         return (
-            f"✅ Created new Word document: '{word_doc.title}' (ID: {word_doc.id}).\n"
+            f"✅ Created new Word document: '{word_doc.title}'.\n"
             f"REMINDER — each section = 1 A4 page. Keep content within the page budget:\n"
             f"  • Plain text only: max 450 words\n"
             f"  • Text + table: max 200 words\n"
@@ -465,7 +465,7 @@ def list_word_sections_db(sql_db: Session, conversation_id: str) -> str:
         if not sections:
             return f"📋 Word document '{word_doc.title}' has no sections yet."
         
-        result = f"📋 **Word Document: {word_doc.title}** (ID: {word_doc.id}, {len(sections)} sections)\n\n"
+        result = f"📋 **Word Document: {word_doc.title}** ({len(sections)} sections)\n\n"
         for section in sections:
             wc = _word_count(section.content)
             result += f"{section.order}. **{section.title}** ({section.section_type}) — {wc} words\n"

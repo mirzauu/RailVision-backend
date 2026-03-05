@@ -171,8 +171,17 @@ async def create_spreadsheet_db(
             return "❌ User or Organization not found."
 
         # 2. Prepare output directory and path
-        file_id = str(uuid.uuid4())
-        storage_rel = f"storage/spreadsheets/{file_id}.xlsx"
+        # Sanitize title for filename
+        import re
+        sanitized_title = re.sub(r'[^\w\s-]', '', input_data.title).strip().replace(' ', '_')
+        if not sanitized_title:
+            sanitized_title = "spreadsheet"
+        
+        # Add a short unique suffix to avoid collisions while keeping the name recognizable
+        unique_suffix = str(uuid.uuid4())[:8]
+        filename = f"{sanitized_title}_{unique_suffix}.xlsx"
+        
+        storage_rel = f"storage/spreadsheets/{filename}"
         os.makedirs("storage/spreadsheets", exist_ok=True)
 
         # 3. Build DataFrames and write Excel file
@@ -197,7 +206,7 @@ async def create_spreadsheet_db(
 
         # 5. Build public URL
         base = input_data.base_url.rstrip("/")
-        file_url = f"{base}/storage/spreadsheets/{file_id}.xlsx"
+        file_url = f"{base}/storage/spreadsheets/{filename}"
 
         # 6. Persist DB record
         record = GeneratedSpreadsheet(

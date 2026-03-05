@@ -43,7 +43,7 @@ async def create_pdf_db(input_data: CreatePDFInput, sql_db: Session, user_id: st
         sql_db.commit()
         sql_db.refresh(pdf)
         
-        return f"✅ Created new PDF: '{pdf.title}' (ID: {pdf.id}) for this conversation. You can now add sections."
+        return f"✅ Created new PDF: '{pdf.title}' for this conversation. You can now add sections."
     except Exception as e:
         sql_db.rollback()
         return f"❌ Error creating PDF in DB: {str(e)}"
@@ -114,7 +114,7 @@ def list_pdf_sections_db(sql_db: Session, conversation_id: str) -> str:
         if not sections:
             return f"📋 PDF '{pdf.title}' has no sections yet."
         
-        result = f"📋 **PDF: {pdf.title}** (ID: {pdf.id}, {len(sections)} sections)\n\n"
+        result = f"📋 **PDF: {pdf.title}** ({len(sections)} sections)\n\n"
         for section in sections:
             result += f"{section.order}. **{section.title}** ({section.section_type})\n"
         return result

@@ -45,7 +45,7 @@ async def create_ppt_db(input_data: CreatePPTInput, sql_db: Session, user_id: st
         sql_db.commit()
         sql_db.refresh(ppt)
         
-        return f"✅ Created new PPT: '{ppt.title}' (ID: {ppt.id}) for this conversation. You can now add slides."
+        return f"✅ Created new PPT: '{ppt.title}' for this conversation. You can now add slides."
     except Exception as e:
         sql_db.rollback()
         return f"❌ Error creating PPT in DB: {str(e)}"
@@ -116,7 +116,7 @@ def list_slides_db(sql_db: Session, conversation_id: str) -> str:
         if not slides:
             return f"📋 PPT '{ppt.title}' has no slides yet."
         
-        result = f"📋 **PPT: {ppt.title}** (ID: {ppt.id}, {len(slides)} slides)\n\n"
+        result = f"📋 **PPT: {ppt.title}** ({len(slides)} slides)\n\n"
         for slide in slides:
             result += f"{slide.order}. **{slide.title}** ({slide.slide_type})\n"
         return result

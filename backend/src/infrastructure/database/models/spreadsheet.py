@@ -23,6 +23,6 @@ class GeneratedSpreadsheet(Base, UUIDMixin, TimestampMixin):
     title = Column(String(500), nullable=False)
 
     # Populated once the .xlsx file has been written to disk
-    file_path = Column(String(1000), nullable=True)   # e.g. storage/spreadsheets/<uuid>.xlsx
+    file_path = Column(String(1000), nullable=True)   # e.g. storage/spreadsheets/<name>_<uuid>.xlsx
     file_url  = Column(String(1000), nullable=True)   # e.g. http://host/storage/spreadsheets/<uuid>.xlsx
     sheet_count = Column(Integer, default=1)
