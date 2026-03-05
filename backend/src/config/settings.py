@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     mail_ssl_tls: bool = False
     use_credentials: bool = True
     validate_certs: bool = True
+
+    # Backend base URL (used for building download links for generated files)
+    base_url: str = "http://localhost:8000"
     
     @property
     def is_production(self) -> bool:

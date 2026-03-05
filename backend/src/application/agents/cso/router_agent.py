@@ -22,6 +22,7 @@ from .pdf_agent import CSOPDFAgent
 from .word_agent import CSOWordAgent
 from .general_agent import CSOGeneralAgent
 from .brutall_agent import CSOBrutallAgent
+from .spreadsheet_agent import CSOSpreadsheetAgent
 
 
 logger = logging.getLogger(__name__)
@@ -68,6 +69,7 @@ class CSORouterAgent(ChatAgent):
             "ppt": CSOPPTAgent(llm_provider, tools_provider),
             "pdf": CSOPDFAgent(llm_provider, tools_provider),
             "word": CSOWordAgent(llm_provider, tools_provider),
+            "spreadsheet": CSOSpreadsheetAgent(llm_provider, tools_provider),
             "general": CSOGeneralAgent(llm_provider, tools_provider),
             "brutall": CSOBrutallAgent(llm_provider, tools_provider),
         }
@@ -81,6 +83,7 @@ class CSORouterAgent(ChatAgent):
             "ppt": "The primary agent for building and updating PowerPoint slide decks; use this for ANY request involving slides, presentations, or decks.",
             "pdf": "Specialized in creating and updating structured PDF documents and reports; use this for ANY request involving PDF reports, memos, or briefs.",
             "word": "Specialized in creating and updating structured Word documents and reports; use this for ANY request involving Word docs, reports, or memos.",
+            "spreadsheet": "Specialized in generating Excel (.xlsx) spreadsheets with multiple sheets from structured data; use this for ANY request involving spreadsheets, Excel files, tabular data exports, or downloadable data files.",
             "general": "Handles greetings and simple open-ended questions; acts as a friendly front-door assistant for the CSO system.",
             "brutall": "Ruthless mentor that challenges ideas, debates, and provides brutally honest feedback to test resilience. Use this when the user wants to be challenged or have their ideas torn apart.",
         }

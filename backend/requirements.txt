@@ -24,3 +24,5 @@ anthropic>=0.18.0
 
 neo4j
 langchain-core
+pandas>=2.0.0
+openpyxl>=3.1.0

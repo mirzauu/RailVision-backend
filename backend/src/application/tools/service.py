@@ -9,8 +9,10 @@ from src.infrastructure.agents.tools.ppt_tool import ppt_generation_tool
 from src.infrastructure.agents.tools.pdf_tool import pdf_generation_tool
 from src.infrastructure.agents.tools.word_tool import word_generation_tool
 from src.infrastructure.agents.tools.attachment_tool import attachment_search_tool
+from src.infrastructure.agents.tools.spreadsheet_tool import spreadsheet_generation_tool
 from src.api.v1.tools.schemas import ToolInfo, ToolInfoWithParameters
 from src.infrastructure.llm.provider_service import ProviderService
+from src.config.settings import settings
 
 
 
@@ -63,6 +65,15 @@ class ToolService:
         if word_tools:
             for word_tool in word_tools:
                 tools[word_tool.name] = word_tool
+
+        # Spreadsheet Generation Tools
+        base_url = getattr(settings, "base_url", "http://localhost:8000")
+        spreadsheet_tools = spreadsheet_generation_tool(
+            self.db, self.user_id, self.conversation_id, base_url=base_url
+        )
+        if spreadsheet_tools:
+            for ss_tool in spreadsheet_tools:
+                tools[ss_tool.name] = ss_tool
 
         # Attachment Search Tool
         att_tool = attachment_search_tool(self.db, self.user_id, self.conversation_id)
