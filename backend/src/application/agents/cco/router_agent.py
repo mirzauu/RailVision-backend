@@ -19,6 +19,7 @@ from .pdf_agent import CCOPDFAgent
 from .word_agent import CCOWordAgent
 from .spreadsheet_agent import CCOSpreadsheetAgent
 from .brutall_agent import CCOBrutallAgent
+from .micheal_agent import CCOMichealAgent
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ class CCORouterAgent(ChatAgent):
             "spreadsheet": CCOSpreadsheetAgent(llm_provider, tools_provider),
             "general": CCOGeneralAgent(llm_provider, tools_provider),
             "brutall": CCOBrutallAgent(llm_provider, tools_provider),
+            "micheal": CCOMichealAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
             "sales_strategy": "Designs commercial strategy, pricing architecture, packaging, and go-to-market plans for North American shortline railroads; focuses on value propositions, territory design, sales process optimization, and pipeline velocity.",
@@ -75,6 +77,7 @@ class CCORouterAgent(ChatAgent):
             "spreadsheet": "Specialized in generating Excel (.xlsx) spreadsheets with multiple sheets from structured commercial data; use this for ANY request involving spreadsheets, Excel files, tabular data exports, or downloadable commercial data files.",
             "general": "Handles greetings and simple open-ended commercial questions; acts as a friendly front-door assistant for the CCO system, triaging queries to the right specialist.",
             "brutall": "Ruthless mentor that challenges commercial ideas, sales strategies, debates deals, and provides brutally honest feedback to test resilience. Use this when the user wants to be challenged or have their ideas torn apart.",
+            "micheal": "The CSO liaison. Has deep knowledge of all Chief Strategy Officer (CSO) related topics including corporate strategy, M&A, macro go-to-market, and railroad intelligence. Use this when the user specifically asks for Micheal, CSO insights, or a high-level strategic perspective on a commercial issue.",
         }
 
         self.agent_descriptions = "\n".join(

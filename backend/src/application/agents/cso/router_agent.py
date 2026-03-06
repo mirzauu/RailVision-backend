@@ -23,6 +23,7 @@ from .word_agent import CSOWordAgent
 from .general_agent import CSOGeneralAgent
 from .brutall_agent import CSOBrutallAgent
 from .spreadsheet_agent import CSOSpreadsheetAgent
+from .mary_agent import CSOMaryAgent
 
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,7 @@ class CSORouterAgent(ChatAgent):
             "spreadsheet": CSOSpreadsheetAgent(llm_provider, tools_provider),
             "general": CSOGeneralAgent(llm_provider, tools_provider),
             "brutall": CSOBrutallAgent(llm_provider, tools_provider),
+            "mary": CSOMaryAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
             "strategy": "Analyzes repository as a strategic asset; identifies business models, value creation, and strategic leverage vs constraints.",
@@ -86,6 +88,7 @@ class CSORouterAgent(ChatAgent):
             "spreadsheet": "Specialized in generating Excel (.xlsx) spreadsheets with multiple sheets from structured data; use this for ANY request involving spreadsheets, Excel files, tabular data exports, or downloadable data files.",
             "general": "Handles greetings and simple open-ended questions; acts as a friendly front-door assistant for the CSO system.",
             "brutall": "Ruthless mentor that challenges ideas, debates, and provides brutally honest feedback to test resilience. Use this when the user wants to be challenged or have their ideas torn apart.",
+            "mary": "The CCO liaison. Has deep knowledge of all Chief Commercial Officer (CCO) related topics including revenue growth, customer acquisition, contract execution, and go-to-market reality. Use this when the user specifically asks for Mary, CCO insights, or a commercial perspective on a strategic issue.",
         }
 
         self.agent_descriptions = "\n".join(
