@@ -26,3 +26,6 @@ neo4j
 langchain-core
 pandas>=2.0.0
 openpyxl>=3.1.0
+fpdf2>=2.7.0
+python-docx>=1.1.0
+python-pptx>=1.0.0

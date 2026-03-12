@@ -10,6 +10,10 @@ class GeneratedPDF(Base, UUIDMixin, TimestampMixin):
     org_id = Column(String, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(500), nullable=False)
     
+    # Populated once the .pdf file has been written to disk
+    file_path = Column(String(1000), nullable=True)
+    file_url  = Column(String(1000), nullable=True)
+    
     sections = relationship("PDFSection", back_populates="pdf", cascade="all, delete-orphan", order_by="PDFSection.order")
 
 class PDFSection(Base, UUIDMixin, TimestampMixin):

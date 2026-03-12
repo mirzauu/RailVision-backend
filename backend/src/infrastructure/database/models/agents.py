@@ -8,6 +8,7 @@ from .mixins import UUIDMixin, TimestampMixin
 
 class AgentType(str, enum.Enum):
     CSO = "cso"
+    CCO = "cco"
     CRO = "cro"
     CFO = "cfo"
     COO = "coo"

@@ -1,175 +1,178 @@
 """
-PDF Management Tool for storing document sections in the database.
+PDF Document Management Tool
 """
 
+import os
 import uuid
+import logging
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 from langchain_core.tools import StructuredTool
+from fpdf import FPDF
 
-# Import project-specific models
 from src.infrastructure.database.models import User, GeneratedPDF, PDFSection
 
-# --- Tool Input Schemas ---
+logger = logging.getLogger(__name__)
+
+# Limits checking
+MAX_SECTIONS = 50
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+
+class PDFSectionInput(BaseModel):
+    title: str = Field(description="Title of the section")
+    content: str = Field(description="Text content of the section.")
+    section_type: str = Field(default="text", description="Type of slide: text, list")
 
 class CreatePDFInput(BaseModel):
-    title: str = Field(description="Title of the PDF document")
-
-class AddPDFSectionInput(BaseModel):
-    title: str = Field(description="Title of the section")
-    content: str = Field(description="Content of the section (Markdown supported)")
-    section_type: str = Field(default="text", description="Type of section: text, list, table")
-
-class UpdatePDFInput(BaseModel):
-    title: Optional[str] = Field(default=None, description="New title for the PDF")
-    sections: Optional[List[Dict[str, str]]] = Field(default=None, description="Complete list of sections to replace current ones. Each dict should have 'title', 'content', and 'section_type'.")
-
-# --- Core Logic Functions (Database interaction) ---
+    title: str = Field(description="Title of the PDF report")
+    sections: List[PDFSectionInput] = Field(description="List of sections for the report")
+    base_url: str = Field(description="Base URL of the backend server")
 
 async def create_pdf_db(input_data: CreatePDFInput, sql_db: Session, user_id: str, conversation_id: str) -> str:
-    """Initialize a new generated PDF in the database"""
     try:
         user = sql_db.query(User).filter(User.id == user_id).first()
         if not user or not user.org_id:
             return "❌ User or Organization not found."
 
-        pdf = GeneratedPDF(
+        import re
+        sanitized_title = re.sub(r'[^\w\s-]', '', input_data.title).strip().replace(' ', '_')
+        if not sanitized_title:
+            sanitized_title = "document"
+            
+        unique_suffix = str(uuid.uuid4())[:8]
+        filename = f"{sanitized_title}_{unique_suffix}.pdf"
+        
+        storage_rel = f"storage/pdfs/{filename}"
+        os.makedirs("storage/pdfs", exist_ok=True)
+        
+        def _sanitize_text(text: str) -> str:
+            if not text:
+                return ""
+            replacements = {
+                '“': '"', '”': '"', '‘': "'", '’': "'",
+                '—': '-', '–': '-', '…': '...'
+            }
+            for k, v in replacements.items():
+                text = text.replace(k, v)
+            return text.encode('latin-1', 'replace').decode('latin-1')
+
+        class PDF(FPDF):
+            def header(self):
+                self.set_font("helvetica", "B", 15)
+                self.cell(0, 10, _sanitize_text(input_data.title), border=False, align="C")
+                self.ln(20)
+                
+            def footer(self):
+                self.set_y(-15)
+                self.set_font("helvetica", "I", 8)
+                self.cell(0, 10, f"Page {self.page_no()}", align="C")
+
+        pdf = PDF()
+        pdf.add_page()
+        pdf.set_font("helvetica", size=11)
+        
+        for i, section in enumerate(input_data.sections):
+            pdf.set_font("helvetica", "B", 14)
+            pdf.cell(0, 10, txt=_sanitize_text(section.title), new_x="LMARGIN", new_y="NEXT")
+            pdf.set_font("helvetica", size=11)
+            pdf.multi_cell(0, 6, txt=_sanitize_text(section.content))
+            pdf.ln(5)
+
+        pdf.output(storage_rel)
+        
+        file_size = os.path.getsize(storage_rel)
+        if file_size > MAX_FILE_SIZE_BYTES:
+            os.remove(storage_rel)
+            return "❌ Generated file is too large. Please reduce the content."
+
+        base = input_data.base_url.rstrip("/")
+        file_url = f"{base}/{storage_rel}"
+        
+        record = GeneratedPDF(
             conversation_id=conversation_id,
             org_id=user.org_id,
-            title=input_data.title
-        )
-        sql_db.add(pdf)
-        sql_db.commit()
-        sql_db.refresh(pdf)
-        
-        return f"✅ Created new PDF: '{pdf.title}' for this conversation. You can now add sections."
-    except Exception as e:
-        sql_db.rollback()
-        return f"❌ Error creating PDF in DB: {str(e)}"
-
-async def add_pdf_section_db(input_data: AddPDFSectionInput, sql_db: Session, conversation_id: str) -> str:
-    """Add a section to the current PDF in the database"""
-    try:
-        # Find the latest PDF for this conversation
-        pdf = sql_db.query(GeneratedPDF).filter(GeneratedPDF.conversation_id == conversation_id).order_by(GeneratedPDF.created_at.desc()).first()
-        if not pdf:
-            return "❌ No PDF found for this conversation. Please create one first using 'create_pdf'."
-
-        # Get current section count for ordering
-        section_count = sql_db.query(PDFSection).filter(PDFSection.generated_pdf_id == pdf.id).count()
-        
-        section = PDFSection(
-            generated_pdf_id=pdf.id,
             title=input_data.title,
-            content=input_data.content,
-            section_type=input_data.section_type,
-            order=section_count + 1
+            file_path=storage_rel,
+            file_url=file_url
         )
-        sql_db.add(section)
-        sql_db.commit()
+        sql_db.add(record)
+        sql_db.flush()
         
-        return f"✅ Added section '{input_data.title}' to PDF '{pdf.title}'. Total sections: {section_count + 1}"
+        for i, sec_in in enumerate(input_data.sections):
+            section_record = PDFSection(
+                generated_pdf_id=record.id,
+                title=sec_in.title,
+                content=sec_in.content,
+                section_type=sec_in.section_type,
+                order=i+1
+            )
+            sql_db.add(section_record)
+            
+        sql_db.commit()
+        sql_db.refresh(record)
+        
+        return (
+            f"✅ PDF **'{record.title}'** created successfully!\n"
+            f"📥 **Download link:** {file_url}"
+        )
     except Exception as e:
         sql_db.rollback()
-        return f"❌ Error adding section to DB: {str(e)}"
+        logger.error("Error creating PDF: %s", e, exc_info=True)
+        return f"❌ Error creating PDF: {str(e)}"
 
-async def update_pdf_db(input_data: UpdatePDFInput, sql_db: Session, conversation_id: str) -> str:
-    """Update the current PDF in the database"""
+def get_pdf_link_db(sql_db: Session, conversation_id: str) -> str:
     try:
-        pdf = sql_db.query(GeneratedPDF).filter(GeneratedPDF.conversation_id == conversation_id).order_by(GeneratedPDF.created_at.desc()).first()
-        if not pdf:
-            return "❌ No PDF found to update."
-
-        if input_data.title:
-            pdf.title = input_data.title
-        
-        if input_data.sections:
-            # Delete existing sections and replace
-            sql_db.query(PDFSection).filter(PDFSection.generated_pdf_id == pdf.id).delete()
-            for i, s_data in enumerate(input_data.sections):
-                section = PDFSection(
-                    generated_pdf_id=pdf.id,
-                    title=s_data.get('title', ''),
-                    content=s_data.get('content', ''),
-                    section_type=s_data.get('section_type', 'text'),
-                    order=i + 1
-                )
-                sql_db.add(section)
-        
-        sql_db.commit()
-        return f"✅ Updated PDF '{pdf.title}' successfully."
+        record = sql_db.query(GeneratedPDF).filter(GeneratedPDF.conversation_id == conversation_id).order_by(GeneratedPDF.created_at.desc()).first()
+        if not record:
+            return "📋 No PDF found for this conversation. Use 'create_pdf' to generate one."
+        if not record.file_url:
+            return "📋 PDF record found but the file has not been generated yet."
+        return (
+            f"📥 **PDF:** '{record.title}'\n"
+            f"**Download:** {record.file_url}"
+        )
     except Exception as e:
-        sql_db.rollback()
-        return f"❌ Error updating PDF: {str(e)}"
+        return f"❌ Error retrieving PDF link: {str(e)}"
 
-def list_pdf_sections_db(sql_db: Session, conversation_id: str) -> str:
-    """List sections of the current PDF in the database"""
-    try:
-        pdf = sql_db.query(GeneratedPDF).filter(GeneratedPDF.conversation_id == conversation_id).order_by(GeneratedPDF.created_at.desc()).first()
-        if not pdf:
-            return "📋 No PDF found for this conversation."
-        
-        sections = sql_db.query(PDFSection).filter(PDFSection.generated_pdf_id == pdf.id).order_by(PDFSection.order.asc()).all()
-        if not sections:
-            return f"📋 PDF '{pdf.title}' has no sections yet."
-        
-        result = f"📋 **PDF: {pdf.title}** ({len(sections)} sections)\n\n"
-        for section in sections:
-            result += f"{section.order}. **{section.title}** ({section.section_type})\n"
-        return result
-    except Exception as e:
-        return f"❌ Error retrieving sections: {str(e)}"
-
-# --- Integration for Project (StructuredTool) ---
-
-def pdf_generation_tool(sql_db: Session, user_id: str, conversation_id: Optional[str] = None) -> List[StructuredTool]:
-    """Returns tools in StructuredTool format for project integration"""
+def pdf_generation_tool(
+    sql_db: Session, 
+    user_id: str, 
+    conversation_id: Optional[str] = None, 
+    base_url: str = "http://localhost:8000"
+) -> List[StructuredTool]:
+    """Returns LangChain StructuredTools for PDF generation."""
     
     if not conversation_id:
-        import logging
-        logging.warning("pdf_generation_tool called without conversation_id. PDF tools will not be available.")
+        logger.warning("pdf_generation_tool called without conversation_id.")
         return []
-
-    async def create_pdf(title: str) -> str:
-        """Initialize a new PDF document in the database."""
-        return await create_pdf_db(CreatePDFInput(title=title), sql_db, user_id, conversation_id)
-
-    async def add_pdf_section(title: str, content: str, section_type: str = "text") -> str:
-        """Add a section to the current PDF document in the database."""
-        return await add_pdf_section_db(AddPDFSectionInput(title=title, content=content, section_type=section_type), sql_db, conversation_id)
-
-    def list_pdf_sections() -> str:
-        """List all sections currently in the database for the current PDF draft."""
-        return list_pdf_sections_db(sql_db, conversation_id)
-
-    async def update_pdf(title: Optional[str] = None, sections: Optional[List[Dict[str, str]]] = None) -> str:
-        """Update the existing PDF in the database."""
-        return await update_pdf_db(UpdatePDFInput(title=title, sections=sections), sql_db, conversation_id)
     
+    async def create_pdf(title: str, sections: List[Dict[str, Any]]) -> str:
+        """
+        Generate a PDF report from structured section data and return a download link.
+        """
+        parsed_sections = [PDFSectionInput(**s) if isinstance(s, dict) else s for s in sections]
+        return await create_pdf_db(CreatePDFInput(title=title, sections=parsed_sections, base_url=base_url), sql_db, user_id, conversation_id)
+        
+    def get_pdf_link() -> str:
+        """Retrieve the download link for the most recent PDF created in this conversation."""
+        return get_pdf_link_db(sql_db, conversation_id)
+        
+    class _CreateInput(BaseModel):
+        title: str = Field(description="Title / label for the PDF report.")
+        sections: List[Dict[str, Any]] = Field(description="List of section objects. Each must have 'title' (str) and 'content' (str). Optional 'section_type' (str).")
+
     return [
         StructuredTool.from_function(
             coroutine=create_pdf,
             name="create_pdf",
-            description="Initialize a new PDF document record in the database. Use this first.",
-            args_schema=CreatePDFInput
+            description="Generate a PDF report with multiple sections. Pass 'title' (document name) and 'sections' (list of {title, content} objects). Returns a download link on success.",
+            args_schema=_CreateInput,
         ),
         StructuredTool.from_function(
-            coroutine=add_pdf_section,
-            name="add_pdf_section",
-            description="Add a section (text, list, or table) to the current database-stored PDF document.",
-            args_schema=AddPDFSectionInput
+            func=get_pdf_link,
+            name="get_pdf_link",
+            description="Retrieve the download link for the most recent PDF created in this conversation.",
+            args_schema=None,
         ),
-        StructuredTool.from_function(
-            func=list_pdf_sections,
-            name="list_pdf_sections",
-            description="List all sections stored in the database for the current PDF.",
-            args_schema=None
-        ),
-        StructuredTool.from_function(
-            coroutine=update_pdf,
-            name="update_pdf",
-            description="Update the current PDF document in the database (title or sections).",
-            args_schema=UpdatePDFInput
-        )
     ]

@@ -9,6 +9,10 @@ class Presentation(Base, UUIDMixin, TimestampMixin):
     conversation_id = Column(String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True)
     org_id = Column(String, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(500), nullable=False)
+
+    # Populated once the .pptx file has been written to disk
+    file_path = Column(String(1000), nullable=True)
+    file_url  = Column(String(1000), nullable=True)
     
     slides = relationship("PresentationSlide", back_populates="presentation", cascade="all, delete-orphan", order_by="PresentationSlide.order")
 

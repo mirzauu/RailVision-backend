@@ -5,8 +5,8 @@ from langchain_core.tools import StructuredTool
 from src.infrastructure.agents.tools.think_tool import think_tool
 from src.infrastructure.agents.tools.web_search_tool import web_search_tool
 from src.infrastructure.agents.tools.knowledge_base_tool import knowledge_base_tool
-from src.infrastructure.agents.tools.ppt_tool import ppt_generation_tool
 from src.infrastructure.agents.tools.pdf_tool import pdf_generation_tool
+from src.infrastructure.agents.tools.ppt_tool import ppt_generation_tool
 from src.infrastructure.agents.tools.word_tool import word_generation_tool
 from src.infrastructure.agents.tools.attachment_tool import attachment_search_tool
 from src.infrastructure.agents.tools.spreadsheet_tool import spreadsheet_generation_tool
@@ -49,25 +49,28 @@ class ToolService:
         if self.web_search_tool:
             tools["web_search_tool"] = self.web_search_tool
 
-        # PPT Generation Tools
-        ppt_tools = ppt_generation_tool(self.db, self.user_id, self.conversation_id)
-        for ppt_tool in ppt_tools:
-            tools[ppt_tool.name] = ppt_tool
+        # Base URL for download links
+        base_url = getattr(settings, "base_url", "http://localhost:8000")
 
         # PDF Generation Tools
-        pdf_tools = pdf_generation_tool(self.db, self.user_id, self.conversation_id)
+        pdf_tools = pdf_generation_tool(self.db, self.user_id, self.conversation_id, base_url=base_url)
         if pdf_tools:
             for pdf_tool in pdf_tools:
                 tools[pdf_tool.name] = pdf_tool
 
+        # PPT Generation Tools
+        ppt_tools = ppt_generation_tool(self.db, self.user_id, self.conversation_id, base_url=base_url)
+        if ppt_tools:
+            for pt_tool in ppt_tools:
+                tools[pt_tool.name] = pt_tool
+
         # Word Generation Tools
-        word_tools = word_generation_tool(self.db, self.user_id, self.conversation_id)
+        word_tools = word_generation_tool(self.db, self.user_id, self.conversation_id, base_url=base_url)
         if word_tools:
             for word_tool in word_tools:
                 tools[word_tool.name] = word_tool
 
         # Spreadsheet Generation Tools
-        base_url = getattr(settings, "base_url", "http://localhost:8000")
         spreadsheet_tools = spreadsheet_generation_tool(
             self.db, self.user_id, self.conversation_id, base_url=base_url
         )

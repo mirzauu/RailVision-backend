@@ -10,6 +10,10 @@ class GeneratedWord(Base, UUIDMixin, TimestampMixin):
     org_id = Column(String, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(500), nullable=False)
     
+    # Populated once the .docx file has been written to disk
+    file_path = Column(String(1000), nullable=True)
+    file_url  = Column(String(1000), nullable=True)
+    
     sections = relationship("WordSection", back_populates="word_doc", cascade="all, delete-orphan", order_by="WordSection.order")
 
 class WordSection(Base, UUIDMixin, TimestampMixin):

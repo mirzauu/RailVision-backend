@@ -125,6 +125,21 @@ MODEL_CONFIG_MAP = {
         "base_url": None,
         "api_version": None,
     },
+    "anthropic/claude-sonnet-4-": {
+        "provider": "anthropic",
+        "default_params": {
+            "temperature": 0.3,
+            "max_tokens": 8000,
+        },
+        "capabilities": {
+            "supports_pydantic": True,
+            "supports_streaming": True,
+            "supports_vision": True,
+            "supports_tool_parallelism": True,
+        },
+        "base_url": None,
+        "api_version": "2023-06-01",
+    },
     "anthropic/claude-sonnet-4-20250514": {
         "provider": "anthropic",
         "default_params": {"temperature": 0.3, "max_tokens": 6000},

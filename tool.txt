@@ -1,277 +1,40 @@
-service.py
+gmail authenticationdbsa    elsd5ri2tflkdp6n
+once authenticated, store the login data.
+neededew gmail notification
+new email sepration and auto repsonder.
+
+create toools for gmail integration
 
 
-class ToolService:
-    def __init__(self, db: Session, user_id: str):
-        self.db = db
-        self.user_id = user_id
-        self.webpage_extractor_tool = webpage_extractor_tool(db, user_id)
-        self.web_search_tool = web_search_tool(db, user_id)
-        self.github_tool = github_tool(db, user_id)
-        self.get_code_from_multiple_node_ids_tool = GetCodeFromMultipleNodeIdsTool(
-            self.db, self.user_id
-        )
-        self.get_code_graph_from_node_id_tool = GetCodeGraphFromNodeIdTool(db)
-        self.file_structure_tool = GetCodeFileStructureTool(db)
-        self.provider_service = ProviderService.create(db, user_id)
-        self.tools = self._initialize_tools()
-
-    def get_tools(self, tool_names: List[str]) -> List[StructuredTool]:
-        """get tools if exists"""
-        tools = []
-        for tool_name in tool_names:
-            if self.tools.get(tool_name) is not None:
-                tools.append(self.tools[tool_name])
-        return tools
-
-    def _initialize_tools(self) -> Dict[str, StructuredTool]:
-        tools = {
-            "get_code_from_probable_node_name": get_code_from_probable_node_name_tool(
-                self.db, self.user_id
-            ),
-            "get_code_from_node_id": get_code_from_node_id_tool(self.db, self.user_id),
-            "get_code_from_multiple_node_ids": get_code_from_multiple_node_ids_tool(
-                self.db, self.user_id
-            ),
-            "ask_knowledge_graph_queries": get_ask_knowledge_graph_queries_tool(
-                self.db, self.user_id
-            ),
-            "get_nodes_from_tags": get_nodes_from_tags_tool(self.db, self.user_id),
-            "get_code_graph_from_node_id": get_code_graph_from_node_id_tool(self.db),
-            "change_detection": get_change_detection_tool(self.user_id),
-            "get_code_file_structure": get_code_file_structure_tool(self.db),
-            "get_node_neighbours_from_node_id": get_node_neighbours_from_node_id_tool(
-                self.db
-            ),
-            "get_linear_issue": get_linear_issue_tool(self.db, self.user_id),
-            "update_linear_issue": update_linear_issue_tool(self.db, self.user_id),
-            "intelligent_code_graph": get_intelligent_code_graph_tool(
-                self.db, self.provider_service, self.user_id
-            ),
-            "think": think_tool(self.db, self.user_id),
-            "github_create_branch": github_create_branch.github_create_branch_tool(
-                self.db, self.user_id
-            ),
-            "github_update_branch": github_update_branch.github_update_branch_tool(
-                self.db, self.user_id
-            ),
-            "github_create_pull_request": github_create_pr.github_create_pull_request_tool(
-                self.db, self.user_id
-            ),
-            "github_add_pr_comments": github_add_pr_comment.git_add_pr_comments_tool(
-                self.db, self.user_id
-            ),
-        }
-
-        if self.webpage_extractor_tool:
-            tools["webpage_extractor"] = self.webpage_extractor_tool
-
-        if self.github_tool:
-            tools["github_tool"] = self.github_tool
-
-        if self.web_search_tool:
-            tools["web_search_tool"] = self.web_search_tool
-
-        return tools
-
-    def list_tools(self) -> List[ToolInfo]:
-        return [
-            ToolInfo(
-                id=tool_id,
-                name=tool.name,
-                description=tool.description,
-            )
-            for tool_id, tool in self.tools.items()
-        ]
-
-    def list_tools_with_parameters(self) -> Dict[str, ToolInfoWithParameters]:
-        return {
-            tool_id: ToolInfoWithParameters(
-                id=tool_id,
-                name=tool.name,
-                description=tool.description,
-                args_schema=tool.args_schema.schema(),
-            )
-            for tool_id, tool in self.tools.items()
-        }
+two file for gmail 
+1. authentication
+2. notification
+3. tools
 
 
-schema.py
+similarly three tools for slack integration , google drive integration, .
 
-from typing import Any, Dict, Union
-
-from pydantic import BaseModel
-
-
-class ToolRequest(BaseModel):
-    tool_id: str
-    params: Dict[str, Any]
+gmail_oauth_base.py
+slack_oauth_base.py
 
 
-class ToolResponse(BaseModel):
-    results: Any
+create webhook, delete webhook, update webhook
 
-
-class ToolParameter(BaseModel):
-    name: str
-    type: str
-    description: str
-    required: bool
-
-
-class ToolInfo(BaseModel):
-    id: str
-    name: str
-    description: Union[str, tuple]
-
-
-class ToolInfoWithParameters(BaseModel):
-    name: str
-    description: Union[str, tuple]
-    args_schema: dict
-
-
-router.py
-
-from typing import List
-
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
-from app.core.database import get_db
-from app.modules.auth.auth_service import AuthService
-from app.modules.intelligence.tools.tool_schema import ToolInfo
-from app.modules.intelligence.tools.tool_service import ToolService
-
-router = APIRouter()
-
-
-@router.get("/tools/list_tools", response_model=List[ToolInfo])
-async def list_tools(
-    db: Session = Depends(get_db),
-    user=Depends(AuthService.check_auth),
-):
-    user_id = user["user_id"]
-    tool_service = ToolService(db, user_id)
-    return tool_service.list_tools()
+    def __init__(self, config: Config) -> None:
+        super().__init__(config)
+        # Override with Jira-specific env vars if provided
+        self.client_id = config("JIRA_CLIENT_ID", default=self.client_id)
+        self.client_secret = config("JIRA_CLIENT_SECRET", default=self.client_secret)
 
 
 
-think_tool.py
+interation modeule.
+tools
+gmail 
+notion.
 
 
-import asyncio
-from typing import Dict, Any
-from langchain_core.tools import StructuredTool
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
-from app.modules.intelligence.provider.provider_service import ProviderService
+lead capture,
+support
+cold call
 
-
-class ThinkToolInput(BaseModel):
-    thought: str = Field(description="Your thoughts to process")
-
-
-class ThinkTool:
-    """Tool for thinking and processing thoughts."""
-
-    name = "think"
-    description = """Use the tool to think about something. It will not obtain new information or make any changes to the repository, but just log the thought. Use it when complex reasoning or brainstorming is needed. For example, if you explore the repo and discover the source of a bug, call this tool to brainstorm several unique ways of fixing the bug, and assess which change(s) are likely to be simplest and most effective. Alternatively, if you receive some test results, call this tool to brainstorm ways to fix the failing tests."""
-
-    def __init__(self, sql_db: Session, user_id: str):
-        self.sql_db = sql_db
-        self.user_id = user_id
-        self.provider_service = ProviderService(sql_db, user_id)
-
-    async def arun(self, thought: str) -> Dict[str, Any]:
-        """Process the thought using structured thinking asynchronously."""
-        prompt = """
-        ## Using the think tool
-
-        Before taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:
-        - List the specific rules that apply to the current request
-        - Check if all required information is collected
-        - Verify that the planned action complies with all policies
-        - Iterate over tool results for correctness
-
-        Here are some examples of what to iterate over inside the think tool:
-        <think_tool_example_1>
-        User wants to cancel flight ABC123
-        - Need to verify: user ID, reservation ID, reason
-        - Check cancellation rules:
-          * Is it within 24h of booking?
-          * If not, check ticket class and insurance
-        - Verify no segments flown or are in the past
-        - Plan: collect missing info, verify rules, get confirmation
-        </think_tool_example_1>
-
-        <think_tool_example_2>
-        User wants to book 3 tickets to NYC with 2 checked bags each
-        - Need user ID to check:
-          * Membership tier for baggage allowance
-          * Which payments methods exist in profile
-        - Baggage calculation:
-          * Economy class × 3 passengers
-          * If regular member: 1 free bag each → 3 extra bags = $150
-          * If silver member: 2 free bags each → 0 extra bags = $0
-          * If gold member: 3 free bags each → 0 extra bags = $0
-        - Payment rules to verify:
-          * Max 1 travel certificate, 1 credit card, 3 gift cards
-          * All payment methods must be in profile
-          * Travel certificate remainder goes to waste
-        - Plan:
-        1. Get user ID
-        2. Verify membership level for bag fees
-        3. Check which payment methods in profile and if their combination is allowed
-        4. Calculate total: ticket price + any bag fees
-        5. Get explicit confirmation for booking
-        </think_tool_example_2>
-
-        Given the following thought, process it using structured thinking and return a detailed analysis:
-
-        {thought}
-        """
-
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an expert at structured thinking and analysis.",
-            },
-            {"role": "user", "content": prompt.format(thought=thought)},
-        ]
-
-        try:
-            response = await self.provider_service.call_llm(
-                messages=messages, config_type="chat"
-            )
-            return {"success": True, "analysis": response}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-
-    def run(self, thought: str) -> Dict[str, Any]:
-        """Synchronous wrapper for arun."""
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            # If there is no event loop in current thread, create a new one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        try:
-            return loop.run_until_complete(self.arun(thought))
-        finally:
-            # Clean up if we created a new loop
-            if not loop.is_running():
-                loop.close()
-
-
-def think_tool(sql_db: Session, user_id: str) -> StructuredTool:
-    """Create and return the think tool."""
-    tool_instance = ThinkTool(sql_db, user_id)
-    return StructuredTool.from_function(
-        coroutine=tool_instance.arun,
-        func=tool_instance.run,
-        name="think",
-        description=tool_instance.description,
-        args_schema=ThinkToolInput,
-    )
