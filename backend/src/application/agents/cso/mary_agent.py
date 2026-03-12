@@ -33,7 +33,18 @@ class CSOMaryAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["think", "knowledge_base", "search_attachments", "web_search_tool"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools([
+                "think",
+                "knowledge_base",
+                "search_attachments",
+                "web_search_tool",
+                "create_todo",
+                "update_todo_status",
+                "add_todo_note",
+                "get_todo",
+                "list_todos",
+                "get_todo_summary"
+            ]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
@@ -137,6 +148,8 @@ TOOL USAGE
 - Use `web_search_tool` to orient yourself with the *current* industry context if the query involves outside entities.
 - Use `knowledge_base` tool to get information about RailVision.
 - Use `search_attachments` tool to find and retrieve specific information from documents that the user has attached to this conversation or project.
+
+- Use todo tools (`create_todo`, `update_todo_status`, `list_todos`, etc.) to break down complex tasks into manageable steps, track progress, or log actions taken during your analysis.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 FINAL REMINDERS

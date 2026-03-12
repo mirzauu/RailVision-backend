@@ -55,15 +55,19 @@ class CSOSpreadsheetAgent(ChatAgent):
         )
 
         tools = (
-            self.tools_provider.get_tools(
-                [
-                    "think",
-                    "knowledge_base",
-                    "create_spreadsheet",
-                    "get_spreadsheet_link",
-                    "search_attachments",
-                ]
-            )
+            self.tools_provider.get_tools([
+                "think",
+                "knowledge_base",
+                "create_spreadsheet",
+                "get_spreadsheet_link",
+                "search_attachments",
+                "create_todo",
+                "update_todo_status",
+                "add_todo_note",
+                "get_todo",
+                "list_todos",
+                "get_todo_summary"
+            ])
             if self.tools_provider
             else []
         )
@@ -135,6 +139,15 @@ OPERATING PRINCIPLES
 2. Structure: Use separate sheets for different data dimensions (e.g., "Summary" + "Details").
 3. Clarity: Column headers should be self-explanatory; avoid abbreviations.
 4. Completeness: Populate all data the user requested before calling the tool.
+
+━━━━━━━━━━━━━━━━━━━━━━
+TOOL USAGE
+━━━━━━━━━━━━━━━━━━━━━━
+
+- Use `think` to plan what sheets are needed, what columns each should have, and what data goes in each row.
+- Use `knowledge_base` or `search_attachments` to retrieve any factual data needed.
+- Use `create_spreadsheet` to generate the file.
+- Use todo tools (`create_todo`, `update_todo_status`, `list_todos`, etc.) to break down complex tasks into manageable steps, track progress, or log actions taken during your analysis.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT RULES

@@ -34,7 +34,7 @@ class CSOArtifactAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "create_ppt", "add_slide", "list_slides", "update_ppt", "create_pdf", "add_pdf_section", "list_pdf_sections", "update_pdf", "create_word_doc", "add_word_section", "list_word_sections", "update_word_doc", "search_attachments"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "create_ppt", "add_slide", "list_slides", "update_ppt", "create_pdf", "add_pdf_section", "list_pdf_sections", "update_pdf", "create_word_doc", "add_word_section", "list_word_sections", "update_word_doc", "search_attachments", "create_todo", "update_todo_status", "add_todo_note", "get_todo", "list_todos", "get_todo_summary"]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
@@ -152,6 +152,7 @@ TOOL USAGE
 - **Word Generation**: If the user wants a Word document, report, or memo, you MUST use the Word tools (`create_word_doc`, `add_word_section`). DO NOT just write the content as text.
 - **Search Attachments**: Use `search_attachments` tool to find and retrieve specific information from documents that the user has attached to this conversation or project. This is essential for answering questions based on the content of uploaded documents.
 - Note: Both slides and PDF segments are stored in the DB linked to this conversation.
+- Use todo tools (`create_todo`, `update_todo_status`, `list_todos`, etc.) to break down complex tasks into manageable steps, track progress, or log actions taken during your analysis.
 - Do not use tools for generic opinions or obvious knowledge.
 
 ━━━━━━━━━━━━━━━━━━━━━━

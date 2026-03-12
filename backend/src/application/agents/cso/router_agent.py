@@ -142,6 +142,17 @@ class CSORouterAgent(ChatAgent):
                 return PydanticMultiAgent(
                     llm_provider=self.llm_provider,
                     config=self.supervisor_config,
+                    tools=self.tools_provider.get_tools(
+                        [
+                            "think",
+                            "create_todo",
+                            "update_todo_status",
+                            "add_todo_note",
+                            "get_todo",
+                            "list_todos",
+                            "get_todo_summary",
+                        ]
+                    ),
                     existing_delegates=self.agents,
                     delegate_descriptions=self.agent_descriptions_map
                 )

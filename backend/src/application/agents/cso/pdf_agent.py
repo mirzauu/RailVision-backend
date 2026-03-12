@@ -37,12 +37,18 @@ class CSOPDFAgent(ChatAgent):
         )
         # Use only PDF-relevant tools
         tools = self.tools_provider.get_tools([
-            "think",
-            "knowledge_base",
-            "create_pdf",
-            "get_pdf_link",
-            "search_attachments"
-        ]) if self.tools_provider else []
+                "think",
+                "knowledge_base",
+                "create_pdf",
+                "get_pdf_link",
+                "search_attachments",
+                "create_todo",
+                "update_todo_status",
+                "add_todo_note",
+                "get_todo",
+                "list_todos",
+                "get_todo_summary"
+            ]) if self.tools_provider else []
 
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
