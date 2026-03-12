@@ -10,6 +10,7 @@ from src.infrastructure.agents.tools.ppt_tool import ppt_generation_tool
 from src.infrastructure.agents.tools.word_tool import word_generation_tool
 from src.infrastructure.agents.tools.attachment_tool import attachment_search_tool
 from src.infrastructure.agents.tools.spreadsheet_tool import spreadsheet_generation_tool
+from src.infrastructure.agents.tools.todo_tool import todo_management_tools
 from src.api.v1.tools.schemas import ToolInfo, ToolInfoWithParameters
 from src.infrastructure.llm.provider_service import ProviderService
 from src.config.settings import settings
@@ -82,6 +83,12 @@ class ToolService:
         att_tool = attachment_search_tool(self.db, self.user_id, self.conversation_id)
         if att_tool:
             tools[att_tool.name] = att_tool
+
+        # Todo Management Tools
+        todo_tools = todo_management_tools(self.conversation_id)
+        if todo_tools:
+            for td_tool in todo_tools:
+                tools[td_tool.name] = td_tool
 
         return tools
 

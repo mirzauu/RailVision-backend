@@ -40,7 +40,20 @@ class CSOStrategyAgent(ChatAgent):
             ],
         )
 
-        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "search_attachments"])
+        tools = self.tools_provider.get_tools(
+            [
+                "think", 
+                "web_search_tool", 
+                "knowledge_base", 
+                "search_attachments",
+                "create_todo",
+                "update_todo_status",
+                "add_todo_note",
+                "get_todo",
+                "list_todos",
+                "get_todo_summary"
+            ]
+        )
 
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
@@ -173,6 +186,7 @@ TOOL USAGE
 - Use `web_search_tool` ONLY to verify facts that materially affect the decision and finding from web.
 - Use `knowledge_base` tool to get information about RailVision.
 - Use `search_attachments` tool to find and retrieve specific information from documents that the user has attached to this conversation or project. This is essential for answering questions based on the content of uploaded documents.
+- Use todo tools (`create_todo`, `update_todo_status`, `list_todos`, etc.) to break down complex strategic analysis into manageable tasks, track evaluation progress, or log steps taken during your strategic analysis.
 - Do not use tools for generic opinions or obvious knowledge.
 
 ━━━━━━━━━━━━━━━━━━━━━━

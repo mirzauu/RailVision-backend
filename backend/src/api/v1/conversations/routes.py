@@ -88,6 +88,31 @@ async def chat_stream(
     # Sanitize query to remove NULL bytes which PostgreSQL doesn't support
     query = query.replace("\x00", "")
     
+    # Auto-create project if none provided
+    if not project_id or project_id == "default":
+        from src.api.v1.projects.routes import generate_project_name
+        from src.application.projects.service import ProjectService
+        from src.infrastructure.database.repositories.project_repository import ProjectRepository
+        from src.infrastructure.database.repositories.project_agent_repository import ProjectAgentRepository
+        from src.infrastructure.database.repositories.project_member_repository import ProjectMemberRepository
+        
+        project_name = await generate_project_name(query, user_id)
+        
+        project_svc = ProjectService(
+            ProjectRepository(db),
+            ProjectAgentRepository(db),
+            ProjectMemberRepository(db),
+        )
+        
+        new_project = project_svc.create_project(
+            org_id=org_id,
+            created_by=user_id,
+            name=project_name,
+            description=query[:500],
+            agent_id=agent if agent and agent != "auto" else None
+        )
+        project_id = str(new_project.id)
+
     # Process file attachment if provided
     attachment_context = ""
     attachment_ids = []
