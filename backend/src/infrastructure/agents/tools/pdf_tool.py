@@ -74,7 +74,7 @@ async def create_pdf_db(input_data: CreatePDFInput, sql_db: Session, user_id: st
         
         for i, section in enumerate(input_data.sections):
             pdf.set_font("helvetica", "B", 14)
-            pdf.cell(0, 10, txt=_sanitize_text(section.title), new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 10, txt=_sanitize_text(section.title), ln=1)
             pdf.set_font("helvetica", size=11)
             pdf.multi_cell(0, 6, txt=_sanitize_text(section.content))
             pdf.ln(5)

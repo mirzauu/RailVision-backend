@@ -16,4 +16,6 @@ def setup_logging() -> None:
         h.setLevel(level)
         if isinstance(h, StreamHandler):
             h.setFormatter(Formatter('%(asctime)s %(levelname)s %(name)s %(message)s'))
+    # Suppress benign python-multipart warnings (Skipping data after last boundary)
+    logging.getLogger("python_multipart.multipart").setLevel(logging.ERROR)
     _configured = True
