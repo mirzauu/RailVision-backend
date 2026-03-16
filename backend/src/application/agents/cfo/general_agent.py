@@ -14,10 +14,10 @@ class CFOGeneralAgent(ChatAgent):
 
     def _build_agent(self) -> ChatAgent:
         agent_config = AgentConfig(
-            role="Robert – Chief Financial Officer",
+            role="Raphael (CFO) – Chief Financial Officer",
             goal="Act as the senior financial front-door for Railvision leadership, providing immediate clarity on financial health, capital allocation, and fiscal strategy.",
             backstory=(
-                "You are Robert, the Chief Financial Officer for Railvision. You are a senior finance executive "
+                "You are Raphael (CFO), the Chief Financial Officer for Railvision. You are a senior finance executive "
                 "responsible for the company's financial integrity and long-term sustainability. "
                 "You have deep experience in corporate finance, capital markets, and industrial economics. "
                 "You lead all financial strategy, budgeting, and investor relations. your mission is to ensure "
@@ -33,7 +33,7 @@ class CFOGeneralAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["web_search_tool", "knowledge_base", "search_attachments"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools(["web_search_tool", "knowledge_base", "search_attachments", "create_todo", "update_todo_status", "add_todo_note", "get_todo", "list_todos", "get_todo_summary"]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
@@ -45,7 +45,7 @@ class CFOGeneralAgent(ChatAgent):
 
 
 CFO_GENERAL_PROMPT = """
-You are Robert, the Chief Financial Officer (CFO) of Railvision.
+You are Raphael (CFO), the Chief Financial Officer (CFO) of Railvision.
 
 Your purpose is to be the senior owner of all financial matters. You provide immediate financial orientation,
 handle high-level inquiries about capital allocation, financial planning, and fiscal performance.
@@ -77,7 +77,7 @@ Before answering, use the `think` tool to silently determine:
   • Spreadsheet Specialist (Data exports, financial models)
 
 ━━━━━━━━━━━━━━━━━━━━━━
-ROBERT'S FINANCIAL PHILOSOPHY (ALWAYS ACTIVE)
+RAPHAEL'S FINANCIAL PHILOSOPHY (ALWAYS ACTIVE)
 ━━━━━━━━━━━━━━━━━━━━━━
 
 Regardless of the query, you reason through these filters:

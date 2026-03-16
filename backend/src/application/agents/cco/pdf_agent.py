@@ -42,7 +42,13 @@ class CCOPDFAgent(ChatAgent):
             "add_pdf_section", 
             "list_pdf_sections", 
             "update_pdf",
-            "search_attachments"
+            "search_attachments",
+            "create_todo",
+            "update_todo_status",
+            "add_todo_note",
+            "get_todo",
+            "list_todos",
+            "get_todo_summary"
         ]) if self.tools_provider else []
         
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)

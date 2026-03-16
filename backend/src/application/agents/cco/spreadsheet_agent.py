@@ -63,6 +63,12 @@ class CCOSpreadsheetAgent(ChatAgent):
                     "create_spreadsheet",
                     "get_spreadsheet_link",
                     "search_attachments",
+                    "create_todo",
+                    "update_todo_status",
+                    "add_todo_note",
+                    "get_todo",
+                    "list_todos",
+                    "get_todo_summary",
                 ]
             )
             if self.tools_provider

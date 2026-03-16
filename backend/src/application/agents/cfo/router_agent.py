@@ -15,6 +15,9 @@ from .financial_strategy_agent import CFOFinancialStrategyAgent
 from .budget_planning_agent import CFOBudgetPlanningAgent
 from .spreadsheet_agent import CFOSpreadsheetAgent
 from .sarah_agent import CFOSarahAgent
+from .pdf_agent import CFOPDFAgent
+from .ppt_agent import CFOPPTAgent
+from .word_agent import CFOWordAgent
 
 logger = logging.getLogger(__name__)
 
@@ -51,18 +54,24 @@ class CFORouterAgent(ChatAgent):
         self.llm_provider = llm_provider
         self.tools_provider = tools_provider
         self.agents: Dict[str, ChatAgent] = {
-            "general": CFOGeneralAgent(llm_provider, tools_provider),
             "financial_strategy": CFOFinancialStrategyAgent(llm_provider, tools_provider),
             "budget_planning": CFOBudgetPlanningAgent(llm_provider, tools_provider),
-            "spreadsheet": CFOSpreadsheetAgent(llm_provider, tools_provider),
             "sarah": CFOSarahAgent(llm_provider, tools_provider),
+            "general": CFOGeneralAgent(llm_provider, tools_provider),
+            "spreadsheet": CFOSpreadsheetAgent(llm_provider, tools_provider),
+            "pdf": CFOPDFAgent(llm_provider, tools_provider),
+            "ppt": CFOPPTAgent(llm_provider, tools_provider),
+            "word": CFOWordAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
-            "general": "Handles greetings and simple open-ended financial questions; acts as a friendly front-door assistant for the CFO system.",
             "financial_strategy": "Designs financial strategy, capital allocation, risk management, and long-term financial planning; focuses on enterprise value, capital structure, and financial health.",
             "budget_planning": "Leads budgeting, forecasting, and variance analysis; handles OpEx/CapEx planning, cash flow management, and financial performance tracking.",
-            "spreadsheet": "Specialized in generating Excel (.xlsx) spreadsheets from financial data; use this for ANY request involving financial models, budgets, or tabular data exports.",
             "sarah": "The strategy and commercial liaison within the CFO team. Bridges the gap between financial constraints and strategic/commercial opportunities.",
+            "general": "Handles greetings and simple open-ended financial questions; acts as a friendly front-door assistant for the CFO system.",
+            "spreadsheet": "Specialized in generating Excel (.xlsx) spreadsheets from financial data; use this for ANY request involving financial models, budgets, or tabular data exports.",
+            "pdf": "Generates professional PDF financial reports and presentations; use this when the user specifically asks for a PDF version of financial documents.",
+            "ppt": "Creates high-impact executive PowerPoint (.pptx) slide decks for financial presentations.",
+            "word": "Produces polished Word (.docx) documents and formal financial reports; ideal for long-form textual financial documentation.",
         }
 
         self.agent_descriptions = "\n".join(

@@ -161,7 +161,13 @@ class CCOWordAgent(ChatAgent):
             "add_word_section", 
             "list_word_sections", 
             "update_word_doc",
-            "search_attachments"
+            "search_attachments",
+            "create_todo",
+            "update_todo_status",
+            "add_todo_note",
+            "get_todo",
+            "list_todos",
+            "get_todo_summary"
         ]) if self.tools_provider else []
         
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)

@@ -1,10 +1,22 @@
 from typing import Dict, Any, Optional
 import os
 
-DEFAULT_CHAT_MODEL = "anthropic/claude-opus-4-6"
+DEFAULT_CHAT_MODEL = "anthropic/claude-sonnet-4-6"
 DEFAULT_INFERENCE_MODEL = "openai/gpt-5.1"
 
 MODEL_CONFIG_MAP = {
+    "anthropic/claude-sonnet-4-6": {
+        "provider": "anthropic",
+        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "capabilities": {
+            "supports_pydantic": True,
+            "supports_streaming": True,
+            "supports_vision": True,
+            "supports_tool_parallelism": True,
+        },
+        "base_url": None,
+        "api_version": None,
+    },
     "openai/gpt-4.1-mini": {
         "provider": "openai",
         "default_params": {"temperature": 0.3},
@@ -125,21 +137,7 @@ MODEL_CONFIG_MAP = {
         "base_url": None,
         "api_version": None,
     },
-    "anthropic/claude-sonnet-4-": {
-        "provider": "anthropic",
-        "default_params": {
-            "temperature": 0.3,
-            "max_tokens": 8000,
-        },
-        "capabilities": {
-            "supports_pydantic": True,
-            "supports_streaming": True,
-            "supports_vision": True,
-            "supports_tool_parallelism": True,
-        },
-        "base_url": None,
-        "api_version": "2023-06-01",
-    },
+
     "anthropic/claude-sonnet-4-20250514": {
         "provider": "anthropic",
         "default_params": {"temperature": 0.3, "max_tokens": 6000},
