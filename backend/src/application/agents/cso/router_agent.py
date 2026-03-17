@@ -23,6 +23,7 @@ from .word_agent import CSOWordAgent
 from .general_agent import CSOGeneralAgent
 from .brutall_agent import CSOBrutallAgent
 from .spreadsheet_agent import CSOSpreadsheetAgent
+from .michael_agent import CSOMichaelAgent
 from .mary_agent import CSOMaryAgent
 
 
@@ -72,21 +73,17 @@ class CSORouterAgent(ChatAgent):
             "word": CSOWordAgent(llm_provider, tools_provider),
             "spreadsheet": CSOSpreadsheetAgent(llm_provider, tools_provider),
             "general": CSOGeneralAgent(llm_provider, tools_provider),
+            "michael": CSOMichaelAgent(llm_provider, tools_provider),
             "brutall": CSOBrutallAgent(llm_provider, tools_provider),
             "mary": CSOMaryAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
-            "strategy": "Analyzes repository as a strategic asset; identifies business models, value creation, and strategic leverage vs constraints.",
-            "value_prop": "Converts capabilities into sharp value propositions; focuses on buyer personas, painful problems, and outcomes.",
-            "gtm": "Designs go-to-market strategies; focuses on adoption sequencing, enterprise deployment, and organizational friction.",
-            "railroad_intel": "Builds mental models of specific railroads; focuses on network structure, decision dynamics, and operational constraints.",
-            "mna": "Thinks like a corporate development executive; identifies strategic buyers, synergies, and defensive value.",
-            "artifact": "Converts inputs into polished artifacts like memos, emails, briefings, and action plans.",
             "ppt": "The primary agent for building PowerPoint (.pptx) slide decks; use this for ANY request involving slides, presentations, decks, or PowerPoint files.",
             "pdf": "Specialized in generating polished PDF reports and structured documents; use this for ANY request involving PDF reports, memos, briefs, or downloadable PDF documents.",
             "word": "Specialized in creating and updating structured Word documents and reports; use this for ANY request involving Word docs, reports, or memos.",
             "spreadsheet": "Specialized in generating Excel (.xlsx) spreadsheets with multiple sheets from structured data; use this for ANY request involving spreadsheets, Excel files, tabular data exports, or downloadable data files.",
             "general": "Handles greetings and simple open-ended questions; acts as a friendly front-door assistant for the CSO system.",
+            "michael": "The ultimate strategic and technical authority with 10+ years of experience. Michael has exhaustive knowledge of RailVision technology and full tool access for high-stakes strategic challenges.",
             "brutall": "Ruthless mentor that challenges ideas, debates, and provides brutally honest feedback to test resilience. Use this when the user wants to be challenged or have their ideas torn apart.",
             "mary": "The CCO liaison. Has deep knowledge of all Chief Commercial Officer (CCO) related topics including revenue growth, customer acquisition, contract execution, and go-to-market reality. Use this when the user specifically asks for Mary, CCO insights, or a commercial perspective on a strategic issue.",
         }

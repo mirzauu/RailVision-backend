@@ -23,6 +23,7 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.models.anthropic import AnthropicModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.anthropic import AnthropicProvider
+import httpx
 
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import (
@@ -87,8 +88,6 @@ class PydanticChatAgent(ChatAgent):
             model = OpenAIModel(model_name=model_id, provider=OpenAIProvider(api_key=api_key, base_url=base_url, http_client=httpx.AsyncClient(timeout=600.0)))
         elif provider == "anthropic":
             # Use a more stable initialization for the provider
-            import httpx
-            from pydantic_ai.providers.anthropic import AnthropicProvider
             model = AnthropicModel(
                 model_name=model_id, 
                 provider=AnthropicProvider(
@@ -105,7 +104,9 @@ class PydanticChatAgent(ChatAgent):
 
         model_settings = {"max_tokens": provider_config.default_params.get("max_tokens", 8000)}
         if final_tools and len(final_tools) > 0:
-            model_settings["parallel_tool_calls"] = True
+            # Only enable parallel tool calls for non-anthropic providers if stability is an issue
+            if provider != "anthropic":
+                model_settings["parallel_tool_calls"] = True
 
         self.agent = PydanticAgent(
             model=model,
@@ -113,7 +114,6 @@ class PydanticChatAgent(ChatAgent):
             system_prompt=f"Role: {config.role}\nGoal: {config.goal}\nBackstory: {config.backstory}. Respond to the user query",
             retries=3,
             defer_model_check=True,
-            end_strategy="exhaustive",
             model_settings=model_settings,
         )
 
@@ -248,84 +248,65 @@ class PydanticChatAgent(ChatAgent):
                 async for node in run:
                     logger.info(f"Stepping into stream node: {type(node).__name__}")
                     if PydanticAgent.is_model_request_node(node):
-                        try:
-                            async with node.stream(run.ctx) as request_stream:
-                                async for event in request_stream:
-                                    if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
-                                        yield ChatAgentResponse(response=event.part.content, tool_calls=[], citations=[])
-                                    if isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
-                                        yield ChatAgentResponse(response=event.delta.content_delta, tool_calls=[], citations=[])
-                                    if isinstance(event, PartDeltaEvent) and isinstance(event.delta, ToolCallPartDelta):
-                                        # Still yielding empty response but potentially could show "thinking about [tool]"
-                                        if event.delta.tool_name_delta:
-                                            yield ChatAgentResponse(response=f"\n[Planning to use tool: {event.delta.tool_name_delta}]", tool_calls=[], citations=[])
-                        except Exception as e:
-                            logger.warning(f"Request stream interrupted: {e}")
-                            yield ChatAgentResponse(
-                                response=f"\n\n[Note: The response stream was partially interrupted during generation. Displaying what was received. Error: {str(e)}]",
-                                tool_calls=[],
-                                citations=[]
-                            )
+                        async with node.stream(run.ctx) as request_stream:
+                            async for event in request_stream:
+                                if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
+                                    yield ChatAgentResponse(response=event.part.content, tool_calls=[], citations=[])
+                                if isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
+                                    yield ChatAgentResponse(response=event.delta.content_delta, tool_calls=[], citations=[])
+                                if isinstance(event, PartDeltaEvent) and isinstance(event.delta, ToolCallPartDelta):
+                                    if event.delta.tool_name_delta:
+                                        yield ChatAgentResponse(response=f"\n[Thinking: {event.delta.tool_name_delta}]", tool_calls=[], citations=[])
                     elif PydanticAgent.is_call_tools_node(node):
-                        try:
-                            async with node.stream(run.ctx) as handle_stream:
-                                async for event in handle_stream:
-                                    if isinstance(event, FunctionToolCallEvent):
-                                        # Safely extract arguments
-                                        args = {}
-                                        try:
-                                            args = event.part.args_as_dict()
-                                        except Exception:
-                                            # Fallback to raw args attribute if it exists and is already a dict or can be used
-                                            args = getattr(event.part, 'args', {})
-                                            if not isinstance(args, dict):
-                                                args = {"raw_args": str(args)}
+                        async with node.stream(run.ctx) as handle_stream:
+                            async for event in handle_stream:
+                                if isinstance(event, FunctionToolCallEvent):
+                                    # Safely extract arguments
+                                    args = {}
+                                    try:
+                                        args = event.part.args_as_dict()
+                                    except Exception:
+                                        args = getattr(event.part, 'args', {})
+                                        if not isinstance(args, dict):
+                                            args = {"raw_args": str(args)}
 
-                                        yield ChatAgentResponse(
-                                            response="",
-                                            tool_calls=[
-                                                ToolCallResponse(
-                                                    call_id=event.part.tool_call_id or "",
-                                                    event_type=ToolCallEventType.CALL,
-                                                    tool_name=event.part.tool_name,
-                                                    tool_response=f"Running tool {event.part.tool_name}",
-                                                    tool_call_details={
-                                                        "summary": {"tool": event.part.tool_name, "args": args}
-                                                    },
-                                                )
-                                            ],
-                                            citations=[],
-                                        )
-                                    if isinstance(event, FunctionToolResultEvent):
-                                        yield ChatAgentResponse(
-                                            response="",
-                                            tool_calls=[
-                                                ToolCallResponse(
-                                                    call_id=event.result.tool_call_id or "",
-                                                    event_type=ToolCallEventType.RESULT,
-                                                    tool_name=event.result.tool_name or "unknown tool",
-                                                    tool_response=f"Completed tool {event.result.tool_name or 'unknown tool'}",
-                                                    tool_call_details={
-                                                        "summary": {"tool": event.result.tool_name or "unknown tool", "result": event.result.content}
-                                                    },
-                                                )
-                                            ],
-                                            citations=[],
-                                        )
-                        except Exception as e:
-                            logger.error(f"Tool execution stream interrupted: {e}")
-                            yield ChatAgentResponse(
-                                response=f"\n\n[Note: Tool execution encountered a stream error. Error: {str(e)}]",
-                                tool_calls=[],
-                                citations=[]
-                            )
+                                    yield ChatAgentResponse(
+                                        response="",
+                                        tool_calls=[
+                                            ToolCallResponse(
+                                                call_id=event.part.tool_call_id or "",
+                                                event_type=ToolCallEventType.CALL,
+                                                tool_name=event.part.tool_name,
+                                                tool_response=f"Running tool {event.part.tool_name}",
+                                                tool_call_details={
+                                                    "summary": {"tool": event.part.tool_name, "args": args}
+                                                },
+                                            )
+                                        ],
+                                        citations=[],
+                                    )
+                                if isinstance(event, FunctionToolResultEvent):
+                                    yield ChatAgentResponse(
+                                        response="",
+                                        tool_calls=[
+                                            ToolCallResponse(
+                                                call_id=event.result.tool_call_id or "",
+                                                event_type=ToolCallEventType.RESULT,
+                                                tool_name=event.result.tool_name or "unknown tool",
+                                                tool_response=f"Completed tool {event.result.tool_name or 'unknown tool'}",
+                                                tool_call_details={
+                                                    "summary": {"tool": event.result.tool_name or "unknown tool", "result": event.result.content}
+                                                },
+                                            )
+                                        ],
+                                        citations=[],
+                                    )
                     elif PydanticAgent.is_end_node(node):
                         logger.info("result streamed successfully")
         except Exception as e:
             logger.error(f"Stream encountered a critical error: {e}")
-            # Yield the error info with more diagnostic context
             yield ChatAgentResponse(
-                response=f"\n\n[Service Alert: The LLM stream was interrupted. This often happens due to provider capacity or very large document generation. Error: {str(e)}]",
+                response=f"\n\n[Service Alert: The stream was interrupted. Error: {str(e)}]",
                 tool_calls=[],
                 citations=[]
             )
