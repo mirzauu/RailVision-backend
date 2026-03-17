@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import re
 from typing import List, Dict, Optional, Any, AsyncGenerator
 
@@ -64,9 +65,14 @@ class PydanticMultiAgent(PydanticChatAgent):
             agent_type_str = str(agent_type_key.value) if hasattr(agent_type_key, "value") else str(agent_type_key)
             
             # Initialize the delegate agent
-            # We pass empty tools to delegates for now, assuming they are pure reasoning agents
-            # or their tools are configured in the config object (if supported later)
-            delegate = PydanticChatAgent(llm_provider, agent_config, tools=[])
+            # If a tools_provider is available, we can pass relevant tools to the delegate
+            delegate_tools_to_pass = []
+            if tools_provider:
+                # This part is a bit heuristic, but we try to find tools for this agent type
+                # For now, we still default to empty if not sure, but allow for future extension
+                pass
+                
+            delegate = PydanticChatAgent(llm_provider, agent_config, tools=delegate_tools_to_pass)
             self.delegates[agent_type_str] = delegate
             
             # Create a tool that allows the supervisor to call this agent
@@ -95,8 +101,37 @@ class PydanticMultiAgent(PydanticChatAgent):
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
         self.current_ctx = ctx
-        async for chunk in super().run_stream(ctx):
-            yield chunk
+        self._event_queue = asyncio.Queue()
+        
+        # Run the supervisor stream
+        # Since super().run_stream is a generator, we need to consume it
+        # we can't easily merge generators without a task or a library,
+        # so we'll run the generator consumption in a background task
+        
+        async def consume_stream():
+            try:
+                async for chunk in super(PydanticMultiAgent, self).run_stream(ctx):
+                    await self._event_queue.put(chunk)
+            except Exception as e:
+                logger.error(f"Error in supervisor stream: {e}")
+            finally:
+                await self._event_queue.put(None) # Sentinel
+
+        task = asyncio.create_task(consume_stream())
+        
+        try:
+            while True:
+                item = await self._event_queue.get()
+                if item is None:
+                    break
+                yield item
+        finally:
+            if not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
 
     def _create_existing_delegate_tool(self, agent_name: str, description: str) -> Tool:
         """
@@ -133,9 +168,19 @@ class PydanticMultiAgent(PydanticChatAgent):
             )
             
             try:
-                response: ChatAgentResponse = await agent.run(delegate_ctx)
+                # Use run_stream to capture intermediate tool calls
+                full_response = ""
+                async for chunk in agent.run_stream(delegate_ctx):
+                    # Pipe tool calls to the supervisor's event queue if it exists
+                    if chunk.tool_calls:
+                        if hasattr(self, "_event_queue"):
+                            await self._event_queue.put(chunk)
+                    
+                    if chunk.response:
+                        full_response += chunk.response
+                
                 logger.info(f"Delegate {agent_name} finished.")
-                return response.response
+                return full_response
             except Exception as e:
                 logger.error(f"Error executing delegate {agent_name}: {e}")
                 return f"Error executing {agent_name} agent: {str(e)}"
@@ -181,9 +226,19 @@ class PydanticMultiAgent(PydanticChatAgent):
             )
             
             try:
-                response: ChatAgentResponse = await agent.run(delegate_ctx)
+                # Use run_stream to capture intermediate tool calls
+                full_response = ""
+                async for chunk in agent.run_stream(delegate_ctx):
+                    # Pipe tool calls to the supervisor's event queue if it exists
+                    if chunk.tool_calls:
+                        if hasattr(self, "_event_queue"):
+                            await self._event_queue.put(chunk)
+                    
+                    if chunk.response:
+                        full_response += chunk.response
+                
                 logger.info(f"Delegate {agent_type} finished.")
-                return response.response
+                return full_response
             except Exception as e:
                 logger.error(f"Error executing delegate {agent_type}: {e}")
                 return f"Error executing {agent_type} agent: {str(e)}"

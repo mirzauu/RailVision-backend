@@ -155,6 +155,8 @@ class PydanticChatAgent(ChatAgent):
         if extra_user_content:
             task = f"Additional User Context:\n{extra_user_content}\n\n{task}"
         resp = await self.agent.run(user_prompt=task, message_history=message_history)
+        
+        # Extract response text
         response_text = None
         if isinstance(resp, str):
             response_text = resp
@@ -176,7 +178,46 @@ class PydanticChatAgent(ChatAgent):
                     response_text = value_attr
         if response_text is None:
             response_text = str(resp)
-        return ChatAgentResponse(response=response_text, tool_calls=[], citations=[])
+
+        # Extract tool calls from message history
+        tool_calls = []
+        try:
+            from pydantic_ai.messages import ModelResponse, ToolCall, ModelRequest, ToolReturnPart
+            
+            # Look at new messages in this run
+            for msg in resp.new_messages():
+                if isinstance(msg, ModelResponse):
+                    for part in msg.parts:
+                        if isinstance(part, ToolCall):
+                            tool_calls.append(
+                                ToolCallResponse(
+                                    call_id=part.tool_call_id or "",
+                                    event_type=ToolCallEventType.CALL,
+                                    tool_name=part.tool_name,
+                                    tool_response=f"Running tool {part.tool_name}",
+                                    tool_call_details={
+                                        "summary": {"tool": part.tool_name, "args": part.args_as_dict()}
+                                    },
+                                )
+                            )
+                elif isinstance(msg, ModelRequest):
+                    for part in msg.parts:
+                        if isinstance(part, ToolReturnPart):
+                            tool_calls.append(
+                                ToolCallResponse(
+                                    call_id=part.tool_call_id or "",
+                                    event_type=ToolCallEventType.RESULT,
+                                    tool_name=part.tool_name or "unknown tool",
+                                    tool_response=f"Completed tool {part.tool_name or 'unknown tool'}",
+                                    tool_call_details={
+                                        "summary": {"tool": part.tool_name or "unknown tool", "result": part.content}
+                                    },
+                                )
+                            )
+        except Exception as e:
+            logger.warning(f"Failed to extract tool calls in run(): {e}")
+
+        return ChatAgentResponse(response=response_text, tool_calls=tool_calls, citations=[])
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
         task = self._create_task_description(self.tasks[0], ctx)
