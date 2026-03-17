@@ -166,7 +166,7 @@ MODEL_CONFIG_MAP = {
         "provider": "anthropic",
         "default_params": {
             "temperature": 0.3,
-            "max_tokens": 4096  
+            "max_tokens": 60000  
         },
         "capabilities": {
             "supports_pydantic": True,
@@ -176,7 +176,7 @@ MODEL_CONFIG_MAP = {
         },
         "base_url": None,
         "api_version": "2023-06-01"
-        },
+    },
     "anthropic/claude-3-7-sonnet-20250219": {
         "provider": "anthropic",
         "default_params": {"temperature": 0.3, "max_tokens": 60000},

@@ -90,8 +90,9 @@ class CSORouterAgent(ChatAgent):
 
         self.agent_descriptions = "\n".join(
             [
-                f"agent_id: {agent_id}\n description: {self.agent_descriptions_map[agent_id]}\n"
-                for agent_id in self.agents
+                f"agent_id: {agent_id}\n description: {description}\n"
+                for agent_id, description in self.agent_descriptions_map.items()
+                if agent_id in self.agents
             ]
         )
         if not self.agent_descriptions:
