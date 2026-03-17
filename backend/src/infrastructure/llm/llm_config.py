@@ -7,7 +7,7 @@ DEFAULT_INFERENCE_MODEL = "openai/gpt-5.1"
 MODEL_CONFIG_MAP = {
     "anthropic/claude-sonnet-4-6": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "default_params": {"temperature": 0.3, "max_tokens": 60000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -67,7 +67,7 @@ MODEL_CONFIG_MAP = {
     },
     "anthropic/claude-3-5-sonnet-20241022": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "default_params": {"temperature": 0.3, "max_tokens": 60000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -79,7 +79,7 @@ MODEL_CONFIG_MAP = {
     },
     "anthropic/claude-3-5-sonnet-20240620": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "default_params": {"temperature": 0.3, "max_tokens": 60000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -115,7 +115,7 @@ MODEL_CONFIG_MAP = {
     },
     "anthropic/claude-haiku-4-5-20251001": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.2, "max_tokens": 8000},
+        "default_params": {"temperature": 0.2, "max_tokens": 60000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -179,7 +179,7 @@ MODEL_CONFIG_MAP = {
         },
     "anthropic/claude-3-7-sonnet-20250219": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "default_params": {"temperature": 0.3, "max_tokens": 60000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -191,7 +191,7 @@ MODEL_CONFIG_MAP = {
     },
     "anthropic/claude-3-5-haiku-20241022": {
         "provider": "anthropic",
-        "default_params": {"temperature": 0.2, "max_tokens": 8000},
+        "default_params": {"temperature": 0.2, "max_tokens": 60000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,
@@ -204,7 +204,7 @@ MODEL_CONFIG_MAP = {
     "openrouter/deepseek/deepseek-chat-v3-0324": {
         "provider": "deepseek",
         "auth_provider": "openrouter",
-        "default_params": {"temperature": 0.3, "max_tokens": 8000},
+        "default_params": {"temperature": 0.3, "max_tokens": 60000},
         "capabilities": {
             "supports_pydantic": True,
             "supports_streaming": True,

@@ -110,7 +110,7 @@ class PydanticMultiAgent(PydanticChatAgent):
         
         async def consume_stream():
             try:
-                async for chunk in super(PydanticMultiAgent, self).run_stream(ctx):
+                async for chunk in PydanticChatAgent.run_stream(self, ctx):
                     await self._event_queue.put(chunk)
             except Exception as e:
                 logger.error(f"Error in supervisor stream: {e}")
