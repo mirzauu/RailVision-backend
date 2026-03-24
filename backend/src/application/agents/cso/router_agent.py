@@ -25,6 +25,7 @@ from .brutall_agent import CSOBrutallAgent
 from .spreadsheet_agent import CSOSpreadsheetAgent
 from .michael_agent import CSOMichaelAgent
 from .mary_agent import CSOMaryAgent
+from .rapheal_agent import CSORaphealAgent
 
 
 logger = logging.getLogger(__name__)
@@ -76,6 +77,7 @@ class CSORouterAgent(ChatAgent):
             "michael": CSOMichaelAgent(llm_provider, tools_provider),
             "brutall": CSOBrutallAgent(llm_provider, tools_provider),
             "mary": CSOMaryAgent(llm_provider, tools_provider),
+            "rapheal": CSORaphealAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
             "ppt": "The primary agent for building PowerPoint (.pptx) slide decks; use this for ANY request involving slides, presentations, decks, or PowerPoint files.",
@@ -84,8 +86,8 @@ class CSORouterAgent(ChatAgent):
             "spreadsheet": "Specialized in generating Excel (.xlsx) spreadsheets with multiple sheets from structured data; use this for ANY request involving spreadsheets, Excel files, tabular data exports, or downloadable data files.",
             "general": "Handles greetings and simple open-ended questions; acts as a friendly front-door assistant for the CSO system.",
             "michael": "The ultimate strategic and technical authority with 10+ years of experience. Michael has exhaustive knowledge of RailVision technology and full tool access for high-stakes strategic challenges.",
-            "brutall": "Ruthless mentor that challenges ideas, debates, and provides brutally honest feedback to test resilience. Use this when the user wants to be challenged or have their ideas torn apart.",
             "mary": "The CCO liaison. Has deep knowledge of all Chief Commercial Officer (CCO) related topics including revenue growth, customer acquisition, contract execution, and go-to-market reality. Use this when the user specifically asks for Mary, CCO insights, or a commercial perspective on a strategic issue.",
+            "rapheal": "The CFO liaison. Has deep knowledge of all Chief Financial Officer (CFO) related topics including capital allocation, financial planning, fiscal discipline, and enterprise value. Use this when the user specifically asks for Raphael, CFO insights, or a financial perspective on a strategic issue.",
         }
 
         self.agent_descriptions = "\n".join(

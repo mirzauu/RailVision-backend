@@ -3,7 +3,7 @@ from typing import AsyncGenerator, Optional
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import AgentConfig, ChatAgent, ChatAgentResponse, ChatContext, TaskConfig
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
-from src.application.reasoning.pipeline import context_enrich
+# from src.application.reasoning.pipeline import context_enrich
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.application.tools.service import ToolService
@@ -38,14 +38,10 @@ class CSOMNAAgent(ChatAgent):
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
-        enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id) if self.tools_provider else ctx.query
-        new_ctx = ctx.model_copy(update={"query": enriched_query})
-        return await self._build_agent().run(new_ctx)
+        return await self._build_agent().run(ctx)
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
-        enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id) if self.tools_provider else ctx.query
-        new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
-        async for chunk in self._build_agent().run_stream(new_ctx):
+        async for chunk in self._build_agent().run_stream(ctx):
             yield chunk
 
 CSO_MNA_PROMPT = """

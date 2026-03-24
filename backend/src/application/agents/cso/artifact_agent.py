@@ -3,7 +3,7 @@ from typing import AsyncGenerator, Optional
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import AgentConfig, ChatAgent, ChatAgentResponse, ChatContext, TaskConfig
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
-from src.application.reasoning.pipeline import context_enrich
+# from src.application.reasoning.pipeline import context_enrich
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.application.tools.service import ToolService
@@ -34,18 +34,14 @@ class CSOArtifactAgent(ChatAgent):
                 )
             ],
         )
-        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "create_ppt", "add_slide", "list_slides", "update_ppt", "create_pdf", "add_pdf_section", "list_pdf_sections", "update_pdf", "create_word_doc", "add_word_section", "list_word_sections", "update_word_doc", "search_attachments", "create_todo", "update_todo_status", "add_todo_note", "get_todo", "list_todos", "get_todo_summary"]) if self.tools_provider else []
+        tools = self.tools_provider.get_tools(["think", "web_search_tool", "knowledge_base", "create_ppt", "get_ppt_link", "create_pdf", "get_pdf_link", "create_word_doc", "get_word_link", "search_attachments", "create_todo", "update_todo_status", "add_todo_note", "get_todo", "list_todos", "get_todo_summary"]) if self.tools_provider else []
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
-        enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id) if self.tools_provider else ctx.query
-        new_ctx = ctx.model_copy(update={"query": enriched_query})
-        return await self._build_agent().run(new_ctx)
+        return await self._build_agent().run(ctx)
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
-        enriched_query = await context_enrich(ctx.query, user_id=self.tools_provider.user_id) if self.tools_provider else ctx.query
-        new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
-        async for chunk in self._build_agent().run_stream(new_ctx):
+        async for chunk in self._build_agent().run_stream(ctx):
             yield chunk
 
 CSO_ARTIFACT_PROMPT = """
@@ -147,9 +143,9 @@ TOOL USAGE
 - Do NOT use `think` for greetings or queries that don't involve artifact production.
 - Use `web_search_tool` ONLY to verify facts that materially affect the decision and finding from web.
 - Use `knowledge_base` tool to get information about RailVision.
-- **PowerPoint Generation**: If the user wants a slide deck, you MUST use the PPT tools (`create_ppt`, `add_slide`). DO NOT just write the content as text.
-- **PDF Generation**: If the user wants a PDF document, report, or memo, you MUST use the PDF tools (`create_pdf`, `add_pdf_section`). DO NOT just write the content as text.
-- **Word Generation**: If the user wants a Word document, report, or memo, you MUST use the Word tools (`create_word_doc`, `add_word_section`). DO NOT just write the content as text.
+- **PowerPoint Generation**: If the user wants a slide deck, you MUST use `create_ppt` with title and all slides in ONE call. DO NOT just write the content as text.
+- **PDF Generation**: If the user wants a PDF document, report, or memo, you MUST use `create_pdf` with title and all sections in ONE call. DO NOT just write the content as text.
+- **Word Generation**: If the user wants a Word document, report, or memo, you MUST use `create_word_doc` with title and all sections in ONE call. DO NOT just write the content as text.
 - **Search Attachments**: Use `search_attachments` tool to find and retrieve specific information from documents that the user has attached to this conversation or project. This is essential for answering questions based on the content of uploaded documents.
 - Note: Both slides and PDF segments are stored in the DB linked to this conversation.
 - Use todo tools (`create_todo`, `update_todo_status`, `list_todos`, etc.) to break down complex tasks into manageable steps, track progress, or log actions taken during your analysis.

@@ -73,7 +73,7 @@ Before answering, use the `think` tool to silently determine:
   • M&A Specialist (Investment/Buyers)
   • Railroad Intel Specialist (Specific entity mapping)
   • Value Prop Specialist (Messaging/Economic engine)
-
+ 
 ━━━━━━━━━━━━━━━━━━━━━━
 MICHAEL'S STRATEGIC PHILOSOPHY (ALWAYS ACTIVE)
 ━━━━━━━━━━━━━━━━━━━━━━
