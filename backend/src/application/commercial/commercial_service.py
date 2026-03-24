@@ -28,6 +28,209 @@ from src.application.tools.service import ToolService
 
 logger = logging.getLogger(__name__)
 
+VERIFIED_DATA = """
+# RAILVISION ANALYTICS — STRUCTURED DATA REPORT
+
+---
+
+## 1. PERFORMANCE METRICS
+
+### 1.1 Validated Case Study — Via Rail Canada
+
+* **Average fuel savings:** ~8%
+* **Total trips validated:** 592 trips
+* **Validation period:** May 2023 → September 2024
+* **Total fuel saved:** Documented (exact number not explicitly shown)
+* **Fuel savings value ($):** Documented monetary value
+* **Routes covered:**
+
+  * 277 miles
+  * 223 miles
+
+---
+
+### 1.2 Active Pilots & Validated Results
+
+| Program                  | Status / Notes                                     |
+| ------------------------ | -------------------------------------------------- |
+| Via Rail Canada          | Completed PoC; 592 trips; re-engagement planned    |
+| Vermont Rail             | Pilot started Fall 2025; resuming Q1 2026          |
+| GWRR (Genesee & Wyoming) | 90-day pilot underway; validating commercial gains |
+| OmniTrax                 | Signed; service execution in progress              |
+
+---
+
+### 1.3 Gainshare Model Parameters
+
+* **Upfront cost to customer:** $0 (zero-risk entry)
+* **Customer keeps:** % of documented monthly fuel savings
+* **RailVision earns:** % of documented monthly fuel savings
+* **Implementation time:** ~90 days
+  (vs 2+ years industry standard)
+
+#### Example (GWRR)
+
+* Total savings pool: **$9M**
+* RailVision share: **30% → ARR**
+* Customer share: **70%**
+
+---
+
+## 2. MARKET & PIPELINE
+
+---
+
+### 2.1 Market Opportunity
+
+| Segment                      | Notes                                              |
+| ---------------------------- | -------------------------------------------------- |
+| Global diesel freight market | Excludes electrified & passenger; 5–10 year vision |
+| North America shortlines     | Initial primary target                             |
+| Top 3 aggregators            | G&W + Watco + OmniTrax                             |
+| Genesee & Wyoming            | Largest shortline aggregator; active pilot         |
+| Watco Companies              | Target account; ASLRRA presence                    |
+| OmniTrax                     | Signed; expansion discussions ongoing              |
+| Class I railroads            | Phase 3 target; ~2x shortline opportunity          |
+
+---
+
+### 2.2 Key Accounts — Pipeline Status
+
+| Account                  | Status / Value                        |
+| ------------------------ | ------------------------------------- |
+| Genesee & Wyoming (GWRR) | $9M fuel savings; 90-day pilot        |
+| OmniTrax                 | $1.6M savings; active execution       |
+| Watco Companies          | $2.2M savings pool; pipeline          |
+| Via Rail Canada          | 592 trips validated; issue resolved   |
+| Vermont Rail             | 8% savings validated; Q1 2026 restart |
+
+---
+
+## 3. FINANCIALS & ROADMAP
+
+---
+
+### 3.1 Funding & Capital Structure
+
+* **Current raise:** Strategic bridge round
+
+* **Purpose:** Brand, sales, support scaling
+
+* **Burn rate:** Monthly operational expenditure (not numerically specified)
+
+* **Runway (with $3M raise):** Path to sustainability
+
+* **Total invested:**
+
+  * $4.5M private
+  * $2.3M government
+  * $1.5M customer-funded
+    → **Total: $8.3M**
+
+* **Breakeven target:** $1.5M+ ARR
+
+* **Valuation target:** 5–10× ARR (depends on 3-year growth)
+
+* **Strategic partner option trigger:** $2.5M+ ARR
+
+---
+
+### 3.2 Revenue Trajectory
+
+| Year | Milestone                                 |
+| ---- | ----------------------------------------- |
+| 2026 | Initial deployments (GWRR), first revenue |
+| 2027 | Aggregator expansion; target $2.5M+ ARR   |
+| 2028 | Shortline penetration; breakeven          |
+| 2029 | Entry into Class I railroads              |
+| 2030 | Global expansion; $50M–$100M valuation    |
+
+---
+
+### 3.3 5-Phase Growth Roadmap
+
+**Phase 1 — Strategic Partnership Launch**
+
+* GWRR + OmniTrax pilots
+* $3M raise
+* Build brand + sales infra
+
+**Phase 2 — North America Shortlines Scale**
+
+* 450+ railroads
+* 2,500+ locomotives
+
+**Phase 3 — Class I Adoption**
+
+* Focus: yard/switching locomotives
+* ~2× shortline opportunity
+
+**Phase 4 — Global Heavy Haul Expansion**
+
+* International markets
+* Heavy freight networks
+
+**Phase 5 — Autonomy Integration**
+
+* AI-driven operations
+* Platform-level transformation
+
+---
+
+## 4. STRATEGIC PARTNERS
+
+---
+
+### 4.1 Strategic Investment & Partnership Targets
+
+| Partner              | Role / Notes                                 |
+| -------------------- | -------------------------------------------- |
+| Genesee & Wyoming    | Largest shortline aggregator; 112 properties |
+| OmniTrax             | 22 properties; active execution              |
+| Watco Companies      | 38 properties; $2.2M savings                 |
+| Ensco                | Rail inspection + distribution               |
+| Amsted Rail          | OEM + hardware distribution                  |
+| Railspire            | Complementary platform                       |
+| Wabtec Corporation   | OEM giant; EMS whitespace                    |
+| Loram                | Maintenance-of-way synergy                   |
+| Holland Company      | GIS + mechanical expansion                   |
+| Arcadea Group        | Railroad software portfolio                  |
+| Valstone Corporation | Logistics ecosystem                          |
+| Herzog Technologies  | Industry validation                          |
+| CN Rail              | Canadian Class I; regulatory advantage       |
+
+---
+
+### 4.2 Status Classification
+
+* Pilot Active / Signed
+* In Discussion / Warm Intro
+* Target
+
+---
+
+# 5. CORE BUSINESS MODEL (IMPLICIT EXTRACTION)
+
+### Value Proposition
+
+* Fuel optimization for diesel locomotives
+* ~8% savings validated
+* No upfront cost → low friction
+
+### Revenue Model
+
+* Gainshare (performance-based)
+* Revenue tied directly to fuel savings
+
+### Competitive Advantage
+
+* Fast deployment (90 days vs 2+ years)
+* Proven real-world validation (Via Rail)
+* Aggregator-first strategy (GWRR, OmniTrax)
+
+---
+"""
+
 class CommercialService:
     def __init__(self, db: Session, user_id: str):
         self.db = db
@@ -45,17 +248,8 @@ class CommercialService:
             "3. Strategic Leverage: Partners (e.g., Loram), their funding amounts, and geographic reach (countries/regions)."
         )
 
-        # 1. Retrieve Context
-        try:
-            # We use a broad query to get all relevant context
-            enriched_context = await context_enrich(
-                question=query,
-                user_id=self.user_id
-            )
-        except Exception as e:
-            logger.error(f"Failed to enrich context: {e}")
-            raise ValueError("Failed to retrieve information from Knowledge Base")
-
+        # 1. (Skip dynamic retrieval - using VERIFIED_DATA as baseline)
+        
         # 2. Extract Structured Data via LLM
         prompt = f"""
         Analyze the provided baseline context and use your tools to perform a comprehensive commercial extraction for RailVision.
@@ -65,9 +259,9 @@ class CommercialService:
         2. Performance Studies showing fuel savings (e.g., 7%, 15%, 25%) and methodology notes.
         3. Strategic Partners (e.g., Loram, Wabtec, Alstom) including funding amounts and geographic reach.
         
-        Here is the initial baseline context gathered so far:
+        Here is the initial baseline context gathered so far (Verified Data):
         ━━━━━━━━━━━━━━━━━━━━━━
-        {enriched_context}
+        {VERIFIED_DATA}
         ━━━━━━━━━━━━━━━━━━━━━━
         Current Known Constraints & Inferences:
         - Our internal documents do not always contain a confirmed figure for total capital raised to date.
