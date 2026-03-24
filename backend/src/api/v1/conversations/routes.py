@@ -47,16 +47,32 @@ async def heartbeat_wrapper(stream: AsyncGenerator, interval: int = HEARTBEAT_IN
     are invisible to the end-user's chat UI.
     """
     heartbeat_chunk = json.dumps({"type": "heartbeat", "response": ""}) + "\n"
-    ait = stream.__aiter__()
-    while True:
+    queue = asyncio.Queue()
+
+    async def consume_stream():
         try:
-            chunk = await asyncio.wait_for(ait.__anext__(), timeout=interval)
-            yield chunk
-        except asyncio.TimeoutError:
-            # No data from the agent within `interval` seconds – send heartbeat
-            yield heartbeat_chunk
-        except StopAsyncIteration:
-            break
+            async for chunk in stream:
+                await queue.put(chunk)
+            await queue.put(None)
+        except Exception as e:
+            await queue.put(e)
+
+    task = asyncio.create_task(consume_stream())
+
+    try:
+        while True:
+            try:
+                chunk = await asyncio.wait_for(queue.get(), timeout=interval)
+                if chunk is None:
+                    break
+                if isinstance(chunk, Exception):
+                    raise chunk
+                yield chunk
+            except asyncio.TimeoutError:
+                # No data from the agent within `interval` seconds – send heartbeat
+                yield heartbeat_chunk
+    finally:
+        task.cancel()
 
 class ChatRequest(BaseModel):
     query: str
