@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, Body, HTTPException, File, UploadFile, Form
 import os
+import asyncio
 from fastapi.responses import StreamingResponse, JSONResponse
 import json
 from datetime import datetime
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from typing import List, Optional, Any
+from typing import List, Optional, Any, AsyncGenerator
 from src.infrastructure.agents.reasoning_manager import reset_reasoning_manager, finalize_reasoning
 from src.config.database import get_db
 from src.api.dependencies import get_current_user
@@ -26,6 +27,36 @@ from src.infrastructure.database.models.conversations import Conversation, Messa
 from src.application.attachments.service import AttachmentService
 
 router = APIRouter()
+
+# ---------------------------------------------------------------------------
+# Heartbeat wrapper – keeps Nginx happy during long AI processing
+# ---------------------------------------------------------------------------
+HEARTBEAT_INTERVAL_SECONDS = 15  # Send a heartbeat every 15 seconds of silence
+
+
+async def heartbeat_wrapper(stream: AsyncGenerator, interval: int = HEARTBEAT_INTERVAL_SECONDS):
+    """
+    Wraps an async generator to inject heartbeat chunks when the upstream
+    generator is silent for more than `interval` seconds.
+    
+    This prevents Nginx (or any reverse proxy) from closing the connection
+    due to proxy_read_timeout while the AI agent is "thinking" (tool calls,
+    classification, long completions, etc.).
+    
+    Heartbeat chunks have `type: "heartbeat"` and empty `response` so they
+    are invisible to the end-user's chat UI.
+    """
+    heartbeat_chunk = json.dumps({"type": "heartbeat", "response": ""}) + "\n"
+    ait = stream.__aiter__()
+    while True:
+        try:
+            chunk = await asyncio.wait_for(ait.__anext__(), timeout=interval)
+            yield chunk
+        except asyncio.TimeoutError:
+            # No data from the agent within `interval` seconds – send heartbeat
+            yield heartbeat_chunk
+        except StopAsyncIteration:
+            break
 
 class ChatRequest(BaseModel):
     query: str
@@ -298,7 +329,10 @@ async def chat_stream(
                         "type": "error"
                     }) + "\n"
 
-        return StreamingResponse(stream_cso_agent(), media_type="application/json")
+        return StreamingResponse(
+            heartbeat_wrapper(stream_cso_agent()),
+            media_type="application/json",
+        )
 
     service = ConversationService(ProviderService.create(user_id=str(current_user.id)))
 
@@ -334,7 +368,10 @@ async def chat_stream(
                     "type": "error"
                 }) + "\n"
 
-    return StreamingResponse(stream_response(), media_type="application/json")
+    return StreamingResponse(
+        heartbeat_wrapper(stream_response()),
+        media_type="application/json",
+    )
 
 
 @router.get("/history/{project_id}")
