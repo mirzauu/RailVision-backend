@@ -1,0 +1,26 @@
+Understood.
+
+Let’s not waste cycles. To move this from “ok” to useful, I need a direction from you.
+
+Pick one of these and add 1–2 lines of context:
+
+1. **RailVision strategy**  
+   - Example: “Help me identify the top 2–3 strategic priorities for the next 12 months.”
+
+2. **Customer / railroad / lane**  
+   - Example: “Evaluate the strategic importance and risk of pursuing [Railroad X] / [corridor Y].”
+
+3. **Product / tech decision**  
+   - Example: “Stress-test our thinking on [feature, architecture, partner integration].”
+
+4. **Board / investor prep**  
+   - Example: “I need a sharp narrative on our moat, market, and path to scale.”
+
+5. **Execution reality check**  
+   - Example: “Here’s what we say we want to do this quarter — is it actually feasible?”
+
+Respond with the number and a sentence or two of context. I’ll then:
+
+- Label what’s ✔ fact, ~ inference, and ⚠ needs validation  
+- Highlight 2–3 leverage points or risks  
+- Give you something you could credibly walk into a meeting with.

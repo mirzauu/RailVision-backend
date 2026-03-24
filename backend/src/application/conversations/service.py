@@ -12,6 +12,7 @@ from src.infrastructure.llm.provider_service import ProviderService
 from src.application.agents.executer_agent import ExecuterAgent
 from src.domain.agents.base import AgentConfig, TaskConfig, ChatContext, ChatAgentResponse
 from src.application.tools.service import ToolService
+from src.infrastructure.agents.reasoning_manager import reset_reasoning_manager, finalize_reasoning
 
 class ConversationService:
     def __init__(self, provider: ProviderService):
@@ -198,6 +199,7 @@ class ConversationService:
         full = []
         print("Agent running...", query)
         first_chunk = True
+        reset_reasoning_manager()
         async for chunk in agent_runner.run_stream(ctx):
             if chunk.response:
                 full.append(chunk.response)
@@ -205,6 +207,15 @@ class ConversationService:
                 chunk.attachments = attachment_infos
                 first_chunk = False
             yield chunk
+        
+        # Finalize reasoning and get hash
+        reasoning_hash = finalize_reasoning()
+        
+        # Build metadata with reasoning hash
+        msg_metadata = {}
+        if reasoning_hash:
+            msg_metadata["reasoning_hash"] = reasoning_hash
+        
         ai_msg = Message(
             conversation_id=conv.id,
             project_id=conv.project_id,
@@ -214,10 +225,20 @@ class ConversationService:
             content="".join(full).replace("\x00", ""),
             status=MessageStatus.SENT,
             attachments=attachment_infos,
+            metadata_=msg_metadata,
         )
         db.add(ai_msg)
         db.commit()
         db.refresh(ai_msg)
+        
+        # Yield a final chunk with the reasoning hash if available
+        if reasoning_hash:
+            yield ChatAgentResponse(
+                response="",
+                tool_calls=[],
+                citations=[],
+                reasoning_hash=reasoning_hash,
+            )
 
     def get_chat_history(self, db: Session, org_id: str, project_id: str) -> dict:
         conv = (

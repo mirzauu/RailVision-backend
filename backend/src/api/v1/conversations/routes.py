@@ -6,6 +6,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import List, Optional, Any
+from src.infrastructure.agents.reasoning_manager import reset_reasoning_manager, finalize_reasoning
 from src.config.database import get_db
 from src.api.dependencies import get_current_user
 from src.infrastructure.database.models import User
@@ -237,6 +238,7 @@ async def chat_stream(
         async def stream_cso_agent():
             full: List[str] = []
             first_chunk = True
+            reset_reasoning_manager()
             try:
                 async for chunk in target_agent.run_stream(ctx):
                     if chunk.response:
@@ -248,6 +250,14 @@ async def chat_stream(
                     
                     yield json.dumps(chunk.model_dump(), default=str) + "\n"
                 
+                # Finalize reasoning and get hash
+                reasoning_hash = finalize_reasoning()
+                
+                # Build metadata with reasoning hash
+                msg_metadata = {}
+                if reasoning_hash:
+                    msg_metadata["reasoning_hash"] = reasoning_hash
+                
                 # Re-fetch or use captured IDs to avoid detachment
                 ai_msg = Message(
                     conversation_id=conv_id,
@@ -258,10 +268,15 @@ async def chat_stream(
                     content="".join(full).replace("\x00", ""),
                     status=MessageStatus.SENT,
                     attachments=attachment_infos,
+                    metadata_=msg_metadata,
                 )
                 db.add(ai_msg)
                 db.commit()
                 db.refresh(ai_msg)
+                
+                # Send a final chunk with the reasoning hash if available
+                if reasoning_hash:
+                    yield json.dumps({"reasoning_hash": reasoning_hash}) + "\n"
             except Exception as e:
                 error_msg = str(e).lower()
                 # Check for rate limit or credit exhaustion errors (Claude/OpenAI)
@@ -344,3 +359,20 @@ def get_history(
         return obj
     
     return JSONResponse(content=make_serializable(data))
+
+
+@router.get("/reasoning/{reasoning_hash}")
+async def get_reasoning(
+    reasoning_hash: str,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retrieve saved reasoning content by its SHA-256 hash.
+    The hash is returned in the streaming response and stored in message metadata.
+    """
+    from src.infrastructure.agents.reasoning_manager import load_reasoning_content
+
+    content = load_reasoning_content(reasoning_hash)
+    if content is None:
+        raise HTTPException(status_code=404, detail="Reasoning content not found")
+    return JSONResponse(content={"reasoning_hash": reasoning_hash, "content": content})

@@ -31,24 +31,77 @@ class ClassificationResponse(BaseModel):
 
 
 classification_prompt = (
-    "You are part of the ai agentic system that routes the current query to the most appropriate CCO agent. "
-    "Select the best agent by comparing the query's requirements with each agent's specialties.\n\n"
+    "You are the master router for the CCO Agentic System. Your role is to analyze the user's query and "
+    "determine the most appropriate routing strategy.\n\n"
+    "### Agent Hierarchy & Coordination Rules:\n"
+    "1. **Mary (The Head)**: Mary is the Chief Commercial Officer (CCO) and ultimate commercial authority. The 'sales_strategy' agent acts as her primary strategic voice.\n"
+    "2. **Multi-Agent Mode (agent_id: 'multi_agent')**: Use this for complex commercial queries requiring multiple specialties (e.g., pricing + contracts). In most cases, Mary acts as the lead coordinator.\n"
+    "3. **Mandatory Multi-Agent Routing**:\n"
+    "   - **Commercial Analysis + Documents**: If the user wants to analyze sales, contracts, or customer data using a PDF, PPT, Word, or Spreadsheet, "
+    "you MUST select 'multi_agent' so that Mary can coordinate with the respective document subagent.\n"
+    "   - **Strategic Oversight**: If the user asks for Micheal (CSO Liaison) or complex strategy work, "
+    "you MUST select 'multi_agent' to include Mary's commercial perspective along with strategic oversight.\n"
+    "4. **Single Agent Exceptions**:\n"
+    "   - **General Greetings**: Use only the 'general' agent for simple commercial-related greetings.\n"
+    "   - **Strictly Domain-Specific**: If a query is strictly about a single subagent's domain (e.g., just updating a contract draft) without needing new strategy, you may pick that agent directly.\n\n"
     "User Query: {query}\n"
     "Chat history: {history}\n"
     "--- end of Chat history ----\n\n"
-    "Available agents and their specialties:\n"
+    "Available agents and their specific roles:\n"
     "{agent_descriptions}\n\n"
     "Analysis Instructions (do not include these in the final answer):\n"
-    "1. Identify key topics, technical terms, and the user's intent.\n"
-    "2. Compare these elements to each agent's specialty description.\n"
-    "3. Favor specialized agents over general ones for close matches.\n"
-    "4. MULTI-AGENT REQUIRED: If the query requires expertise from multiple different domains or combining insights from more than one agent, explicitly select 'multi_agent' as the agent_id and set is_multi_agent to True.\n\n"
-    "Confidence Scoring Guidelines:\n"
-    "- 0.9-1.0: Ideal match with core expertise.\n"
-    "- 0.7-0.9: Strong match with known capabilities.\n"
-    "- 0.5-0.7: Partial or related match.\n"
-    "If multiple areas of expertise are needed, choose the 'multi_agent' option. If no agent is an ideal match, choose the best available option.\n"
+    "1. Identify if it's a simple greeting (-> 'general').\n"
+    "2. Identify if it involves document analysis (Requires Mary + Doc Agent -> 'multi_agent').\n"
+    "3. Identify if it involves cross-functional coordination (Sales + Contract, or Commercial + CSO) -> 'multi_agent'.\n"
+    "4. Favor 'multi_agent' for any query requiring CCO-level synthesis.\n"
 )
+
+
+SUPERVISOR_TASK_DESCRIPTION = """
+You are Mary, the Chief Commercial Officer (CCO) of RailVision, operating in Multi-Agent Orchestration Mode.
+You are the senior commercial authority. You lead, synthesize, and take responsibility for the final commercial output.
+
+━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: UNDERSTAND THE COMMERCIAL QUERY
+━━━━━━━━━━━━━━━━━━━━━━
+
+Before calling any subagent or tool, deeply understand the commercial intent:
+- Is this about Sales Strategy, Contract Negotiation, or Customer Success?
+- Does it require document generation (PDF, PPT, Word, Spreadsheet)?
+- Are there dependencies? (e.g., Pricing ROI must be verified before the Contract is drafted)
+
+━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: MANDATORY TODO TRACKING (FOR MULTI-TASK QUERIES)
+━━━━━━━━━━━━━━━━━━━━━━
+
+If the query involves multiple steps or deliverables, you MUST use the todo system to plan and track progress:
+1. Use `create_todo` to create one todo per delegation or major step.
+2. Use `update_todo_status` as you complete commercial milestones.
+3. Use `add_todo_note` to record negotiation points, pricing decisions, or customer risks.
+4. Use `get_todo_summary` at the end to ensure the deal is fully structured before delivery.
+
+━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: DELEGATE TO SUBAGENTS
+━━━━━━━━━━━━━━━━━━━━━━
+
+Use your delegate tools (consult_*_agent) to query specialists:
+- `consult_sales_strategy_agent`: YOUR own strategic voice — use for pricing, GTM, and value prop design.
+- `consult_contract_agent`: Subagent for end-to-end contract execution and negotiation.
+- `consult_customer_success_agent`: Subagent for senior relationship management and account expansion.
+- `consult_micheal_agent`: CSO Liaison subagent — use for strategic alignment and railroad domain expertise.
+- `consult_brutall_agent`: Ruthless mentor — use to pressure-test the commercial viability of a deal.
+- `consult_pdf_agent` / `consult_ppt_agent` / `consult_word_agent` / `consult_spreadsheet_agent`: Document generation.
+
+━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: SYNTHESIZE & DELIVER
+━━━━━━━━━━━━━━━━━━━━━━
+
+Synthesize all commercial insights into one cohesive executive-ready response:
+- Lead with revenue impact and commercial risk.
+- Clearly distinguish: ✔ Verified Commercial Facts | ~ Reasoned Inferences | ⚠ Commercial Assumptions.
+- Include links for generated contracts or presentations.
+- The user is often an executive or board member — be professional, direct, and ROI-focused.
+"""
 
 
 class CCORouterAgent(ChatAgent):
@@ -68,16 +121,16 @@ class CCORouterAgent(ChatAgent):
             "micheal": CCOMichealAgent(llm_provider, tools_provider),
         }
         self.agent_descriptions_map: Dict[str, str] = {
-            "sales_strategy": "Designs commercial strategy, pricing architecture, packaging, and go-to-market plans for North American shortline railroads; focuses on value propositions, territory design, sales process optimization, and pipeline velocity.",
-            "contract": "Leads end-to-end contract execution — from pilot-to-contract conversion through negotiation, deal structuring, signature, and renewal; handles multi-year agreements, risk management, and revenue protection.",
-            "customer_success": "Builds and maintains senior-level customer relationships, drives account expansion and renewals, manages partner/channel development, and develops industry alliances (ASLRRA); focuses on retention, NRR, and customer advocacy.",
-            "ppt": "The primary agent for building and updating PowerPoint slide decks; use this for ANY request involving slides, presentations, or decks visualizing CCO themes.",
-            "pdf": "Specialized in creating and updating structured PDF documents and reports; use this for ANY request involving PDF reports, memos, or briefs summarizing CCO topics.",
-            "word": "Specialized in creating and updating structured Word documents and reports; use this for ANY request involving Word docs, reports, or memos summarizing CCO findings.",
-            "spreadsheet": "Specialized in generating Excel (.xlsx) spreadsheets with multiple sheets from structured commercial data; use this for ANY request involving spreadsheets, Excel files, tabular data exports, or downloadable commercial data files.",
-            "general": "Handles greetings and simple open-ended commercial questions; acts as a friendly front-door assistant for the CCO system, triaging queries to the right specialist.",
-            "brutall": "Ruthless mentor that challenges commercial ideas, sales strategies, debates deals, and provides brutally honest feedback to test resilience. Use this when the user wants to be challenged or have their ideas torn apart.",
-            "micheal": "The CSO liaison. Has deep knowledge of all Chief Strategy Officer (CSO) related topics including corporate strategy, M&A, macro go-to-market, and railroad intelligence. Use this when the user specifically asks for Micheal, CSO insights, or a high-level strategic perspective on a commercial issue.",
+            "sales_strategy": "THE HEAD AGENT'S VOICE (Mary). Designs commercial strategy, pricing architecture, packaging, and GTM plans. Lead commercial authority.",
+            "contract": "Subagent specialized in contract execution: negotiation, deal structuring, and revenue protection.",
+            "customer_success": "Subagent specialized in senior-level relationships, account expansion, and customer advocacy.",
+            "micheal": "CSO Liaison subagent with deep knowledge of corporate strategy and railroad intelligence.",
+            "ppt": "Specialized subagent for building commercial PowerPoint slide decks.",
+            "pdf": "Specialized subagent for generating polished commercial PDF reports and briefs.",
+            "word": "Specialized subagent for creating and updating commercial Word documents.",
+            "spreadsheet": "Specialized subagent for generating Excel (.xlsx) spreadsheets from commercial data.",
+            "general": "Handles greetings and simple commercial introductions for the CCO system.",
+            "brutall": "The Ruthless Mentor subagent. Pressure-tests sales strategies and commercial assumptions.",
         }
 
         self.agent_descriptions = "\n".join(
@@ -90,13 +143,13 @@ class CCORouterAgent(ChatAgent):
             self.agent_descriptions = "No agents available for routing"
         
         self.supervisor_config = AgentConfig(
-            role="CCO Supervisor",
-            goal="Coordinate specialized CCO agents to provide comprehensive commercial answers.",
-            backstory="You are the Chief of Staff to the CCO. You coordinate specialized agents (Sales Strategy, Contract, Customer Success) to answer complex queries that require multiple commercial perspectives.",
+            role="Mary – Head CCO & Multi-Agent Orchestrator",
+            goal="Coordinate specialized CCO subagents under Mary's leadership to provide authoritative, executive-ready commercial answers.",
+            backstory="You represent the office of Mary, the Chief Commercial Officer. Your role is to orchestrate specialized subagents (Sales Strategy, Contract, Customer Success) to ensure every response aligns with commercial reality and drives revenue for RailVision.",
             tasks=[
                 TaskConfig(
-                    description="Analyze the user query and consult the appropriate specialized agents to provide a comprehensive answer.",
-                    expected_output="A well-reasoned, comprehensive response that integrates insights from multiple specialized agents."
+                    description=SUPERVISOR_TASK_DESCRIPTION,
+                    expected_output="A comprehensive commercial response that integrates subagent insights under Mary's strategic coordination, including links to any requested deliverables."
                 )
             ]
         )

@@ -26,6 +26,7 @@ from pydantic_ai.providers.anthropic import AnthropicProvider
 import httpx
 
 from src.infrastructure.llm.provider_service import ProviderService
+from src.infrastructure.agents.reasoning_manager import get_reasoning_manager
 from src.domain.agents.base import (
     AgentConfig,
     ChatAgent,
@@ -248,11 +249,14 @@ class PydanticChatAgent(ChatAgent):
                 async for node in run:
                     logger.info(f"Stepping into stream node: {type(node).__name__}")
                     if PydanticAgent.is_model_request_node(node):
+                        reasoning_mgr = get_reasoning_manager()
                         async with node.stream(run.ctx) as request_stream:
                             async for event in request_stream:
                                 if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
+                                    reasoning_mgr.append_content(event.part.content)
                                     yield ChatAgentResponse(response=event.part.content, tool_calls=[], citations=[])
                                 if isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
+                                    reasoning_mgr.append_content(event.delta.content_delta)
                                     yield ChatAgentResponse(response=event.delta.content_delta, tool_calls=[], citations=[])
                                 if isinstance(event, PartDeltaEvent) and isinstance(event.delta, ToolCallPartDelta):
                                     if event.delta.tool_name_delta:

@@ -22,6 +22,7 @@ class ChatAgentResponse(BaseModel):
     tool_calls: List[ToolCallResponse] = Field([], description="List of tool calls")
     citations: List[str] = Field(..., description="List of file names referenced in the response")
     attachments: Optional[List[Any]] = Field(None, description="List of attachments")
+    reasoning_hash: Optional[str] = Field(None, description="Hash of the saved reasoning trace")
 
 
 class ChatContext(BaseModel):
