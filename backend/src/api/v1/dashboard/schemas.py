@@ -26,8 +26,8 @@ class RecentItem(BaseModel):
 
 class DashboardResponse(BaseModel):
     org_name: str
-    plan_type: str
-    subscription_status: str
+    plan_type: Optional[str] = None
+    subscription_status: Optional[str] = None
     subscription_ends_at: Optional[datetime] = None
     
     quotas: Dict[str, QuotaInfo]

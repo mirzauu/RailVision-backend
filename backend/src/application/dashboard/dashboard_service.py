@@ -6,7 +6,7 @@ from src.infrastructure.database.models import (
 from src.api.v1.dashboard.schemas import DashboardResponse, QuotaInfo, DashboardStats, RecentItem
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import List
+from typing import List, Optional
 
 class DashboardService:
     def __init__(self, db: Session):
@@ -103,11 +103,12 @@ class DashboardService:
             recent_activity=recent_activity[:10]
         )
 
-    def _to_quota(self, used: float, max_val: float, unit: str = "count") -> QuotaInfo:
-        percentage = (used / max_val * 100) if max_val > 0 else 0
+    def _to_quota(self, used: float, max_val: Optional[float], unit: str = "count") -> QuotaInfo:
+        m = max_val if max_val is not None else 0
+        percentage = (used / m * 100) if m > 0 else 0
         return QuotaInfo(
             used=float(used),
-            max=float(max_val),
+            max=float(m),
             unit=unit,
             percentage=round(percentage, 2)
         )

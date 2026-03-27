@@ -316,19 +316,14 @@ class CommercialService:
             raise ValueError(f"Failed to extract structured data from Knowledge Base: {e}")
 
         # 3. Update Database
-        # For simplicity in this 'refresh' logic, we might clear old data or update.
-        # Given the requirements, let's upsert Accounts and Partners, and add new Pipeline snapshots.
-        # But to ensure the dashboard reflects EXACTLY what the KB says (and remove stale entries), 
-        # a full refresh strategy (delete for org & re-insert) is often cleaner for "synced" views, 
-        # UNLESS we need historical pipeline tracking. 
-        # The user schema has 'snapshot_date' for pipeline, implying history.
-        # So: 
-        # - Accounts: Update or Insert.
-        # - Pipeline: Insert new snapshot.
-        # - Studies: Replace (assuming KB is the source of truth).
-        # - Partners: Replace.
-
         try:
+            # Re-validate connection before database update, as LLM takes time
+            from sqlalchemy import text
+            try:
+                self.db.execute(text("SELECT 1"))
+            except Exception:
+                self.db.rollback()
+
             self._update_accounts_and_pipeline(org_id, extraction.accounts)
             self._update_studies(org_id, extraction.performance_studies)
             self._update_partners(org_id, extraction.partners)

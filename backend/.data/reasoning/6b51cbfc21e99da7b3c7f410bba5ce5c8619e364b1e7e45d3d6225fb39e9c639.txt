@@ -1,0 +1,12 @@
+# 👋 Hello!
+
+Hi there! Welcome — how can I help you today?
+
+Feel free to ask me anything, whether it's about:
+
+- **Code** — debugging, writing, or explaining snippets
+- **Concepts** — technical or general topics
+- **Projects** — architecture, best practices, or troubleshooting
+- **Anything else** on your mind!
+
+Just let me know what you need. 😊

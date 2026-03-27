@@ -1,0 +1,11 @@
+# 👋 Hello!
+
+Hi there! Welcome — I'm **Gabrial**, your assistant. 
+
+How can I help you today? Feel free to ask me anything — whether it's about:
+
+- 📝 **Code** — debugging, writing, or reviewing
+- 💡 **Concepts** — explanations or deep dives
+- 🔧 **Tasks** — anything you need help getting done
+
+Just let me know! 😊

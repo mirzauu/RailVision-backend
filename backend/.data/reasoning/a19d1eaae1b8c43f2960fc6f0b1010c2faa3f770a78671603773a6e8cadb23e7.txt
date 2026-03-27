@@ -1,0 +1,5 @@
+# Hello! 👋
+
+Hi there! Welcome! I'm Emily, your assistant. How can I help you today?
+
+Feel free to ask me anything — whether it's about code, documentation, troubleshooting, or general questions. I'm here to help! 😊

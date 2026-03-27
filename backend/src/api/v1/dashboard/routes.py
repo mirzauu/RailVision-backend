@@ -1,4 +1,7 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from src.config.database import get_db
@@ -44,5 +47,5 @@ def get_dashboard(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        # Log error in real app
+        logger.error(f"Error fetching dashboard data: {e}")
         raise HTTPException(status_code=500, detail="Internal server error while fetching dashboard data")

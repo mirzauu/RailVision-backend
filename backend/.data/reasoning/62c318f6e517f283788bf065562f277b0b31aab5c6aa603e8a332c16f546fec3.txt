@@ -1,0 +1,11 @@
+# Hello! 👋
+
+Hi there! Welcome — how can I help you today?
+
+Feel free to ask me anything, whether it's about:
+
+- **Code** — debugging, writing, or reviewing
+- **Documentation** — understanding or creating docs
+- **General questions** — I'm happy to assist with a wide range of topics
+
+Just let me know what you need! 😊

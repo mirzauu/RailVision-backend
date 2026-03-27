@@ -1,0 +1,12 @@
+# 👋 Hello!
+
+Hi there! Welcome — I'm here to help you out.
+
+Feel free to ask me anything, such as:
+
+- **Questions** about code, architecture, or technical concepts
+- **Help** with debugging or troubleshooting
+- **Guidance** on best practices or design patterns
+- **Explanations** of files, functions, or systems
+
+Just let me know what you need, and I'll do my best to assist! 😊

@@ -1,0 +1,11 @@
+# 👋 Hello!
+
+Hi there! Welcome — I'm here to help you with any questions you might have.
+
+Feel free to ask me about anything, such as:
+
+- **Code questions** — debugging, writing, or reviewing code
+- **Technical concepts** — explanations of tools, frameworks, or architectures
+- **General queries** — anything else you'd like assistance with
+
+How can I help you today? 😊
