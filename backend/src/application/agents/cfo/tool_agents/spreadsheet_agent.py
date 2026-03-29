@@ -1,4 +1,9 @@
-from typing import AsyncGenerator, Optional, TYPE_CHECKING
+"""
+Spreadsheet Agent for the CSO (Chief Strategy Officer).
+
+Routes to this agent when the user asks for any Excel / spreadsheet generation.
+"""
+from typing import AsyncGenerator, Optional
 
 from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import (
@@ -9,7 +14,8 @@ from src.domain.agents.base import (
     TaskConfig,
 )
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
-from src.application.reasoning.pipeline import context_enrich
+# from src.application.reasoning.pipeline import context_enrich
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.application.tools.service import ToolService
@@ -28,13 +34,12 @@ class CFOSpreadsheetAgent(ChatAgent):
         agent_config = AgentConfig(
             role="CFO Spreadsheet Specialist",
             goal=(
-                "Generate clean, well-structured Excel spreadsheets from financial data "
+                "Generate clean, well-structured Excel spreadsheets from data "
                 "requests, returning a download link for the user."
             ),
             backstory=(
-                "You are the financial modeling and reporting specialist at RailVision. "
-                "You transform structured financial requests (budgets, cash flows, P&L, "
-                "valuation models) into professional Excel workbooks "
+                "You are the financial reporting expert at RailVision. "
+                "You transform structured data requests into professional Excel workbooks "
                 "with multiple sheets, clear column headers, and sensible layouts. "
                 "You never show raw data as text — you always produce a downloadable Excel file."
             ),
@@ -50,21 +55,19 @@ class CFOSpreadsheetAgent(ChatAgent):
         )
 
         tools = (
-            self.tools_provider.get_tools(
-                [
-                    "think",
-                    "knowledge_base",
-                    "create_spreadsheet",
-                    "get_spreadsheet_link",
-                    "search_attachments",
-                    "create_todo",
-                    "update_todo_status",
-                    "add_todo_note",
-                    "get_todo",
-                    "list_todos",
-                    "get_todo_summary",
-                ]
-            )
+            self.tools_provider.get_tools([
+                "think",
+                "knowledge_base",
+                "create_spreadsheet",
+                "get_spreadsheet_link",
+                "search_attachments",
+                "create_todo",
+                "update_todo_status",
+                "add_todo_note",
+                "get_todo",
+                "list_todos",
+                "get_todo_summary"
+            ])
             if self.tools_provider
             else []
         )
@@ -72,29 +75,17 @@ class CFOSpreadsheetAgent(ChatAgent):
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
-        enriched_query = (
-            await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
-            if self.tools_provider
-            else ctx.query
-        )
-        new_ctx = ctx.model_copy(update={"query": enriched_query})
-        return await self._build_agent().run(new_ctx)
+        return await self._build_agent().run(ctx)
 
     async def run_stream(
         self, ctx: ChatContext
     ) -> AsyncGenerator[ChatAgentResponse, None]:
-        enriched_query = (
-            await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
-            if self.tools_provider
-            else ctx.query
-        )
-        new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
-        async for chunk in self._build_agent().run_stream(new_ctx):
+        async for chunk in self._build_agent().run_stream(ctx):
             yield chunk
 
 
 CFO_SPREADSHEET_PROMPT = """
-You are the Chief Financial Officer (CFO) Specialist in Spreadsheet Generation.
+You are the Chief Financial Officer (CFO), specializing in Spreadsheet Generation.
 
 Your SOLE PURPOSE is to produce Excel spreadsheets using the `create_spreadsheet` tool.
 
@@ -102,20 +93,58 @@ Your SOLE PURPOSE is to produce Excel spreadsheets using the `create_spreadsheet
 🚨 MANDATORY: TOOL-FIRST POLICY 🚨
 ━━━━━━━━━━━━━━━━━━━━━━
 
-- **NEVER** paste data as a markdown table.
+- **NEVER** paste data as a markdown table in your response as a substitute for a file.
+- **NEVER** draft the spreadsheet in text before calling tools.
 - **ALWAYS** follow this exact sequence:
-    1. `think`: Plan the sheets and columns.
-    2. `knowledge_base` or `search_attachments`: Retrieve factual financial data.
-    3. `create_spreadsheet`: Call with the structured data.
+    1. `think`: Plan what sheets are needed, what columns each should have, and what data goes in each row.
+    2. `knowledge_base` or `search_attachments`: Retrieve any factual data needed (revenue numbers, headcount, schedules, etc.).
+    3. `create_spreadsheet`: Call ONCE with:
+        - `title`: A concise document title.
+        - `sheets`: A list of sheet objects — each with a `name` and `rows` (list of dicts).
+
+━━━━━━━━━━━━━━━━━━━━━━
+SHEETS FORMAT
+━━━━━━━━━━━━━━━━━━━━━━
+
+Each sheet must be:
+    {
+        "name": "Sheet Tab Name",    ← max 31 chars
+        "rows": [
+            {"Column A": "value1", "Column B": 12345},
+            {"Column A": "value2", "Column B": 67890}
+        ]
+    }
+
+- All rows in one sheet share the SAME keys (column headers).
+- Use clear, descriptive column names.
+- Limits: max 10 sheets, 50 000 rows/sheet, 100 columns/sheet.
+
+━━━━━━━━━━━━━━━━━━━━━━
+OPERATING PRINCIPLES
+━━━━━━━━━━━━━━━━━━━━━━
+
+1. Accuracy First: Only include real data from the knowledge base or user-provided context. Do not invent numbers.
+2. Structure: Use separate sheets for different data dimensions (e.g., "Summary" + "Details").
+3. Clarity: Column headers should be self-explanatory; avoid abbreviations.
+4. Completeness: Populate all data the user requested before calling the tool.
+
+━━━━━━━━━━━━━━━━━━━━━━
+TOOL USAGE
+━━━━━━━━━━━━━━━━━━━━━━
+
+- Use `think` to plan what sheets are needed, what columns each should have, and what data goes in each row.
+- Use `knowledge_base` or `search_attachments` to retrieve any factual data needed.
+- Use `create_spreadsheet` to generate the file.
+- Use todo tools (`create_todo`, `update_todo_status`, `list_todos`, etc.) to break down complex tasks into manageable steps, track progress, or log actions taken during your analysis.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT RULES
 ━━━━━━━━━━━━━━━━━━━━━━
 
-After the tool runs, provide:
-1. Short confirmation.
-2. Download link.
-3. Brief one-line summary.
+After the tool runs, your final response to the user must include ONLY:
+1. A short confirmation that the spreadsheet was created.
+2. The download link returned by the tool (copy it exactly — do not modify the URL).
+3. A brief one-line summary of what the spreadsheet contains.
 
 Produce the spreadsheet using your TOOLS now.
 """

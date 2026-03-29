@@ -1,7 +1,7 @@
 """
-Spreadsheet Agent for the CCO (Chief Commercial Officer).
+Spreadsheet Agent for the CSO (Chief Strategy Officer).
 
-Routes to this agent when the user asks for any Excel / spreadsheet generation related to commercial topics.
+Routes to this agent when the user asks for any Excel / spreadsheet generation.
 """
 from typing import AsyncGenerator, Optional
 
@@ -14,7 +14,7 @@ from src.domain.agents.base import (
     TaskConfig,
 )
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
-from src.application.reasoning.pipeline import context_enrich
+# from src.application.reasoning.pipeline import context_enrich
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -34,13 +34,12 @@ class CCOSpreadsheetAgent(ChatAgent):
         agent_config = AgentConfig(
             role="CCO Spreadsheet Specialist",
             goal=(
-                "Generate clean, well-structured Excel spreadsheets from commercial data "
+                "Generate clean, well-structured Excel spreadsheets from data "
                 "requests, returning a download link for the user."
             ),
             backstory=(
-                "You are the data-visualization and commercial reporting specialist at RailVision. "
-                "You transform structured commercial requests (sales metrics, revenue models, "
-                "contracts, customer metrics) into professional Excel workbooks "
+                "You are the commercial documentation expert at RailVision. "
+                "You transform structured data requests into professional Excel workbooks "
                 "with multiple sheets, clear column headers, and sensible layouts. "
                 "You never show raw data as text — you always produce a downloadable Excel file."
             ),
@@ -56,21 +55,19 @@ class CCOSpreadsheetAgent(ChatAgent):
         )
 
         tools = (
-            self.tools_provider.get_tools(
-                [
-                    "think",
-                    "knowledge_base",
-                    "create_spreadsheet",
-                    "get_spreadsheet_link",
-                    "search_attachments",
-                    "create_todo",
-                    "update_todo_status",
-                    "add_todo_note",
-                    "get_todo",
-                    "list_todos",
-                    "get_todo_summary",
-                ]
-            )
+            self.tools_provider.get_tools([
+                "think",
+                "knowledge_base",
+                "create_spreadsheet",
+                "get_spreadsheet_link",
+                "search_attachments",
+                "create_todo",
+                "update_todo_status",
+                "add_todo_note",
+                "get_todo",
+                "list_todos",
+                "get_todo_summary"
+            ])
             if self.tools_provider
             else []
         )
@@ -78,24 +75,12 @@ class CCOSpreadsheetAgent(ChatAgent):
         return PydanticChatAgent(self.llm_provider, agent_config, tools=tools)
 
     async def run(self, ctx: ChatContext) -> ChatAgentResponse:
-        enriched_query = (
-            await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
-            if self.tools_provider
-            else ctx.query
-        )
-        new_ctx = ctx.model_copy(update={"query": enriched_query})
-        return await self._build_agent().run(new_ctx)
+        return await self._build_agent().run(ctx)
 
     async def run_stream(
         self, ctx: ChatContext
     ) -> AsyncGenerator[ChatAgentResponse, None]:
-        enriched_query = (
-            await context_enrich(ctx.query, user_id=self.tools_provider.user_id)
-            if self.tools_provider
-            else ctx.query
-        )
-        new_ctx = ctx.model_copy(update={"additional_context": enriched_query})
-        async for chunk in self._build_agent().run_stream(new_ctx):
+        async for chunk in self._build_agent().run_stream(ctx):
             yield chunk
 
 
@@ -112,7 +97,7 @@ Your SOLE PURPOSE is to produce Excel spreadsheets using the `create_spreadsheet
 - **NEVER** draft the spreadsheet in text before calling tools.
 - **ALWAYS** follow this exact sequence:
     1. `think`: Plan what sheets are needed, what columns each should have, and what data goes in each row.
-    2. `knowledge_base` or `search_attachments`: Retrieve any factual data needed (sales figures, customer data, contract details, etc.).
+    2. `knowledge_base` or `search_attachments`: Retrieve any factual data needed (revenue numbers, headcount, schedules, etc.).
     3. `create_spreadsheet`: Call ONCE with:
         - `title`: A concise document title.
         - `sheets`: A list of sheet objects — each with a `name` and `rows` (list of dicts).
@@ -142,6 +127,15 @@ OPERATING PRINCIPLES
 2. Structure: Use separate sheets for different data dimensions (e.g., "Summary" + "Details").
 3. Clarity: Column headers should be self-explanatory; avoid abbreviations.
 4. Completeness: Populate all data the user requested before calling the tool.
+
+━━━━━━━━━━━━━━━━━━━━━━
+TOOL USAGE
+━━━━━━━━━━━━━━━━━━━━━━
+
+- Use `think` to plan what sheets are needed, what columns each should have, and what data goes in each row.
+- Use `knowledge_base` or `search_attachments` to retrieve any factual data needed.
+- Use `create_spreadsheet` to generate the file.
+- Use todo tools (`create_todo`, `update_todo_status`, `list_todos`, etc.) to break down complex tasks into manageable steps, track progress, or log actions taken during your analysis.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT RULES
