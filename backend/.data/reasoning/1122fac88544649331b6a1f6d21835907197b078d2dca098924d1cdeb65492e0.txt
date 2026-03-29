@@ -1,0 +1,132 @@
+
+
+Let me pull the latest strategic picture from the knowledge base.---
+
+# 📊 CSO Status Briefing — RailVision Analytics
+
+**From:** Micheal, CSO Liaison | **Date:** January 2026 | **Classification:** Internal
+
+---
+
+## Strategic Thesis
+
+**Original vision:** Participate in railroad autonomous and eco-friendly transformation.
+**Honed to:** **Fuel savings. Singular focus.** One metric the customer can verify on their P&L.
+
+The refinement is sound. Railroads don't buy "transformation" — they buy cost reduction. Every product decision, every conversation, every contract now ladders to one question: *Did we save them fuel?*
+
+---
+
+## Market Architecture — Three Horizons
+
+| Horizon | Market | ARR Potential | Status |
+|---------|--------|--------------|--------|
+| **H1 (NOW)** | N.A. Shortlines | ~$10M CAD | **Entering — GWRR is the beachhead** |
+| **H2** | Class I Railroads | $500M+ | Pre-positioning (5 customers, Wabtec-dominated) |
+| **H3** | Global | ~$1.5B | Thesis stage |
+
+The logic is sequential: shortline proof → Class I credibility → global scale. No shortcuts.
+
+---
+
+## 2025 Reality Check — $0 Revenue
+
+Let me be direct. **2025 was a revenue failure.** Zero dollars recognized.
+
+- Sales cycles in rail were underestimated — institutional inertia is real
+- We were building the product (LTOC + fuel optimization) while trying to sell it simultaneously
+- No dedicated sales infrastructure to run parallel conversations
+
+**But:** The value proposition was never rejected. The objection was always *"prove it"* and *"who else?"* — not *"why would we?"*
+
+---
+
+## 2026 Pipeline — The Honest Picture
+
+**Projected: $3.5M CAD**
+
+| Customer | Properties | Revenue Target | % of Total | Status |
+|----------|-----------|---------------|------------|--------|
+| **GWRR** | 112 railroads | $2.9M | **82.5%** | In negotiation |
+| **OmniTrax** | 19 railroads | ~$507K | ~14.5% | **Term sheet SIGNED** ✅ |
+| **Vermont Rail Systems** | — | $80K | ~2.3% | March 2026 target |
+
+### ⚠️ GWRR Concentration Risk
+
+GWRR is simultaneously our greatest opportunity and greatest single point of failure:
+
+- **Upside:** One decision-maker controls 112 properties, 15,117 track miles, $19.9M monthly fuel spend. Success here *is* the reference case that unlocks the entire market.
+- **Downside:** If GWRR delays 2 quarters, we lose ~$1.5M from the plan. If they walk, we lose the year — and potentially the company.
+- **Mitigation:** OmniTrax signed term sheet provides a second proof point. Vermont adds geographic diversity. We need 2-3 more LOIs by Q2.
+
+---
+
+## Competitive Position
+
+| Dimension | Wabtec (Trip Optimizer) | RailVision |
+|-----------|------------------------|------------|
+| Approach | Hardware-heavy | **Software-first** |
+| Shortline presence | **None** | Entering now |
+| Deployment | Complex locomotive retrofit | Locomotive-agnostic, tablet-based |
+| Pricing | CapEx + maintenance | **Value-share (30% of verified savings)** |
+| Installed base | 6,000+ Class I locos | Pre-revenue |
+
+**Strategic window:** Wabtec has ignored shortlines because the per-unit economics don't justify their hardware model. We have an **uncontested beachhead** — but it's temporary. If we prove this market, they'll notice. We have ~18-24 months to establish dominance.
+
+---
+
+## Strategic Partnerships in Play
+
+| Partner | Value to RailVision | Status |
+|---------|-------------------|--------|
+| **Alstom** | Bridge to Class I; global scale (70+ countries); autonomous rail R&D | Exploratory |
+| **Railroad Software** | 200+ railroad customer base; back-office integration | Exploratory |
+| **Holland / Loram** | Shortline relationships; combined investment structure | Referral stage |
+
+**Alstom is the highest-value play** — but they need to see results before we're a partner vs. a curiosity.
+
+---
+
+## Critical Risks — Ranked
+
+| # | Risk | Severity |
+|---|------|----------|
+| 1 | GWRR deal delays or collapses | **Existential** |
+| 2 | Cash runway exhaustion before revenue | **Existential** |
+| 3 | $0 revenue persists into Q3 2026 | **Existential** |
+| 4 | Sales capacity gap (1 person targeting 800+ railroads) | High |
+| 5 | Value-share model underperforms on real savings | High |
+
+---
+
+## Six-Month Survival Plan (Jan–June 2026)
+
+| Month | Priority | Deliverable |
+|-------|----------|------------|
+| **Jan** | Triage — post-mortem, org restructure, cut discretionary spend | Revised plan with $750K ARR milestone |
+| **Feb** | GWRR do-or-die — exec meeting, 3-property pilot negotiation | Signed GWRR pilot or trigger Plan B |
+| **Mar** | Perfect execution on GWRR Property #1 deployment | First property live, fuel data emerging |
+| **Apr** | Validation — deploy Properties #2-3, prove savings are real | 6%+ documented savings, GWRR expansion negotiated |
+| **May** | Sales activation — use GWRR proof to build pipeline | Close Vermont, sign OmniTrax pilot, 3-5 customers active |
+| **Jun** | **Decision point:** raise, sustain on revenue, or strategic transaction | Funding secured or term sheet in hand |
+
+**June decision framework:**
+- **$400K+ ARR + growth momentum** → Raise bridge, target strategic exit in 12-18 months
+- **$200-300K ARR** → Consider strategic sale at $15-20M
+- **<$200K ARR** → Prepare for acqui-hire or wind-down
+
+---
+
+## Bottom Line
+
+**What's working:** Thesis is sharp. Product is differentiated. Business model removes purchase friction. Beachhead is uncontested.
+
+**What's not:** Zero revenue after a full year. Dangerous concentration risk. No sales infrastructure. Cash position demands survival-mode discipline.
+
+**The strategic conviction remains high. The execution margin for error is zero.**
+
+The next 180 days will determine whether RailVision becomes the category-defining shortline optimization platform or a cautionary tale about the gap between a great thesis and a funded company.
+
+---
+
+*CSO Liaison — for internal leadership use only.*

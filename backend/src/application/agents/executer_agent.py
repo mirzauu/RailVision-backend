@@ -5,11 +5,11 @@ from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext, AgentConfig
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
 from src.infrastructure.agents.crewai_agent import CrewAIChatAgent
-from src.application.agents.cso.router_agent import CSORouterAgent
-from src.application.agents.cco.router_agent import CCORouterAgent
-from src.application.agents.cfo.router_agent import CFORouterAgent
-from src.application.agents.coo.router_agent import COORouterAgent
-from src.application.agents.chro.router_agent import CHRORouterAgent
+from src.application.agents.cso.core_agents.router_agent import CSORouterAgent
+from src.application.agents.cco.core_agents.router_agent import CCORouterAgent
+from src.application.agents.cfo.core_agents.router_agent import CFORouterAgent
+from src.application.agents.cto.core_agents.router_agent import CTORouterAgent
+from src.application.agents.cro.core_agents.router_agent import CRORouterAgent
 from src.application.tools.service import ToolService
 
 logger = logging.getLogger(__name__)
@@ -23,8 +23,8 @@ class ExecuterAgent(ChatAgent):
         self.router_agent: Optional[CSORouterAgent] = None
         self.cco_router_agent: Optional[CCORouterAgent] = None
         self.cfo_router_agent: Optional[CFORouterAgent] = None
-        self.coo_router_agent: Optional[COORouterAgent] = None
-        self.chro_router_agent: Optional[CHRORouterAgent] = None
+        self.cto_router_agent: Optional[CTORouterAgent] = None
+        self.cro_router_agent: Optional[CRORouterAgent] = None
         if self.framework == "pydantic":
             self.pydantic_agent = PydanticChatAgent(llm_provider, config)
         elif self.framework == "crewai":
@@ -41,22 +41,22 @@ class ExecuterAgent(ChatAgent):
             if not tools_provider:
                 raise ValueError("tools_provider is required for CFO router framework")
             self.cfo_router_agent = CFORouterAgent(llm_provider, tools_provider)
-        elif self.framework in {"coo_router", "coo"}:
+        elif self.framework in {"cto_router", "cto"}:
             if not tools_provider:
-                raise ValueError("tools_provider is required for COO router framework")
-            self.coo_router_agent = COORouterAgent(llm_provider, tools_provider)
-        elif self.framework in {"chro_router", "chro"}:
+                raise ValueError("tools_provider is required for CTO router framework")
+            self.cto_router_agent = CTORouterAgent(llm_provider, tools_provider)
+        elif self.framework in {"cro_router", "cro"}:
             if not tools_provider:
-                raise ValueError("tools_provider is required for CHRO router framework")
-            self.chro_router_agent = CHRORouterAgent(llm_provider, tools_provider)
+                raise ValueError("tools_provider is required for CRO router framework")
+            self.cro_router_agent = CRORouterAgent(llm_provider, tools_provider)
         else:
             self.pydantic_agent = PydanticChatAgent(llm_provider, config)
         
         chosen = "none"
         if self.cco_router_agent: chosen = "cco_router"
         elif self.cfo_router_agent: chosen = "cfo_router"
-        elif self.coo_router_agent: chosen = "coo_router"
-        elif self.chro_router_agent: chosen = "chro_router"
+        elif self.cto_router_agent: chosen = "cto_router"
+        elif self.cro_router_agent: chosen = "cro_router"
         elif self.router_agent: chosen = "router"
         elif self.pydantic_agent: chosen = "pydantic"
         elif self.crewai_agent: chosen = "crewai"
@@ -73,14 +73,14 @@ class ExecuterAgent(ChatAgent):
             print("ExecuterAgent delegating to CFORouterAgent")
             logger.info("ExecuterAgent delegating to CFORouterAgent")
             return await self.cfo_router_agent.run(ctx)
-        if self.coo_router_agent:
-            print("ExecuterAgent delegating to COORouterAgent")
-            logger.info("ExecuterAgent delegating to COORouterAgent")
-            return await self.coo_router_agent.run(ctx)
-        if self.chro_router_agent:
-            print("ExecuterAgent delegating to CHRORouterAgent")
-            logger.info("ExecuterAgent delegating to CHRORouterAgent")
-            return await self.chro_router_agent.run(ctx)
+        if self.cto_router_agent:
+            print("ExecuterAgent delegating to CTORouterAgent")
+            logger.info("ExecuterAgent delegating to CTORouterAgent")
+            return await self.cto_router_agent.run(ctx)
+        if self.cro_router_agent:
+            print("ExecuterAgent delegating to CRORouterAgent")
+            logger.info("ExecuterAgent delegating to CRORouterAgent")
+            return await self.cro_router_agent.run(ctx)
         if self.router_agent:
             print("ExecuterAgent delegating to CSORouterAgent")
             logger.info("ExecuterAgent delegating to CSORouterAgent")
@@ -108,16 +108,16 @@ class ExecuterAgent(ChatAgent):
             async for chunk in self.cfo_router_agent.run_stream(ctx):
                 yield chunk
             return
-        if self.coo_router_agent:
-            print("ExecuterAgent streaming via COORouterAgent")
-            logger.info("ExecuterAgent streaming via COORouterAgent")
-            async for chunk in self.coo_router_agent.run_stream(ctx):
+        if self.cto_router_agent:
+            print("ExecuterAgent streaming via CTORouterAgent")
+            logger.info("ExecuterAgent streaming via CTORouterAgent")
+            async for chunk in self.cto_router_agent.run_stream(ctx):
                 yield chunk
             return
-        if self.chro_router_agent:
-            print("ExecuterAgent streaming via CHRORouterAgent")
-            logger.info("ExecuterAgent streaming via CHRORouterAgent")
-            async for chunk in self.chro_router_agent.run_stream(ctx):
+        if self.cro_router_agent:
+            print("ExecuterAgent streaming via CRORouterAgent")
+            logger.info("ExecuterAgent streaming via CRORouterAgent")
+            async for chunk in self.cro_router_agent.run_stream(ctx):
                 yield chunk
             return
         if self.router_agent:

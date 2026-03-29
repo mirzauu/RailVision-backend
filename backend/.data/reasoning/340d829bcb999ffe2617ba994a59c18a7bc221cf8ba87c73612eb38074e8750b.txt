@@ -1,0 +1,33 @@
+# Hello! 👋
+
+Hi there! Welcome — I'm here to help with any **technology-related questions** or **technical triage** you might need.
+
+---
+
+## How Can I Help You?
+
+Here are some areas I can assist with:
+
+| Area | Examples |
+|------|----------|
+| 🛠 **Troubleshooting** | Debugging errors, diagnosing issues, root cause analysis |
+| 💻 **Code Assistance** | Code reviews, snippets, best practices |
+| 📄 **Documentation** | Explaining concepts, referencing internal knowledge |
+| 🏗 **Architecture** | Design patterns, system design, tech stack guidance |
+| 🔍 **Research** | Looking up current tech trends, tools, or solutions |
+
+---
+
+## Getting Started
+
+To help you most effectively, feel free to share:
+
+- **What you're working on** — a brief description of the project or task
+- **The specific issue or question** — error messages, unexpected behavior, or a concept you'd like explained
+- **Any relevant context** — programming language, framework, environment, etc.
+
+---
+
+> 💡 **Tip:** The more detail you provide, the more precise and helpful my response will be!
+
+Looking forward to helping you out. What's on your mind? 😊

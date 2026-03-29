@@ -5,5 +5,4 @@ class AgentType(str, Enum):
     CCO = "CCO"
     CRO = "CRO"
     CFO = "CFO"
-    COO = "COO"
-    CHRO = "CHRO"
+    CTO = "CTO"

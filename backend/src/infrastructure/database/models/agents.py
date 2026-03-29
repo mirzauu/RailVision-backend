@@ -11,8 +11,6 @@ class AgentType(str, enum.Enum):
     CCO = "cco"
     CRO = "cro"
     CFO = "cfo"
-    COO = "coo"
-    CHRO = "chro"
     CTO = "cto"
     CMO = "cmo"
     CLO = "clo"

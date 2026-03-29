@@ -1,0 +1,112 @@
+
+
+I'll help you retrieve the CSO (Customer Sales Opportunity) status from Michael. Let me search for this information across our knowledge base and any available attachments.Excellent! I found comprehensive information about Michael, RailVision's **Chief Strategy Officer (CSO)**. Here's the detailed report:
+
+---
+
+# 📊 CSO Status Report — Michael, Chief Strategy Officer (RailVision)
+
+## 👤 Profile Overview
+
+| Field | Details |
+|-------|---------|
+| **Name** | Michael |
+| **Title** | Chief Strategy Officer (CSO) |
+| **Company** | RailVision Analytics |
+| **Role in Partner Scorecard** | Owner / Lead |
+| **Reports To** | Jamie O'Rourke (CEO) |
+
+---
+
+## 🔑 Current Strategic Initiatives Led by Michael
+
+### 1. **Holland Co-Sell Partnership (Primary Focus)**
+
+Michael authored the **Holland × RailVision Co-Sell Partner Memo (Draft v1)** dated **December 1, 2025**, which outlines the strategy to pursue **Holland Company** as a **non-exclusive co-sell partner** to accelerate adoption with shortlines and regional railroads.
+
+#### Partnership Status: `🟡 Evaluation / Draft Phase`
+
+| Dimension | Status |
+|-----------|--------|
+| **Partnership Type** | Referral + Co-Sell (No reseller/white-label) |
+| **Territory** | North America — Shortlines & Regionals |
+| **Commercial Model** | Referral fee (10–15% of first-year NRR) **or** Fixed success fee per signed SOW |
+| **Holland Status** | Under evaluation |
+| **Memo Distribution** | Sent to Jamie O'Rourke (CEO), Sales, Product, CS, Ops |
+
+#### 90-Day Joint GTM Plan Milestones
+
+| Phase | Timeline | Deliverable | Status |
+|-------|----------|-------------|--------|
+| Account Mapping | Week 1 | 25-logo target list + 6 joint exec calls | 📋 Planned |
+| POC Kit | Weeks 1–2 | Baseline plan, SOW, value-based pricing | 📋 Planned |
+| Adoption Playbook | Weeks 2–3 | Train 10+ Holland field staff | 📋 Planned |
+| Pipeline & Ops Rhythm | Weekly | Joint deal review & blocker removal | 📋 Planned |
+| **90-Day Exit Gate** | Day 90 | ≥3 POCs signed, data rights honored | 🎯 Target |
+
+#### Success Metrics (Targets)
+
+| Metric | Target |
+|--------|--------|
+| POCs Signed | ≥ 3 |
+| Production Contracts | ≥ 1 |
+| Active Crew Usage in POC | ≥ 70% |
+| Time-to-First-Train | ≤ 14 days from SOW |
+| Qualified Pipeline | ≥ 5 deals |
+| Engineer NPS | Positive |
+| Opt-Out Rate | < 10% |
+
+---
+
+### 2. **Loram Partnership Exploration (Secondary)**
+
+Michael's Holland work has a strategic connection to the **Loram Maintenance of Way** opportunity:
+
+- **Erik Curren** of Holland Company referred **Mike Mannix** (Mannix family / Loram owners) as having potential interest in RailVision.
+- CEO Jamie O'Rourke has a call scheduled with Loram's CEO for a potential **combined Holland-Loram investment structure**.
+- The vision: Both track-focused companies share risk in expanding into operational software, combining complementary strengths.
+
+---
+
+### 3. **Partner Scorecard Governance**
+
+Michael, as the CSO, serves as the **primary owner/lead** for the Partner Scorecard framework:
+
+| Scorecard Area | Go/No-Go Criteria |
+|----------------|-------------------|
+| **Go** | Gate metrics met + pipeline ≥ 5 qualified deals |
+| **No-Go** | < 3 POCs or failure to deliver data rights |
+
+**Risk Flags Being Monitored:**
+- ⚠️ Slow intros / slipped timelines
+- ⚠️ Data access blocked by partners
+- ⚠️ Messaging drift (e.g., "autopilot" claims)
+
+---
+
+## 📌 Immediate Next Steps (Owned by Michael)
+
+| # | Action Item | Timeline |
+|---|-------------|----------|
+| 1 | Send memo + redlines to Holland counterpart | Today |
+| 2 | Schedule kickoff for named-account map | Within 7 days |
+| 3 | Finalize POC kit + adoption playbook v1 | End of Week 2 |
+| 4 | Confirm data-sharing mechanics & security review | End of Week 2 |
+
+---
+
+## 💡 Recommendations for Gabriel (CRO)
+
+1. **Align Sales Team with Holland GTM Plan** — Michael's memo designates Sales as a **co-lead** on the Partner Scorecard. Ensure the sales org is prepared to participate in joint weekly deal reviews and pipeline tracking.
+
+2. **Define Revenue Targets per Logo** — The memo notes *"$X in new ARR (target to be set per logo size)"* — this needs CRO input to finalize commercial targets for the Holland partnership.
+
+3. **SPIF Budget Approval** — Holland AE/field rep SPIFs ($500/qualified POC, $2,000/closed-won >$50k) need revenue team sign-off.
+
+4. **Monitor the 90-Day Gate Closely** — If fewer than 3 POCs are signed or data rights aren't honored, the exit clause triggers a pause/renegotiation. Early weekly tracking is critical.
+
+5. **Loram Synergy** — Coordinate with Michael and Jamie on the Loram CEO call — a Holland + Loram combined structure could significantly expand the addressable pipeline for the sales team.
+
+---
+
+> **Summary:** Michael, as CSO, is actively driving RailVision's channel partnership strategy with Holland Company in the **evaluation/draft phase**. The 90-day joint GTM plan is structured with clear go/no-go gates. Sales leadership alignment is critical in the coming weeks to capitalize on this initiative.
