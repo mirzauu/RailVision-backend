@@ -5,6 +5,7 @@ from src.infrastructure.llm.provider_service import ProviderService
 from src.domain.agents.base import ChatAgent, ChatAgentResponse, ChatContext, AgentConfig
 from src.infrastructure.agents.pydantic_agent import PydanticChatAgent
 from src.infrastructure.agents.crewai_agent import CrewAIChatAgent
+from src.infrastructure.agents.claude_agent import ClaudeChatAgent
 from src.application.agents.cso.core_agents.router_agent import CSORouterAgent
 from src.application.agents.cco.core_agents.router_agent import CCORouterAgent
 from src.application.agents.cfo.core_agents.router_agent import CFORouterAgent
@@ -20,6 +21,7 @@ class ExecuterAgent(ChatAgent):
         self.framework = framework.lower()
         self.pydantic_agent: Optional[PydanticChatAgent] = None
         self.crewai_agent: Optional[CrewAIChatAgent] = None
+        self.claude_agent: Optional[ClaudeChatAgent] = None
         self.router_agent: Optional[CSORouterAgent] = None
         self.cco_router_agent: Optional[CCORouterAgent] = None
         self.cfo_router_agent: Optional[CFORouterAgent] = None
@@ -29,6 +31,8 @@ class ExecuterAgent(ChatAgent):
             self.pydantic_agent = PydanticChatAgent(llm_provider, config)
         elif self.framework == "crewai":
             self.crewai_agent = CrewAIChatAgent(config)
+        elif self.framework == "claude":
+            self.claude_agent = ClaudeChatAgent(config)
         elif self.framework in {"router", "cso_router", "cso"}:
             if not tools_provider:
                 raise ValueError("tools_provider is required for router framework")
@@ -60,6 +64,7 @@ class ExecuterAgent(ChatAgent):
         elif self.router_agent: chosen = "router"
         elif self.pydantic_agent: chosen = "pydantic"
         elif self.crewai_agent: chosen = "crewai"
+        elif self.claude_agent: chosen = "claude"
         
         logger.info("ExecuterAgent initialized using framework '%s' -> '%s'", self.framework, chosen)
         print(f"ExecuterAgent initialized using framework '{self.framework}' -> '{chosen}'")
@@ -93,6 +98,10 @@ class ExecuterAgent(ChatAgent):
             print("ExecuterAgent delegating to CrewAIChatAgent")
             logger.info("ExecuterAgent delegating to CrewAIChatAgent")
             return await self.crewai_agent.run(ctx)
+        if self.claude_agent:
+            print("ExecuterAgent delegating to ClaudeChatAgent")
+            logger.info("ExecuterAgent delegating to ClaudeChatAgent")
+            return await self.claude_agent.run(ctx)
         return ChatAgentResponse(response="", tool_calls=[], citations=[])
 
     async def run_stream(self, ctx: ChatContext) -> AsyncGenerator[ChatAgentResponse, None]:
@@ -136,5 +145,11 @@ class ExecuterAgent(ChatAgent):
             print("ExecuterAgent streaming via CrewAIChatAgent")
             logger.info("ExecuterAgent streaming via CrewAIChatAgent")
             async for chunk in self.crewai_agent.run_stream(ctx):
+                yield chunk
+            return
+        if self.claude_agent:
+            print("ExecuterAgent streaming via ClaudeChatAgent")
+            logger.info("ExecuterAgent streaming via ClaudeChatAgent")
+            async for chunk in self.claude_agent.run_stream(ctx):
                 yield chunk
             return

@@ -1,0 +1,61 @@
+## Yes, I Have Tool Access! 🛠️
+
+I have access to a variety of powerful tools. Here's a summary of what's available to me:
+
+---
+
+### 🔧 Core File & Code Tools
+
+| Tool | Description |
+|------|-------------|
+| **Read** | Read files from the local filesystem |
+| **Write** | Write/create files on the local filesystem |
+| **Edit** | Make precise string replacements in files |
+| **Glob** | Search for files using glob patterns (e.g., `**/*.js`) |
+| **Grep** | Search file contents using regex (powered by ripgrep) |
+| **Bash** | Execute shell/bash commands |
+
+---
+
+### 🤖 Agent & Task Tools
+
+| Tool | Description |
+|------|-------------|
+| **Agent** | Launch specialized sub-agents for complex tasks |
+| **TodoWrite** | Manage task/todo lists |
+| **TaskOutput** | Get output from running tasks |
+| **TaskStop** | Stop a running task |
+
+---
+
+### 🌐 Web & Research Tools
+
+| Tool | Description |
+|------|-------------|
+| **WebSearch** | Search the web for information |
+| **WebFetch** | Fetch content from a specific URL |
+
+---
+
+### ⏰ Scheduling & Automation Tools
+
+| Tool | Description |
+|------|-------------|
+| **CronCreate** | Create scheduled cron jobs |
+| **CronDelete** | Delete cron jobs |
+| **CronList** | List existing cron jobs |
+| **RemoteTrigger** | Trigger remote agents |
+
+---
+
+### 📓 Other Tools
+
+| Tool | Description |
+|------|-------------|
+| **NotebookEdit** | Edit Jupyter notebooks |
+| **ToolSearch** | Search for and fetch deferred tool schemas |
+| **Skill** | Invoke specialized skill agents |
+
+---
+
+> **In short:** Yes! I have broad tool access covering file operations, code search, web research, task scheduling, and agent orchestration. Just let me know what you need! 🚀
