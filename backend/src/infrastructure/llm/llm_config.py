@@ -2,7 +2,7 @@ from typing import Dict, Any, Optional
 import os
 
 DEFAULT_CHAT_MODEL = "anthropic/claude-sonnet-4-6"
-DEFAULT_INFERENCE_MODEL = "openai/gpt-5.1"
+DEFAULT_INFERENCE_MODEL = "openai/gpt-4o"
 
 MODEL_CONFIG_MAP = {
     "anthropic/claude-sonnet-4-6": {

@@ -33,6 +33,8 @@ class ConversationService:
         return a
 
     def _build_history(self, db: Session, project_id: Optional[str]) -> List[Dict[str, str]]:
+        from src.infrastructure.agents.reasoning_manager import load_reasoning_content
+
         if not project_id:
             return []
         msgs = (
@@ -46,7 +48,15 @@ class ConversationService:
         for m in msgs:
             if m.content:
                 role = "user" if m.role == MessageRole.USER else "assistant"
-                history.append({"role": role, "content": m.content})
+                content = m.content
+                if role == "assistant" and getattr(m, "metadata_", None) and isinstance(m.metadata_, dict) and "reasoning_hash" in m.metadata_:
+                    reasoning_hash = m.metadata_["reasoning_hash"]
+                    reasoning = load_reasoning_content(reasoning_hash)
+                    print(f"\n--- REASONING HASH: {reasoning_hash} ---")
+                    print(f"--- REASONING DATA: {reasoning} ---\n")
+                    if reasoning:
+                        content = f"<reasoning>\n{reasoning}\n</reasoning>\n{content}"
+                history.append({"role": role, "content": content})
         return history
 
     def _get_or_create_conversation(self, db: Session, project: Optional[Project], org_id: str) -> Conversation:

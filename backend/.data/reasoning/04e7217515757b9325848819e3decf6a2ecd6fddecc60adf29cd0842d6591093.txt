@@ -1,0 +1,102 @@
+
+
+Let me pull the latest financial picture from our knowledge base.Now let me check for any attached documents with more granular financial data.---
+
+# 💰 RailVision — Financial Status Read
+
+**Raphael, CFO Liaison. Here's the unvarnished picture.**
+
+---
+
+## Headline
+
+**We are a pre-revenue company running on a fundraising clock.** Product is live. Pilots are in motion. But until the G&W pilot converts to paid ARR, there is no revenue line — only projections and pipeline.
+
+---
+
+## Revenue & Commercial Model
+
+| Dimension | Status |
+|---|---|
+| **Current Confirmed ARR** | **$0** — pilots are validation-stage, not revenue-generating |
+| **Revenue Model** | 30% gainshare on verified 8% fuel savings (or flat subscription) |
+| **12-Month ARR Target** | **$2.5M** |
+| **Key Milestone** | OmniTrax term sheet **signed** ✅ — G&W (GWRR) pilot **underway** with 90-day validation window |
+
+### Revenue Won't Flow Until Three Things Are True:
+1. Pilots convert to commercial contracts
+2. Fuel savings are **independently verified** on each corridor
+3. Drivers **actually follow** the recommendations (behavioral adoption = revenue)
+
+If any of those break, the gainshare model produces nothing.
+
+---
+
+## Capital Position & Fundraise
+
+| Item | Detail |
+|---|---|
+| **Current Raise** | **$3M** strategic round (targeted at Wabtec, Progress Rail, Alstom, Holland, Loram, Railroad Software) |
+| **Allocation** | $1.8M tech team & 2-3 engineering hires · $1.2M field rollout & scaling |
+| **Exit Valuation Target** | $50M–$100M |
+
+### Runway Estimate *(inferred — no disclosed cash-on-hand)*:
+
+| Post-Raise Burn Scenario | Estimated Runway |
+|---|---|
+| $150–200K/month (lean, current team) | ~15–20 months |
+| $250–350K/month (post-hiring) | ~8.5–12 months |
+
+> ⚠️ **We do not have confirmed figures for: current cash on hand, monthly burn rate, historical funding raised, or cap table structure.** These are critical gaps. Without them, I can't give you a true runway or dilution picture.
+
+---
+
+## Pipeline & ARR Potential *(if fully converted)*
+
+| Target | ARR Potential | Properties/Units | Stage |
+|---|---|---|---|
+| **G&W** | **$10M** | 120 railroads | Pilot underway (GWRR — 112 properties, $2.7M subset) |
+| **Watco** | **$5M** | 45 railroads | Pipeline |
+| **Wheeling & Lake Erie** | **$1.5M** | 1 railroad | Pipeline |
+| **Via Rail** | **$3.5M** | 1 operator | Pipeline |
+| **Total Pipeline** | **~$20M** | — | — |
+
+Getting to $2.5M ARR in 12 months requires converting **~12.5%** of that pipeline. Achievable in theory — aggressive in practice, given railroad buying cycles.
+
+---
+
+## Market Sizing *(layered, for context)*
+
+| Market Tier | TAM | RailVision ARR Potential |
+|---|---|---|
+| **Shortline Beachhead** (650+ railroads) | $600–750M fuel spend | **$7.2–10.8M** |
+| **Class I North America** (5–7 carriers) | $9.4–11.8B fuel spend | **$113–142M** |
+| **Global** | $2.5B fuel savings product | **~$1.5B CAD** |
+
+The shortline beachhead is the only market we should be modeling revenue against today. Everything else is horizon planning.
+
+---
+
+## Financial Risk Matrix
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| **Pre-revenue with unknown runway** | 🔴 Critical | Close the $3M raise — this is existential |
+| **Gainshare revenue depends on driver behavior** | 🔴 High | Invest in UX/adoption; track compliance rates in pilot |
+| **Pilot-to-paid conversion timing** | 🟡 Medium-High | 60-90 day pilot structure helps, but railroad procurement can stall |
+| **Concentration risk** | 🟡 Medium | G&W is ~50% of near-term pipeline; diversify urgently |
+| **No disclosed unit economics** | 🟡 Medium | Need to establish cost-per-deployment, CAC, LTV before next raise |
+
+---
+
+## Raphael's Bottom Line
+
+**Three things I need visibility on before I can give a clean financial health assessment:**
+
+1. **Cash on hand and monthly burn** — without this, every runway estimate is a guess
+2. **G&W pilot fuel savings data** — this is the revenue model proof point; if we're not tracking it weekly, we're flying blind
+3. **Driver compliance rate** — our revenue is literally a function of how often engineers follow the tablet; we should know this number to the decimal
+
+The strategic thesis is sound. The market is real. The revenue model is clever. But **we are currently a pre-revenue company spending money we haven't yet raised, banking on pilots we haven't yet converted.** That's not a criticism — it's the stage we're at. The job right now is to close the raise, convert G&W, and build the financial instrumentation to know exactly where we stand in real time.
+
+**What do you want to dig into — the raise structure, the unit economics, or the path to $2.5M?**

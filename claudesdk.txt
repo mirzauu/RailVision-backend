@@ -1,0 +1,172 @@
+import asyncio
+import json
+import sys
+import re
+from enum import Enum
+from pathlib import Path
+from typing import List, Optional, Dict, Any
+
+from pydantic import BaseModel, Field
+from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage
+from claude_agent_sdk.types import StreamEvent
+
+
+PROJECT_DIR = Path(__file__).parent.resolve()
+
+
+# --- Pydantic Schema ---
+
+class ToolCallEventType(Enum):
+    CALL = "call"
+    RESULT = "result"
+
+
+class ToolCallResponse(BaseModel):
+    call_id: str = Field(..., description="ID of the tool call")
+    event_type: ToolCallEventType = Field(..., description="Type of the event")
+    tool_name: str = Field(..., description="Name of the tool")
+    tool_response: str = Field("", description="Response from the tool")
+    tool_call_details: Dict[str, Any] = Field({}, description="Details of the tool call")
+
+
+class ChatAgentResponse(BaseModel):
+    response: str = Field("", description="Full response to the query")
+    tool_calls: List[ToolCallResponse] = Field([], description="List of tool calls")
+    citations: List[str] = Field([], description="List of file names referenced in the response")
+    attachments: Optional[List[Any]] = Field(None, description="List of attachments")
+    reasoning_hash: Optional[str] = Field(None, description="Hash of the saved reasoning trace")
+
+
+# --- Utilities ---
+
+def print_response_state(state: ChatAgentResponse, title: str = "STREAM UPDATE"):
+    """Prints the current state as JSON-serialized Pydantic model."""
+    print(f"\n--- {title} ---")
+    print(state.model_dump_json(indent=2))
+    print("-" * 20 + "\n", flush=True)
+
+
+async def main():
+    options = ClaudeAgentOptions(
+        cwd=str(PROJECT_DIR),
+        setting_sources=["user", "project"],
+        allowed_tools=["Skill", "Bash", "Read", "Write", "Grep", "Glob"],
+        include_partial_messages=True,
+    )
+
+    prompt = (
+        "Please test the available skills. "
+        "If a relevant skill exists for testing, use it. "
+        "Also inspect the current project files and explain every step."
+    )
+
+    agent_response = ChatAgentResponse()
+    
+    # Internal tracking
+    active_tool_calls: Dict[str, ToolCallResponse] = {}
+    partial_json_buffer: Dict[str, str] = {}
+
+    async for message in query(prompt=prompt, options=options):
+        # 1. Handle StreamEvents (incremental data)
+        if isinstance(message, StreamEvent):
+            event = message.event
+            etype = event.get("type")
+
+            if etype == "content_block_start":
+                block = event.get("content_block", {})
+                if block.get("type") == "tool_use":
+                    call_id = block.get("id")
+                    tool_name = block.get("name")
+                    
+                    tool_call = ToolCallResponse(
+                        call_id=call_id,
+                        event_type=ToolCallEventType.CALL,
+                        tool_name=tool_name,
+                        tool_call_details={}
+                    )
+                    active_tool_calls[call_id] = tool_call
+                    agent_response.tool_calls.append(tool_call)
+                    
+                    partial_json_buffer[call_id] = ""
+                    # print_response_state(agent_response, f"TOOL CALL INITIATED: {tool_name}")
+
+            elif etype == "content_block_delta":
+                delta = event.get("delta", {})
+                dtype = delta.get("type")
+
+                if dtype == "text_delta":
+                    text = delta.get("text", "")
+                    agent_response.response += text
+                    # We can print deltas directly to show the assistant's flow
+                    sys.stdout.write(text)
+                    sys.stdout.flush()
+
+                elif dtype == "input_json_delta":
+                    # This happens for tool use
+                    # We might need to know which block index this belongs to, 
+                    # but in this SDK we usually have one active tool call.
+                    # For simplicty, apply to all active calls (usually only one).
+                    chunk = delta.get("partial_json", "")
+                    for cid in active_tool_calls:
+                        partial_json_buffer[cid] += chunk
+                        # Try to parse partial JSON if it's potentially complete
+                        try:
+                            active_tool_calls[cid].tool_call_details = json.loads(partial_json_buffer[cid])
+                        except json.JSONDecodeError:
+                            pass # Still streaming
+
+            elif etype == "content_block_stop":
+                # Finalize tool_call_details if buffer wasn't yet parsed
+                for cid, buf in partial_json_buffer.items():
+                    if buf:
+                        try:
+                            # If it's still invalid, it might be due to late content_block_stop
+                            # but usually the SDK sends the full JSON by now.
+                            active_tool_calls[cid].tool_call_details = json.loads(buf)
+                        except json.JSONDecodeError:
+                            pass
+                # partial_json_buffer.clear()
+                # print_response_state(agent_response, "CONTENT BLOCK STOP")
+
+            elif etype == "message_delta":
+                delta = event.get("delta", {})
+                if "reasoning_hash" in delta:
+                    agent_response.reasoning_hash = delta["reasoning_hash"]
+
+        # 2. Handle ResultMessage (turn completion)
+        elif isinstance(message, ResultMessage):
+            # The result message sometimes contains the final text or summary
+            # We can also attempt to extract citations here
+            files = re.findall(r'([a-zA-Z0-9_\-\./]+\.(?:py|md|txt|json))', agent_response.response)
+            if files:
+                agent_response.citations = sorted(list(set(agent_response.citations + files)))
+            
+            # Populate reasoning_hash if it was in the result object
+            if hasattr(message, 'reasoning_hash') and message.reasoning_hash:
+                agent_response.reasoning_hash = message.reasoning_hash
+
+            print_response_state(agent_response, "TURN COMPLETED - FINAL SCHEMA")
+
+        # 3. Handle other message types (e.g., historical turns)
+        else:
+            # Check for tool results in the message history provided by the SDK
+            msg_data = getattr(message, '__dict__', message)
+            if isinstance(msg_data, dict) and 'content' in msg_data:
+                for block in msg_data['content']:
+                    # Use string manipulation or attribute check depending on object type
+                    b_type = getattr(block, 'type', None) or (block.get('type') if isinstance(block, dict) else None)
+                    if b_type == 'tool_result':
+                        tool_use_id = getattr(block, 'tool_use_id', None) or (block.get('tool_use_id') if isinstance(block, dict) else None)
+                        if tool_use_id:
+                            for tc in agent_response.tool_calls:
+                                if tc.call_id == tool_use_id:
+                                    tc.event_type = ToolCallEventType.RESULT
+                                    tc.tool_response = str(getattr(block, 'content', None) or block.get('content', ""))
+                                    print(f"\n--- TOOL RESULT RECEIVED: {tc.tool_name} ---")
+
+    # Final Summary
+    print_response_state(agent_response, "SESSION FINISHED - COMPLETE MODEL")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

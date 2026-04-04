@@ -269,12 +269,19 @@ async def chat_stream(
             .all()
         )
         history = []
-        # Exclude the message we just added to avoid duplication in history
+        from src.infrastructure.agents.reasoning_manager import load_reasoning_content
+
         history_msgs = msgs[:-1] if msgs else []
         for m in history_msgs:
             if m.content:
                 role = "user" if m.role == MessageRole.USER else "assistant"
-                history.append({"role": role, "content": m.content})
+                content = m.content
+                if role == "assistant" and getattr(m, "metadata_", None) and isinstance(m.metadata_, dict) and "reasoning_hash" in m.metadata_:
+                    reasoning_hash = m.metadata_["reasoning_hash"]
+                    reasoning = load_reasoning_content(reasoning_hash)
+                    if reasoning:
+                        content = f"<reasoning>\n{reasoning}\n</reasoning>\n{content}"
+                history.append({"role": role, "content": content})
 
         ctx = ChatContext(
             history=history,

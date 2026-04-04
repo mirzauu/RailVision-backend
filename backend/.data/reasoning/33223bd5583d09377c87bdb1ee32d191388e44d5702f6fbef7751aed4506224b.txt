@@ -1,0 +1,406 @@
+
+
+Let me plan this out and execute it properly. First, I'll set up the task tracker and get the CCO intel simultaneously.Good — all tasks tracked. Now executing **Step 1**: consulting the CCO.
+
+Let me pull everything from the knowledge base to give you a comprehensive, board-grade commercial briefing. Running multiple queries now.Now let me create the todo tracker for this task.---
+
+# 📊 CCO COMMERCIAL BRIEFING — RAILVISION ANALYTICS
+### Board-Grade Strategy Document | Prepared by: Mary, Chief Commercial Officer
+### Classification: CONFIDENTIAL — Executive Leadership Only
+
+---
+
+## 1. REVENUE & ARR STATUS
+
+### Current State
+RailVision is **pre-recurring-revenue**. We are in active pilot/validation stage with our first customers. Revenue will begin flowing upon completion of the GWRR 90-day pilot validation and conversion to a production gainshare contract.
+
+### ARR Targets
+
+| Metric | Value |
+|---|---|
+| **12-Month ARR Target** | **$2.5M** |
+| **North American Shortline TAM** | $9.2M ARR (shortline segment) |
+| **Broader Shortline Addressable Market** | $300–375M (from $600–750M annual fuel spend across 650 railroads) |
+| **North American Shortline RailVision ARR Potential** | $7.2–10.8M |
+| **Class I Market (Long-Term)** | $113–142M ARR potential (from $9.4–11.8B fuel spend, 7 carriers) |
+| **Global Market (Total)** | ~$1.5B CAD / ~$2.5B USD |
+| **Exit Valuation Target** | $50M–$100M |
+
+### ARR Pipeline by Account
+
+| Account | ARR Potential | Status |
+|---|---|---|
+| **Genesee & Wyoming (G&W)** | $10M (full), $2.7M (near-term) | Active pilot — 3 properties, 90-day validation |
+| **Watco** | $5M | Prospect — 45 railroads |
+| **Via Rail** | $3.5M | Prospect — largest passenger railroad in Canada |
+| **Wheeling & Lake Erie** | $1.5M | Prospect — Major Class II |
+| **Total Identified Pipeline** | **$20M+** | Mixed stages |
+
+### Revenue Model Economics
+- **Gainshare**: 30% of verified fuel savings (primary)
+- **Alternative**: Flat subscription option available
+- **Fuel savings delivered**: 8% verified (model basis), 7% average live, up to 15% human-operated (live), up to 25% machine-operated (simulation)
+
+### ⚠️ CCO Assessment
+The $2.5M 12-month target is achievable **if and only if** the GWRR pilot validates on schedule and we convert 3–5 additional properties before Q4 2026. The pipeline is weighted — G&W represents >50% of near-term ARR, creating concentration risk I'll address under Risks.
+
+---
+
+## 2. CUSTOMER ACQUISITION
+
+### Current Customer Status
+
+| Customer | Type | Status | Detail |
+|---|---|---|---|
+| **Genesee & Wyoming (GWRR)** | Shortline Holding Co. | **Active Pilot** | 3 properties in 90-day validation; 112 total properties, ~2,000 customers, 13,000+ track-miles |
+| **OmniTrax** | Shortline Holding Co. | **Term Sheet Signed** | Pilot underway |
+| **Vermont Rail System** | Regional | **Validation Data** | 400+ miles of track; fuel savings data used for proof |
+
+### Active Prospects
+
+| Prospect | Segment | ARR Potential | Notes |
+|---|---|---|---|
+| **Watco** | Shortline (45 RRs) | $5M | Major multi-property shortline operator |
+| **Via Rail** | Passenger | $3.5M | Largest passenger railroad in Canada |
+| **Wheeling & Lake Erie** | Class II Regional | $1.5M | Major Class II railroad |
+
+### Customer Segments (Addressable)
+
+| Segment | Count | Notes |
+|---|---|---|
+| **Class III Shortlines** | 600–650 railroads | Primary beachhead. Conservative, cost-conscious, underserved by tech |
+| **Class II Regionals** | ~20 | Larger operations, higher fuel spend, more complex decision-making |
+| **Passenger Railroads** | Select targets | Via Rail lead. Proven freight + passenger capability is a differentiator |
+| **Conservative Railroad Buyers** | Industry-wide | This is the buyer archetype — risk-averse, skeptical of tech, relationship-driven |
+
+### Win Rate / Sales Velocity
+- **Formal win rate**: Not yet measurable — too early in pipeline maturity
+- **Sales cycle compression**: Industry norm is **2+ years** for technology adoption; our gainshare model compresses that to **90 days** (pilot to revenue)
+- **Conversion signal**: OmniTrax moved to term sheet. GWRR in active pilot. Both accelerated on the strength of zero-upfront positioning.
+
+---
+
+## 3. PIPELINE & DEALS
+
+### Active Deal Pipeline
+
+| Deal | Stage | Expected Timeline | Value | Key Milestone |
+|---|---|---|---|---|
+| **GWRR Pilot** (3 properties) | **Active Pilot** | 90-day validation in progress | $2.7M near-term ARR | Documented fuel savings required for conversion |
+| **OmniTrax** | **Term Sheet Signed** | Pilot underway | TBD — pending property count | Term sheet to pilot conversion |
+| **GWRR Expansion** (112 properties) | **Dependent on Pilot** | Post-validation | $10M full potential | Requires successful 3-property proof |
+| **Watco** | **Prospecting** | TBD | $5M | 45 railroads — no active engagement confirmed |
+| **Via Rail** | **Prospecting** | TBD | $3.5M | Passenger segment entry |
+| **Wheeling & Lake Erie** | **Prospecting** | TBD | $1.5M | Class II beachhead |
+
+### Pipeline Value Summary
+
+| Stage | Total Potential ARR |
+|---|---|
+| **Active Pilot / Term Sheet** | ~$2.7M–$3.5M |
+| **Expansion (contingent)** | ~$10M |
+| **Prospecting** | ~$10M |
+| **Total Identified** | **$20M+** |
+
+### ⚠️ CCO Assessment
+The pipeline is **top-heavy and early-stage**. We have one deal in active validation and one term sheet. Everything else is prospecting. For a board document, I would characterize this as: *"$2.7M in near-term contracted pipeline with $20M+ identified opportunity across 5 named accounts."* That's the honest framing.
+
+---
+
+## 4. CONTRACT EXECUTION
+
+### Gainshare Model Performance
+
+| Element | Detail |
+|---|---|
+| **Revenue Model** | 30% of verified fuel savings (gainshare) **or** flat subscription |
+| **Upfront Cost to Customer** | **$0** — zero capital outlay |
+| **Fuel Savings (Verified Basis)** | 8% (financial model), 7% average (live), 15% max (live human-operated), 25% max (simulation) |
+| **Deployment Method** | Tablet-based, software-first. No hardware installation. Locomotive-agnostic |
+| **PTC Requirement** | None — advisory mode operates independently |
+| **Pilot Duration** | 60–90 day corridor pilot to prove fuel savings |
+| **Deployment Timeline** | 90 days from contract to live deployment |
+
+### Contract Structure
+- **Pilot → Production conversion**: 60–90 day validation period, then convert to multi-year gainshare agreement
+- **Average deal size**: Not yet established (pre-revenue). Projected per-property ARR varies by fuel spend and fleet size. G&W near-term = ~$24K/property/year ($2.7M ÷ 112 properties)
+- **Renewal rates**: N/A — no contracts have yet reached renewal stage
+- **Billing basis**: Verified fuel savings, measured and documented per corridor
+
+### What Makes This Model Work Commercially
+1. **Zero customer risk** — they pay nothing unless they save money
+2. **Self-proving** — the 90-day pilot IS the sales process AND the validation
+3. **Aligned incentives** — we make more when they save more
+4. **Low switching cost for entry** — but high switching cost once operational data is embedded
+
+### What Concerns Me
+- Gainshare variability: Fuel savings fluctuate with terrain, crew compliance, weather, and commodity mix. We need a **floor mechanism** or hybrid (gainshare + minimum subscription) to stabilize revenue predictability.
+- Verification disputes: Who audits the fuel savings? We need a third-party or algorithmic verification standard before we scale.
+
+---
+
+## 5. GO-TO-MARKET STRATEGY
+
+### Current GTM Approach
+
+**The playbook is relationship-first, CEO-led selling:**
+
+1. **Lead**: "Shortline-Proof ROI" — zero upfront, you only pay when you save
+2. **Hook (First Minute)**: Live LTOC demo — real-time train location, current speed limits/slow orders, pacing and ETAs
+3. **Prove**: 60–90 day corridor pilot with documented fuel savings, advisory compliance, and exception reduction
+4. **Close**: Convert pilot to multi-year gainshare production contract
+
+### Sales Channel Structure
+
+| Channel | Status | Notes |
+|---|---|---|
+| **Direct (CEO-Led)** | **Primary & Only** | Jamie O'Rourke's 20-year railroad relationships drive all active deals |
+| **Partner Channels** | **In Development** | Wabtec, Loram, Holland, Railroad Software, Railhead all identified as potential co-sell partners |
+| **Industry Events / ASLRRA** | **Active** | Short line industry association engagement for awareness |
+
+### Sales Team Structure
+- **Jamie O'Rourke (CEO)**: Primary commercial relationship owner. 20-year railroad industry veteran. The entire sales motion currently runs through Jamie.
+- **Dev Jain (CTO)**: Technical demonstrations, product validation, integration support. 7+ years rail experience, McGill + Centech Top Entrepreneur.
+- **Formal sales team**: ⚠️ **Does not exist yet.** Planned as part of $3M funding allocation.
+
+### What's Working
+- Zero-upfront gainshare **eliminates the #1 objection** in railroad technology sales
+- 90-day deployment vs. multi-year hardware installs is a **massive competitive advantage**
+- Jamie's personal relationships opened GWRR (112 properties), OmniTrax, Vermont Rail
+- LTOC demo creates immediate "aha moment" for railroad operators
+
+### What's Not Working / At Risk
+- **Single-threaded sales dependency on CEO** — this does not scale and creates key-person risk
+- **No repeatable sales playbook** documented for non-founder sellers
+- **No dedicated sales hires** — blocked by funding
+- **Long prospect-to-pilot timeline** for accounts without existing Jamie relationships
+- **Conservative buyer psychology** — even with zero upfront, railroad operators default to "do nothing"
+
+---
+
+## 6. PARTNERSHIP & CHANNEL STRATEGY
+
+### Tier 1: Strategic Partners (Board-Level Priority)
+
+| Partner | Strategic Value | Status | ARR Impact |
+|---|---|---|---|
+| **Wabtec** | Fills 650+ shortline gap in their portfolio. Instant brand credibility. Access to global sales network. Trip Optimizer complement (not competitor) | **Priority conversation** | Accelerates market penetration. Cross-sell their braking/locomotive components into our customer base |
+| **Alstom** | North American freight entry for Alstom. Integration with Mastria platform. 70+ country presence. Autonomous rail R&D alignment | **Medium-term** (Q3/Q4) | $52M international ARR opportunity. European market pathway |
+| **Progress Rail (Caterpillar)** | Bundle RailVision with every locomotive sale. Fortune 100 credibility. Global expansion (Brazil, Australia, China) | **Medium-term** | Every loco sale = deployment opportunity across 650+ shortlines |
+
+### Tier 2: Distribution & Co-Sell Partners
+
+| Partner | Value | Status |
+|---|---|---|
+| **Railroad Software** | 200+ existing railroad customers (shortlines, regionals, Class I subs). 40+ years industry expertise. Back-office → operations integration | Identified |
+| **Railhead** | 60+ locations, 800+ shortline customers. Parts distribution + predictive maintenance. PE-backed (Madison Dearborn) | Identified |
+| **Loram** | 32 countries. Track maintenance contracts across every Class I + major regional. Mannix family (Canadian) ownership creates SR&ED alignment. Predictive maintenance ecosystem | Active conversation (Jamie → CEO Bruce Roloff) |
+| **Holland Company** | Family-owned, 100+ year history. Shortline relationships. Track measurement + maintenance services | Evaluation status — prospective co-sell partner |
+
+### Combined Track Partners Opportunity
+A **Holland-Loram consortium** has emerged as a strategic investment structure:
+- Shared risk on track-to-mechanical expansion
+- Combined railroad relationship networks across North America
+- Complementary track data (Holland measurement geometry + Loram maintenance patterns)
+- Cross-border alignment (Currin family US-based, Mannix family Canada-based)
+- Larger combined investment capacity
+
+---
+
+## 7. COMPETITIVE POSITIONING
+
+### Primary Competitive Landscape
+
+| Dimension | **RailVision (EcoRail)** | **Wabtec (Trip Optimizer)** |
+|---|---|---|
+| **Market Focus** | Shortline (Class II/III) + Passenger | Class I only |
+| **Approach** | Software-first, tablet-based | Hardware-heavy, locomotive-integrated |
+| **Deployment Time** | 90 days | Multi-year |
+| **Hardware Required** | Bracket + tablet. No installation | Full locomotive hardware retrofit |
+| **Locomotive Compatibility** | Any locomotive | Specific models only |
+| **Fuel Savings** | 7% avg live, up to 25% (sim) | 5–17% |
+| **Installed Base** | Pilot stage | 6,000+ locomotives, 12,000 base |
+| **PTC Required** | No | Yes (integrated) |
+| **Passenger + Freight** | ✅ Both | ❌ Freight only |
+| **Affordable for Class II/III** | ✅ Zero upfront | ❌ Too expensive |
+| **Updates / New Features** | ✅ Continuous software updates | ❌ Hardware-locked |
+| **Upfront Cost** | $0 (gainshare) | Significant CapEx |
+
+### Competitive Position Statement
+> *RailVision is the only deployed, validated software product serving the shortline and EMS-unequipped Class I market — a $30M+ ARR opportunity in North America that is currently unserved by any competitor.*
+
+### What We Must NOT Do
+- **Do not position against Trip Optimizer head-to-head in Class I.** The switching costs are $25–50M+ per carrier with 13–18 year payback. Class I is a 5+ year opportunity at best.
+- **Class I ARR projections ($113–142M) should be removed or clearly marked as long-term aspirational** in any board or investor document. This undermines credibility with sophisticated investors.
+
+### Adjacent / Emerging Competitors
+Companies like **Nexus Robotics**, **Embark Trucks**, and **Applied Intuition** are in autonomous transportation but not directly competing in shortline rail optimization today. **Union Pacific** and **CN Rail** have internal programs but are potential customers, not competitors in the shortline space.
+
+---
+
+## 8. KEY COMMERCIAL RISKS
+
+### 🔴 Critical Risks
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| **GWRR pilot failure or delay** | Entire pipeline, fundraise, and partnership strategy collapses. No validated proof = no commercial traction | Tight metrics framework. Weekly monitoring. Clear go/no-go criteria at Day 45 |
+| **Single-threaded CEO sales dependency** | Key-person risk. If Jamie is unavailable, all commercial momentum stops. No scalable sales motion | First sales hire must be in $3M funding plan. Document the playbook NOW |
+| **Revenue concentration** | G&W = >50% of near-term ARR pipeline. Single customer dependency | Accelerate Watco, W&LE, and Via Rail conversations in parallel |
+
+### 🟡 Elevated Risks
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| **Gainshare revenue variability** | Fuel savings fluctuate by terrain, crew compliance, commodity mix, weather. Unpredictable revenue | Introduce hybrid model: gainshare + minimum subscription floor |
+| **Conservative buyer psychology** | Railroads default to "do nothing" even when economics are compelling. 650 shortlines doesn't mean 650 willing buyers | Peer validation is everything. GWRR success becomes the reference account. Industry press, ASLRRA endorsement |
+| **Class I market overreach** | Including $113–142M Class I ARR in projections damages credibility with investors who know the switching cost reality | Strip from near-term projections. Position as "Phase 3 — 2028+" |
+| **Partnership negotiation from weakness** | Pre-revenue startup negotiating with Wabtec ($24B), Alstom ($17B), Caterpillar ($67B). Risk of being absorbed on unfavorable terms | Prove the pilot FIRST. Post-validation valuation is materially different. Do not sign exclusivity pre-proof |
+| **Fuel savings verification disputes** | No third-party audit standard for gainshare calculations | Establish algorithmic verification methodology and consider independent audit for first 3 contracts |
+
+### 🟢 Structural Strengths That Mitigate Risk
+
+- Zero-upfront model eliminates customer financial risk barrier
+- 90-day deployment cycle means fast proof-of-value
+- No hardware dependency = locomotive-agnostic scalability
+- Jamie's 20-year relationships are a non-replicable competitive asset (short-term)
+- Canadian SR&ED tax credits provide meaningful cost advantage on engineering
+
+---
+
+## 9. STRATEGIC RECOMMENDATIONS — CCO'S TOP 5 COMMERCIAL PRIORITIES (NEXT 6–12 MONTHS)
+
+### Priority 1: VALIDATE — Close the GWRR Pilot with Board-Grade Proof
+- Complete 90-day validation on 3 properties with documented, verified fuel savings
+- Produce a **case study package**: fuel %, advisory compliance rate, exception reduction, operator satisfaction
+- This is the single most important commercial event in the company's history. Everything downstream depends on it.
+
+### Priority 2: CONVERT — Turn OmniTrax Term Sheet into Revenue
+- OmniTrax has signed. Move to pilot deployment immediately.
+- Two paying customers is categorically different from one. It proves repeatability.
+
+### Priority 3: SCALE — Build the First Repeatable Sales Motion
+- Document Jamie's sales playbook: messaging sequence, LTOC demo script, pilot proposal template, objection handling
+- Hire **1 sales closer** with railroad industry relationships as part of $3M funding
+- Target: **15+ properties deployed by Q4 2026** (per funding plan)
+- Goal: At least one deal closed by a non-founder within 12 months
+
+### Priority 4: PARTNER — Advance Wabtec to a Structured Conversation (Post-Pilot)
+- Wabtec is the priority partnership. They need us to fill their 650-shortline gap.
+- **Do not approach with hat in hand.** Complete GWRR validation first, then engage from a position of proven product-market fit.
+- Structure: Co-sell / distribution agreement, NOT acquisition or exclusivity at this stage.
+- Parallel: Keep Loram and Holland advancing as a combined investment + co-sell structure.
+
+### Priority 5: DISCIPLINE — Clean the Projections for Investor Credibility
+- Remove or clearly gate Class I revenue ($113–142M) from any near-term financial projections
+- Present shortline-only projections as the 12–24 month commercial plan
+- Position Class I as "Phase 3 — Accessible via partnership" (Wabtec bridge)
+- This is the single most important credibility move for the $3M fundraise
+
+---
+
+### ⚠️ DATA CONFIDENCE FLAGS
+
+| Data Point | Confidence | Note |
+|---|---|---|
+| ARR pipeline by account | ✅ Confirmed | From strategic facts (Neo4j, high confidence) |
+| Fuel savings (7% avg, 15% live max) | ✅ Confirmed | From product effectiveness data |
+| GWRR pilot — 3 properties, 90-day timeline | ✅ Confirmed | Multiple source documents |
+| OmniTrax term sheet signed | ✅ Confirmed | Strategic event logged |
+| Gainshare model — 30% of verified savings | ✅ Confirmed | Multiple sources |
+| Current cash position / burn rate | ⚠️ Not available | CFO data required |
+| Formal sales team structure | ⚠️ Does not exist | CEO-led only |
+| Win rate / conversion metrics | ⚠️ Not measurable | Too early-stage |
+| GWRR pilot current progress (% complete) | ⚠️ Not confirmed | Needs operational update |
+| Watco / Via Rail / W&LE engagement stage | ⚠️ Prospecting only | No confirmed active conversations |
+
+---
+
+*This briefing is board-ready in substance. For the Word document, I recommend pairing each section with the CFO's financial data to create the complete executive strategy report. The numbers are honest — I'd rather go to the board with a credible $2.5M ARR target and a clean story than a $100M fantasy that gets picked apart in diligence.*
+
+— **Mary, CCO**Outstanding — Mary delivered a comprehensive briefing. Let me update the tracker and move to Step 2: compile and generate the Word document.Now generating the Word document with the full CCO commercial intelligence:
+
+Let me plan this document meticulously, then generate it in a single pass.Now let me generate the full document with all 11 sections, charts, tables, and executive-grade formatting.The backend had a transient connection issue. Let me retry the document generation.---
+
+# ✅ Document Generated — CCO Commercial Strategy Report
+
+📄 **[Download: RailVision Analytics — CCO Commercial Strategy Report FY2025–2026](http://localhost:8000/storage/word_docs/RailVision_Analytics__CCO_Commercial_Strategy_Report_FY20252026_a7783dd5.docx)**
+
+---
+
+## Document Summary
+
+This **board-grade, 12-section commercial strategy report** provides the CCO's comprehensive intelligence briefing for FY2025–2026, covering the full commercial landscape from pipeline and deals to competitive positioning and risk assessment. The document includes **6 embedded charts** (pipeline by account, market tiers, fuel savings performance, pipeline stage distribution, competitive fuel savings comparison, risk profile), **15+ formatted tables**, and candid CCO/CSO assessments throughout.
+
+## What's Inside
+
+| Section | Key Content |
+|---|---|
+| **Executive Summary** | $2.5M ARR target, $20M+ pipeline, GWRR critical dependency |
+| **Revenue & ARR Status** | Market sizing ($9.2M → $2.5B), pipeline by account, model economics |
+| **Customer Acquisition** | 3 customers, 3 prospects, segmentation, 8x sales cycle compression |
+| **Pipeline & Deals** | 6-deal pipeline table, stage distribution, dependency map |
+| **Gainshare Model** | 4 structural advantages, variability concerns, hybrid model recommendation |
+| **Go-To-Market Strategy** | 4-step playbook, what's working vs. not, single-threaded risk |
+| **Partnership Strategy** | Tier 1 (Wabtec, Alstom, Progress Rail) + Tier 2 + Holland-Loram consortium |
+| **Competitive Positioning** | 11-dimension comparison table, moat analysis, strategic warnings |
+| **Key Risks** | 3 critical (red), 5 elevated (yellow), 5 structural strengths (green) |
+| **Top 5 Priorities** | Validate → Convert → Scale → Partner → Discipline (sequenced) |
+| **Data Confidence Flags** | 16-item confidence matrix + 4 gaps requiring resolution |
+| **CSO Closing Statement** | Board-level summary and next review milestone |
+
+**Classification:** CONFIDENTIAL — Executive Leadership OnlyDocument generated. Let me finalize the task tracker.All tasks complete. Here's the full debrief:
+
+---
+
+# ✅ CCO Commercial Strategy Report — Complete
+
+## 📄 [Download: RailVision Analytics — CCO Commercial Strategy Report FY2025–2026 (Word)](http://localhost:8000/storage/word_docs/RailVision_Analytics__CCO_Commercial_Strategy_Report_FY20252026_a7783dd5.docx)
+
+---
+
+## 📋 Task Tracker — All Complete
+
+| # | Task | Status |
+|---|---|---|
+| 1 | 🗣️ Get Commercial Intelligence from CCO (Mary) | ✅ Completed |
+| 2 | 📊 Compile & Synthesize Report Content | ✅ Completed |
+| 3 | 📄 Generate Word Document | ✅ Completed |
+
+---
+
+## 🔑 What's in the Document (12 Sections)
+
+| Section | Content |
+|---|---|
+| **Executive Summary** | $2.5M ARR target, $20M+ pipeline, GWRR as critical dependency |
+| **Revenue & ARR Status** | Market sizing from $9.2M shortline TAM to $2.5B global, pipeline by account |
+| **Customer Acquisition** | 3 customers (GWRR, OmniTrax, Vermont Rail), 3 prospects, sales cycle compression |
+| **Pipeline & Deals** | 6-deal pipeline table with stages, values, and milestones |
+| **Gainshare Model** | 30% fuel savings share, zero-upfront structure, verification concerns |
+| **Go-to-Market Strategy** | CEO-led playbook, what's working, single-threaded risk flag |
+| **Partnership Strategy** | Tier 1 (Wabtec, Alstom, Progress Rail) + Tier 2 + Holland-Loram consortium |
+| **Competitive Positioning** | 11-dimension comparison vs. Wabtec Trip Optimizer |
+| **Key Commercial Risks** | 🔴 3 Critical / 🟡 5 Elevated / 🟢 5 Structural Strengths |
+| **Top 5 CCO Priorities** | Validate → Convert → Scale → Partner → Discipline |
+| **Data Confidence Flags** | 16-item confidence matrix with 4 gaps requiring resolution |
+| **CSO Closing Statement** | Board-level summary and strategic truth |
+
+---
+
+## ⚠️ Key Flags Before Distribution
+
+> Mary flagged these **critical items** that the board must be aware of:
+
+| Flag | Detail |
+|---|---|
+| 🔴 **GWRR Pilot = Everything** | Entire pipeline, fundraise, and partnership strategy depends on 90-day validation success |
+| 🔴 **CEO Sales Dependency** | No sales team exists — Jamie is the only commercial engine |
+| 🟡 **Revenue Concentration** | G&W represents >50% of near-term ARR — single-customer risk |
+| 🟡 **Class I Projections** | $113–142M Class I ARR should be stripped from near-term documents (credibility risk) |
+| ⚠️ **Cash/Burn Rate Missing** | CFO data needed to complete the financial picture |
+
+---
+
+The document is **board-ready in commercial content**. If you want me to cross-reference this with Raphael's (CFO) financial data from the earlier PDF report to create a combined strategy document, just say the word.

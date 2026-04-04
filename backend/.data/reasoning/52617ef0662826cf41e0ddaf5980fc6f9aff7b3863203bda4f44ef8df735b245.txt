@@ -1,0 +1,50 @@
+
+
+Let me pull the current state of Railvision so I can give you a proper status read.Good — apologies for the interruption earlier. I've pulled everything from the knowledge base. Here's your current status read:
+
+---
+
+# 📊 RailVision — Current Status Overview
+
+## The Core Thesis
+RailVision is building **AI-powered self-driving technology for trains**, with the first product (**EcoRail**) serving as the **Trojan Horse** — a "Google Maps for rail" that delivers real-time driving recommendations to save fuel and reduce GHG emissions. The long game is **autonomy**; the near game is **fuel savings with revenue from day one**.
+
+---
+
+## 🟢 What's Working
+
+| Area | Status |
+|---|---|
+| **Product** | Built and operational — **EcoRail** delivers Trip Setup, Live Recommendations, Trip Review, driving recommendations, speed/elevation/map views, and ETA — all on a **tablet**. No locomotive hardware required. |
+| **Competitive Edge** | **25% fuel savings vs. 5%** from incumbents (Wabtec Trip Optimizer). Deploys in **weeks** vs. multi-year hardware installs. Crews love the UX. Locomotives stay in service. |
+| **Beachhead Market** | **Class II & III shortlines** — 650+ railroads, $9.2M ARR addressable in shortline segment alone. TAM for fuel savings product: **$2.5B globally**. |
+| **Go-to-Market Model** | **30% gainshare on verified fuel savings** (or flat subscription). Zero upfront cost to railroads. 60-90 day corridor pilot to prove value. |
+| **Pipeline — Key Targets** | **G&W** (120 railroads, $10M ARR potential), **Watco** (45 railroads, $5M ARR), **Wheeling & Lake Erie** ($1.5M ARR) |
+| **Strategic Partnerships** | Active pursuit of **Wabtec**, **Progress Rail (Caterpillar)**, and **Alstom** — each with a tailored $3M strategic investment ask and clear value narrative |
+
+---
+
+## 🔴 What Needs Attention
+
+| Priority | Detail |
+|---|---|
+| **Fundraising** | Seeking **$3M** in strategic funding — split $1.8M (tech team & key hires) / $1.2M (field rollout). This is the current constraint on scaling. |
+| **12-Month Target** | **$2.5M ARR** — aggressive but credible if G&W pilot converts and 15+ properties deploy by Q4 2026. |
+| **Exit Valuation Range** | Targeting **$50M–$100M** — contingent on proving the shortline playbook scales. |
+| **Pilot Validation** | G&W pilot underway with 90-day validation timeline. **This is the single most important proof point right now.** If it converts, the dominoes fall. If it stalls, everything downstream slows. |
+
+---
+
+## ⚡ Michael's Strategic Read
+
+**Three things that matter most right now:**
+
+1. **The G&W pilot is the company.** Everything — fundraising, partnership credibility, ARR targets — flows from proving real fuel savings on real shortline operations. Protect it. Resource it. Don't let it drift.
+
+2. **The strategic partnership play is smart but risky.** Running parallel conversations with Wabtec, Progress Rail, *and* Alstom is high-leverage if managed carefully — but each of these players could also become a competitive threat if they decide to build rather than buy. Know your walk-away point.
+
+3. **Adoption is the silent killer.** The algorithms can be brilliant, but if railroad engineers don't actually follow the tablet recommendations, the gainshare model produces zero revenue. The UX advantage is real — keep investing in it.
+
+---
+
+**What do you want to drill into?** I can route you to the right specialist — GTM for go-to-market sequencing, M&A for the partnership/investment strategy, or Railroad Intel for deeper target mapping.
