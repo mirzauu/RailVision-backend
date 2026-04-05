@@ -4,6 +4,7 @@ from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from src.application.reasoning.pipeline import context_enrich
+from src.infrastructure.agents.tools.tool_progress import begin_tool, end_tool, async_push_progress
 
 
 class KnowledgeBaseToolInput(BaseModel):
@@ -30,16 +31,21 @@ and relationships between various business entities.
 
     async def arun(self, query: str) -> str:
         """Retrieve information from the knowledge base asynchronously."""
+        begin_tool(self.name)
         try:
-            # Call the context_enrich pipeline which handles intent classification,
-            # Pinecone retrieval, and Neo4j state building.
+            await async_push_progress(self.name, "🔍 Searching knowledge base...")
+            await async_push_progress(self.name, "⚙️ Enriching context from Neo4j & Pinecone...")
             result = await context_enrich(
                 question=query,
                 user_id=self.user_id
             )
+            await async_push_progress(self.name, f"✅ Knowledge base results ready.\n\n{result}")
             return result
         except Exception as e:
+            await async_push_progress(self.name, f"❌ Error: {str(e)}")
             return f"Error retrieving knowledge base info: {str(e)}"
+        finally:
+            end_tool(self.name)
 
     def run(self, query: str) -> str:
         """Synchronous wrapper for arun."""

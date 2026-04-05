@@ -50,7 +50,7 @@ class   ClaudeChatAgent(ChatAgent):
         )
 
         # Default Claude Agent SDK options
-        self.allowed_tools = ["Skill", "Bash", "Read", "Write", "Grep", "Glob"]
+        self.allowed_tools = ["Skill"]
 
     def _create_task_description(self, task_config: TaskConfig, ctx: ChatContext) -> str:
         """Build the full prompt — identical logic to PydanticChatAgent."""

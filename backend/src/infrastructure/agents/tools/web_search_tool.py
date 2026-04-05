@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from src.infrastructure.llm.provider_service import ProviderService
 from src.config.settings import settings
+from src.infrastructure.agents.tools.tool_progress import begin_tool, end_tool, async_push_progress
 
 
 class WebSearchToolInput(BaseModel):
@@ -32,10 +33,18 @@ class WebSearchTool:
         self.provider_service = ProviderService(self.user_id)
 
     async def arun(self, query: str) -> Dict[str, Any]:
-        resp = await self._make_llm_call(query)
-        if not resp:
-            return {"success": False, "content": "Tool Call Failed", "citations": []}
-        return resp
+        begin_tool(self.name)
+        try:
+            await async_push_progress(self.name, "🌐 Searching the web...")
+            resp = await self._make_llm_call(query)
+            if not resp:
+                await async_push_progress(self.name, "❌ Search failed.")
+                return {"success": False, "content": "Tool Call Failed", "citations": []}
+            content = resp.get("content", "")
+            await async_push_progress(self.name, f"✅ Search complete.\n\n{content}")
+            return resp
+        finally:
+            end_tool(self.name)
 
     async def _make_llm_call(self, query: str) -> Dict[str, Any]:
         try:

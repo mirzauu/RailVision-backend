@@ -5,6 +5,7 @@ from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from src.infrastructure.llm.provider_service import ProviderService
+from src.infrastructure.agents.tools.tool_progress import begin_tool, end_tool, async_push_progress
 
 
 class ThinkToolInput(BaseModel):
@@ -40,7 +41,9 @@ j
 
     async def arun(self, thought: str) -> Dict[str, Any]:
         """Process the thought using structured thinking asynchronously."""
-        prompt = """
+        begin_tool(self.name)
+        try:
+            prompt = """
         ## Using the think tool
 
         Before taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:
@@ -89,21 +92,26 @@ j
         {thought}
         """
 
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an expert at structured thinking and analysis.",
-            },
-            {"role": "user", "content": prompt.format(thought=thought)},
-        ]
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are an expert at structured thinking and analysis.",
+                },
+                {"role": "user", "content": prompt.format(thought=thought)},
+            ]
 
-        try:
-            response = await self.provider_service.call_llm(
-                messages=messages, config_type="inference"
-            )
-            return {"success": True, "analysis": response}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+            await async_push_progress(self.name, "🧠 Reasoning about the problem...")
+            try:
+                response = await self.provider_service.call_llm(
+                    messages=messages, config_type="inference"
+                )
+                await async_push_progress(self.name, f"✅ Analysis complete.\n\n{response}")
+                return {"success": True, "analysis": response}
+            except Exception as e:
+                await async_push_progress(self.name, f"❌ Error: {str(e)}")
+                return {"success": False, "error": str(e)}
+        finally:
+            end_tool(self.name)
 
     def run(self, thought: str) -> Dict[str, Any]:
         """Synchronous wrapper for arun."""

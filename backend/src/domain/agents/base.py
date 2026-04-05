@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 class ToolCallEventType(Enum):
     CALL = "call"
+    PROGRESS = "progress"
     RESULT = "result"
 
 

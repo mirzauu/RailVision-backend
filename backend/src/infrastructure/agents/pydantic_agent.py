@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import AsyncGenerator, List, Dict
+from typing import AsyncGenerator, List, Dict, Optional
 
 from langchain_core.tools import StructuredTool
 from pydantic_ai import Agent as PydanticAgent
@@ -23,6 +23,7 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.models.anthropic import AnthropicModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.anthropic import AnthropicProvider
+import asyncio
 import httpx
 
 from src.infrastructure.llm.provider_service import ProviderService
@@ -36,9 +37,44 @@ from src.domain.agents.base import (
     ToolCallEventType,
     ToolCallResponse,
 )
-
+from src.infrastructure.agents.tools.tool_progress import (
+    get_queue as _get_progress_queue,
+    DONE_SENTINEL as _QUEUE_DONE_SENTINEL,
+    get_all_active_tool_names as _get_active_tools,
+)
+# Also import doc-gen sentinel for backward compat (ppt/word use their own registry)
+from src.infrastructure.agents.tools.claude_document_generator import (
+    _QUEUE_DONE as _DOC_GEN_DONE_SENTINEL,
+)
 
 logger = logging.getLogger(__name__)
+
+# Tool names for which we stream progress (all tools using tool_progress registry)
+# This set is used only to detect doc-gen tools that use the OLD queue system
+_LEGACY_DOC_GEN_TOOL_NAMES = {"create_ppt", "create_word_doc"}
+
+
+def _get_legacy_doc_queue(tool_name: str):
+    """Look up the active progress queue for legacy doc-gen tools (ppt/word)."""
+    if tool_name == "create_ppt":
+        from src.infrastructure.agents.tools.ppt_tool import get_active_progress_queue
+        return get_active_progress_queue(tool_name), _DOC_GEN_DONE_SENTINEL
+    elif tool_name == "create_word_doc":
+        from src.infrastructure.agents.tools.word_tool import get_active_progress_queue
+        return get_active_progress_queue(tool_name), _DOC_GEN_DONE_SENTINEL
+    return None, None
+
+
+def _get_any_progress_queue(tool_name: str):
+    """Return (queue, done_sentinel) for any tool — central registry first, then legacy."""
+    # 1. Central registry (think, knowledge_base, web_search, attachments, etc.)
+    q = _get_progress_queue(tool_name)
+    if q is not None:
+        return q, _QUEUE_DONE_SENTINEL
+    # 2. Legacy doc-gen tools (ppt, word) use their own module-level queues
+    q, sentinel = _get_legacy_doc_queue(tool_name)
+    return q, sentinel
+
 
 
 class PydanticChatAgent(ChatAgent):
@@ -220,12 +256,13 @@ class PydanticChatAgent(ChatAgent):
                 elif isinstance(msg, ModelRequest):
                     for part in msg.parts:
                         if isinstance(part, ToolReturnPart):
+                            result_content = part.content if isinstance(part.content, str) else str(part.content)
                             tool_calls.append(
                                 ToolCallResponse(
                                     call_id=part.tool_call_id or "",
                                     event_type=ToolCallEventType.RESULT,
                                     tool_name=part.tool_name or "unknown tool",
-                                    tool_response=f"Completed tool {part.tool_name or 'unknown tool'}",
+                                    tool_response=result_content,
                                     tool_call_details={
                                         "summary": {"tool": part.tool_name or "unknown tool", "result": part.content}
                                     },
@@ -262,49 +299,156 @@ class PydanticChatAgent(ChatAgent):
                                     if event.delta.tool_name_delta:
                                         yield ChatAgentResponse(response=f"\n[Thinking: {event.delta.tool_name_delta}]", tool_calls=[], citations=[])
                     elif PydanticAgent.is_call_tools_node(node):
-                        async with node.stream(run.ctx) as handle_stream:
-                            async for event in handle_stream:
+                        # Universal real-time progress streaming for ALL tools.
+                        # Any tool that calls begin_tool/push_progress/end_tool from
+                        # tool_progress.py is automatically streamed here.
+                        #
+                        # Strategy:
+                        #   1. Run the pydantic-ai tool node stream in a background task
+                        #      (it pushes FunctionToolCallEvent / FunctionToolResultEvent
+                        #      into tool_event_queue as they arrive)
+                        #   2. Main loop polls both the tool_event_queue (100ms timeout)
+                        #      AND the per-tool progress queue, yielding PROGRESS chunks
+
+                        tool_event_queue: asyncio.Queue = asyncio.Queue()
+                        # tool_name → call_id for currently running tools
+                        active_tools: dict = {}
+
+                        async def _collect_tool_events():
+                            """Background task: collect pydantic-ai node events into a queue."""
+                            try:
+                                async with node.stream(run.ctx) as handle_stream:
+                                    async for event in handle_stream:
+                                        await tool_event_queue.put(event)
+                            except Exception as exc:
+                                logger.error(f"Tool event collector error: {exc}")
+                            finally:
+                                await tool_event_queue.put(None)  # stream-done sentinel
+
+                        collector_task = asyncio.create_task(_collect_tool_events())
+
+                        def _drain_progress(tool_name: str, call_id: str):
+                            """Inner generator — yield PROGRESS chunks from a tool's queue."""
+                            progress_q, done_sentinel = _get_any_progress_queue(tool_name)
+                            if progress_q is None:
+                                return
+                            while not progress_q.empty():
+                                try:
+                                    chunk = progress_q.get_nowait()
+                                    if chunk is done_sentinel:
+                                        active_tools.pop(tool_name, None)
+                                        break
+                                    if isinstance(chunk, str) and chunk:
+                                        yield ChatAgentResponse(
+                                            response="",
+                                            tool_calls=[
+                                                ToolCallResponse(
+                                                    call_id=call_id,
+                                                    event_type=ToolCallEventType.PROGRESS,
+                                                    tool_name=tool_name,
+                                                    tool_response=chunk,
+                                                    tool_call_details={},
+                                                )
+                                            ],
+                                            citations=[],
+                                        )
+                                except Exception:
+                                    break
+
+                        try:
+                            while True:
+                                # 1. Drain progress from all currently active tools
+                                for t_name, t_call_id in list(active_tools.items()):
+                                    for chunk_resp in _drain_progress(t_name, t_call_id):
+                                        yield chunk_resp
+
+                                # 2. Poll tool event queue (100 ms timeout keeps the loop alive)
+                                try:
+                                    event = await asyncio.wait_for(
+                                        tool_event_queue.get(), timeout=0.1
+                                    )
+                                except asyncio.TimeoutError:
+                                    continue  # no new pydantic-ai event yet, loop back
+
+                                if event is None:
+                                    # pydantic-ai stream finished — final drain for all tools
+                                    for t_name, t_call_id in list(active_tools.items()):
+                                        for chunk_resp in _drain_progress(t_name, t_call_id):
+                                            yield chunk_resp
+                                    break
+
+                                # 3. Process pydantic-ai tool lifecycle events
                                 if isinstance(event, FunctionToolCallEvent):
-                                    # Safely extract arguments
                                     args = {}
                                     try:
                                         args = event.part.args_as_dict()
                                     except Exception:
-                                        args = getattr(event.part, 'args', {})
+                                        args = getattr(event.part, "args", {})
                                         if not isinstance(args, dict):
                                             args = {"raw_args": str(args)}
+
+                                    t_name = event.part.tool_name
+                                    t_call_id = event.part.tool_call_id or ""
+                                    # Track this tool for progress polling
+                                    active_tools[t_name] = t_call_id
 
                                     yield ChatAgentResponse(
                                         response="",
                                         tool_calls=[
                                             ToolCallResponse(
-                                                call_id=event.part.tool_call_id or "",
+                                                call_id=t_call_id,
                                                 event_type=ToolCallEventType.CALL,
-                                                tool_name=event.part.tool_name,
-                                                tool_response=f"Running tool {event.part.tool_name}",
+                                                tool_name=t_name,
+                                                tool_response=f"Running tool {t_name}",
                                                 tool_call_details={
-                                                    "summary": {"tool": event.part.tool_name, "args": args}
+                                                    "summary": {"tool": t_name, "args": args}
                                                 },
                                             )
                                         ],
                                         citations=[],
                                     )
-                                if isinstance(event, FunctionToolResultEvent):
+
+                                elif isinstance(event, FunctionToolResultEvent):
+                                    t_name = event.result.tool_name or "unknown tool"
+                                    t_call_id = event.result.tool_call_id or ""
+                                    call_id_for_drain = active_tools.get(t_name, t_call_id)
+
+                                    # Final drain before emitting RESULT
+                                    for chunk_resp in _drain_progress(t_name, call_id_for_drain):
+                                        yield chunk_resp
+                                    active_tools.pop(t_name, None)
+
+                                    result_content = (
+                                        event.result.content
+                                        if isinstance(event.result.content, str)
+                                        else str(event.result.content)
+                                    )
                                     yield ChatAgentResponse(
                                         response="",
                                         tool_calls=[
                                             ToolCallResponse(
-                                                call_id=event.result.tool_call_id or "",
+                                                call_id=t_call_id,
                                                 event_type=ToolCallEventType.RESULT,
-                                                tool_name=event.result.tool_name or "unknown tool",
-                                                tool_response=f"Completed tool {event.result.tool_name or 'unknown tool'}",
+                                                tool_name=t_name,
+                                                tool_response=result_content,
                                                 tool_call_details={
-                                                    "summary": {"tool": event.result.tool_name or "unknown tool", "result": event.result.content}
+                                                    "summary": {
+                                                        "tool": t_name,
+                                                        "result": event.result.content,
+                                                    }
                                                 },
                                             )
                                         ],
                                         citations=[],
                                     )
+                        finally:
+                            if not collector_task.done():
+                                collector_task.cancel()
+                                try:
+                                    await collector_task
+                                except asyncio.CancelledError:
+                                    pass
+
                     elif PydanticAgent.is_end_node(node):
                         logger.info("result streamed successfully")
         except Exception as e:

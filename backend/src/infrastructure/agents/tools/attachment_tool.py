@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from src.application.attachments.service import AttachmentService
 from src.infrastructure.database.models.conversations import Message, Conversation
 from src.infrastructure.database.models.documents import Document, DocumentScope
+from src.infrastructure.agents.tools.tool_progress import begin_tool, end_tool, async_push_progress
 
 class AttachmentToolInput(BaseModel):
     query: str = Field(description="The question or query to search for in the conversation's attached documents.")
@@ -27,7 +28,9 @@ class AttachmentTool:
 
     async def arun(self, query: str) -> str:
         """Retrieve information from conversation attachments."""
+        begin_tool(self.name)
         try:
+            await async_push_progress(self.name, "📎 Scanning conversation attachments...")
             # 1. Find all messages in the conversation to collect attachment IDs
             messages = self.sql_db.query(Message).filter(
                 Message.conversation_id == self.conversation_id
@@ -56,8 +59,11 @@ class AttachmentTool:
             attachment_ids = list(set(attachment_ids))
 
             if not attachment_ids:
-                return "No attachments found in this conversation to search."
+                result = "No attachments found in this conversation to search."
+                await async_push_progress(self.name, f"⚠️ {result}")
+                return result
 
+            await async_push_progress(self.name, f"🔍 Searching {len(attachment_ids)} document(s)...")
             # 2. Retrieve context from these attachments
             context = self.attachment_service.retrieve_context_for_attachments(
                 query=query,
@@ -66,12 +72,19 @@ class AttachmentTool:
             )
 
             if not context:
-                return "No relevant information found in the attached documents for the given query."
+                result = "No relevant information found in the attached documents for the given query."
+                await async_push_progress(self.name, f"⚠️ {result}")
+                return result
 
-            return f"Context found in attachments:\n\n{context}"
+            result = f"Context found in attachments:\n\n{context}"
+            await async_push_progress(self.name, f"✅ Found relevant content in attachments.\n\n{context}")
+            return result
 
         except Exception as e:
+            await async_push_progress(self.name, f"❌ Error: {str(e)}")
             return f"Error searching attachments: {str(e)}"
+        finally:
+            end_tool(self.name)
 
     def run(self, query: str) -> str:
         """Synchronous wrapper (not ideally used but required by some frameworks)."""
