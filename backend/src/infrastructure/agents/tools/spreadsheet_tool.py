@@ -163,8 +163,11 @@ async def create_spreadsheet_db(
     user_id: str,
     conversation_id: str,
 ) -> str:
-    """Generate an .xlsx file from structured sheet data and persist a DB record."""
+    from .tool_progress import begin_tool, push_progress, end_tool
+    tool_name = "create_spreadsheet"
+    begin_tool(tool_name)
     try:
+        push_progress(tool_name, "📊 Initializing spreadsheet...")
         # 1. Validate user / org
         user = sql_db.query(User).filter(User.id == user_id).first()
         if not user or not user.org_id:
@@ -186,10 +189,12 @@ async def create_spreadsheet_db(
 
         # 3. Build DataFrames and write Excel file
         with pd.ExcelWriter(storage_rel, engine="openpyxl") as writer:
-            for sheet in input_data.sheets:
+            for i, sheet in enumerate(input_data.sheets):
+                push_progress(tool_name, f"✍️ Writing sheet {i+1}/{len(input_data.sheets)}: {sheet.name} ({len(sheet.rows)} rows)...")
                 df = pd.DataFrame(sheet.rows)
                 df.to_excel(writer, sheet_name=sheet.name, index=False)
 
+            push_progress(tool_name, "✨ Finalizing formatting and column widths...")
             # Auto-fit column widths for all sheets
             for sheet in input_data.sheets:
                 ws = writer.sheets[sheet.name]
@@ -237,6 +242,8 @@ async def create_spreadsheet_db(
         sql_db.rollback()
         logger.error("Error creating spreadsheet: %s", e, exc_info=True)
         return f"❌ Error creating spreadsheet: {str(e)}"
+    finally:
+        end_tool(tool_name)
 
 
 def get_spreadsheet_link_db(sql_db: Session, conversation_id: str) -> str:

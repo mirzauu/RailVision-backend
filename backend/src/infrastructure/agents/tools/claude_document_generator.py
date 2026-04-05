@@ -59,8 +59,9 @@ def _get_client():
     global _anthropic_client
     if _anthropic_client is None:
         from anthropic import Anthropic
+        from src.config.settings import settings
 
-        api_key = os.environ.get("CLAUDE_API_KEY") or os.environ.get(
+        api_key = settings.claude_api_key or os.environ.get("CLAUDE_API_KEY") or os.environ.get(
             "ANTHROPIC_API_KEY"
         )
         if not api_key:

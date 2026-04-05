@@ -795,8 +795,11 @@ async def create_pdf_db(
     user_id: str,
     conversation_id: str,
 ) -> str:
-    """Generate a professional PDF file from structured section data and persist a DB record."""
+    from .tool_progress import begin_tool, push_progress, end_tool
+    tool_name = "create_pdf"
+    begin_tool(tool_name)
     try:
+        push_progress(tool_name, "📄 Initializing PDF document...")
         # 1. Validate user / org
         user = sql_db.query(User).filter(User.id == user_id).first()
         if not user or not user.org_id:
@@ -829,6 +832,7 @@ async def create_pdf_db(
 
         # -- Render each section
         for idx, sec in enumerate(input_data.sections):
+            push_progress(tool_name, f"✍️ Rendering section {idx+1}/{len(input_data.sections)}: {sec.title}...")
             pdf._is_cover_page = False
             pdf.add_page()
 
@@ -848,6 +852,12 @@ async def create_pdf_db(
             pdf.set_text_color(*COLORS["body"])
             pdf.set_font("helvetica", "", 11)
             _render_section_content(pdf, sec.content)
+            
+            # Divider
+            if idx < len(input_data.sections) - 1:
+                _add_section_divider(pdf)
+
+        push_progress(tool_name, "💾 Saving PDF to storage...")
 
         # 5. Save
         pdf.output(storage_rel)
@@ -900,6 +910,8 @@ async def create_pdf_db(
         sql_db.rollback()
         logger.error("Error creating PDF: %s", e, exc_info=True)
         return f"❌ Error creating PDF: {str(e)}"
+    finally:
+        end_tool(tool_name)
 
 
 def get_pdf_link_db(sql_db: Session, conversation_id: str) -> str:
